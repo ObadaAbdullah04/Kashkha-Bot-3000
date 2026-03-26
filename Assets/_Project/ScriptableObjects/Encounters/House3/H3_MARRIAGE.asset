@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 18a70a1cd1fb9264a8311678de099e76, type: 3}
+  m_Name: H3_MARRIAGE
+  m_EditorClassIdentifier: 
+  EncounterId: H3_MARRIAGE
+  Type: 0
+  QuestionTextAR: "\u0625\u064A\u0645\u062A\u0649 \u0631\u062D \u062A\u062A\u062C\u0648\u0632
+    \u064A\u0627 \u0627\u0628\u0646\u064A\u061F"
+  Choices:
+  - TextAR: "\u0645\u0627 \u0623\u062F\u0631\u064A \u0628\u0639\u062F\u064A\u0646"
+    BatteryDelta: -0.2
+    StomachDelta: 0
+    EidiaReward: 0
+    ScrapReward: 2
+    IsCorrect: 0
+    FeedbackText: Vague deflection signals discomfort and creates awkward silence.
+      Redirect warmly instead.
+  - TextAR: "\u0625\u0646 \u0634\u0627\u0621 \u0627\u0644\u0644\u0647 \u064A\u0627
+      \u062E\u0627\u0644\u062A\u064A \u0639\u0642\u0628\u0627\u0644 \u0639\u0631\u0633\u0643"
+    BatteryDelta: 0.15
+    StomachDelta: 0
+    EidiaReward: 10
+    ScrapReward: 5
+    IsCorrect: 1
+    FeedbackText: "This phrase redirects the blessing back to her family \u2014 the
+      socially elegant Jordanian answer."
+  - TextAR: "\u0647\u0627\u062F \u0645\u0627 \u0625\u0644\u0643 \u0634\u063A\u0644
+      \u0641\u064A\u0647"
+    BatteryDelta: -0.4
+    StomachDelta: 0
+    EidiaReward: 0
+    ScrapReward: 0
+    IsCorrect: 0
+    FeedbackText: "This response is considered extremely \u0631\u0641\u0636 \u0648\u0642\u062D.
+      The robot has caused a family incident."
+  PanicTimerDuration: 6
+  TriggersMiniGame: 0
+  RequiredUpgradeIds: []

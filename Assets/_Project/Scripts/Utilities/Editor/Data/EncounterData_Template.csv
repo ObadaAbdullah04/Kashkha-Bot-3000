@@ -1,0 +1,10 @@
+EncounterId,House,Type,QuestionTextAR,PanicTimer,MiniGame,RequiredUpgradeIds,ChoiceTextAR,BatteryDelta,StomachDelta,EidiaReward,ScrapReward,IsCorrect,FeedbackText
+H1_GREETING,1,Dialogue,السلام عليكم كيف حالك؟,8,None,,مرحبا,-0.15,0,0,2,FALSE,Generic and too casual for Eid. The occasion calls for a full blessing.
+,,,,,,,عيد مبارك كل عام وأنتم بخير,0.1,0,5,5,TRUE,The complete Eid greeting. Returning a full blessing shows genuine cultural fluency.
+,,,,,,,هلا,-0.25,0,0,1,FALSE,Informal slang. Using it with elders on Eid is considered disrespectful — عيب.
+H1_COFFEE,1,Dialogue,تفضل اشرب قهوة يا ابني,8,None,,لا شكراً,-0.2,0,0,2,FALSE,Saying 'no thank you' verbally is often ignored. You must shake the finjan cup to signal you are done.
+,,,,,,,شكراً خالتي كثير استفدت,0.1,0,0,4,TRUE,Accepting graciously while signalling fullness respects both the host and the tradition.
+,,,,,,,ما بدي,-0.3,0,0,1,FALSE,Blunt refusal is considered رفض وقح — rude rejection. The host's generosity must always be honoured gently.
+H3_MARRIAGE,3,Dialogue,إيمتى رح تتجوز يا ابني؟,6,None,,ما أدري بعدين,-0.2,0,0,2,FALSE,Vague deflection signals discomfort and creates awkward silence. Redirect warmly instead.
+,,,,,,,إن شاء الله يا خالتي عقبال عرسك,0.15,0,10,5,TRUE,This phrase redirects the blessing back to her family — the socially elegant Jordanian answer.
+,,,,,,,هاد ما إلك شغل فيه,-0.4,0,0,0,FALSE,This response is considered extremely رفض وقح. The robot has caused a family incident.
