@@ -55,17 +55,20 @@ public class FallingItem : MonoBehaviour
         if (collision.CompareTag("Player"))
         {
             _isCaught = true;
-            Debug.Log($"[FallingItem] OnTriggerEnter2D: {(isEidia ? "Eidia" : "Ma'amoul")} caught by player!");
 
-            // Tell the CatchMiniGame manager that we were caught
-            if (CatchMiniGame.Instance != null)
-            {
-                CatchMiniGame.Instance.OnItemCaught(isEidia);
-            }
+            // Cache reference BEFORE destroying to avoid race condition
+            CatchMiniGame catchGame = CatchMiniGame.Instance;
+            bool isEidiaCapture = isEidia;
 
             // Disable collider and destroy this item
             if (_collider != null) _collider.enabled = false;
             Destroy(gameObject);
+
+            // CRITICAL: Notify manager AFTER disabling collider but object still exists
+            if (catchGame != null)
+            {
+                catchGame.OnItemCaught(isEidiaCapture);
+            }
         }
     }
 

@@ -39,13 +39,6 @@ public class MiniGameManager : MonoBehaviour
     [SerializeField] private float pathTimeHouse2 = 30f;
     [Tooltip("Time limit for House 3 path drawing")]
     [SerializeField] private float pathTimeHouse3 = 40f;
-    
-    [Tooltip("Obstacles for House 1 path drawing")]
-    [SerializeField] private int pathObstaclesHouse1 = 4;
-    [Tooltip("Obstacles for House 2 path drawing")]
-    [SerializeField] private int pathObstaclesHouse2 = 5;
-    [Tooltip("Obstacles for House 3 path drawing")]
-    [SerializeField] private int pathObstaclesHouse3 = 6;
 
     private GameObject _activeMiniGameInstance;
 
@@ -192,8 +185,9 @@ public class MiniGameManager : MonoBehaviour
     }
     
     /// <summary>
-    /// PHASE 5C: Starts the Path-Drawing Maze mini-game.
+    /// PHASE 5C (REVISED): Starts the Path-Drawing Maze mini-game.
     /// Alternates with Catch game or can be set as primary mini-game.
+    /// Obstacles are manually placed in the prefab - no auto-spawning.
     /// </summary>
     public void StartPathDrawingGame(int houseLevel)
     {
@@ -203,16 +197,16 @@ public class MiniGameManager : MonoBehaviour
             StartCatchGame(houseLevel);
             return;
         }
-        
+
         // Hide encounter UI during mini-game
         if (UIManager.Instance != null)
             UIManager.Instance.HideAllPanelsForMiniGame();
-        
+
         // Change state
         if (GameManager.Instance != null)
             GameManager.Instance.ChangeState(GameState.InterHouseMiniGame);
-        
-        // Calculate difficulty based on house level
+
+        // Calculate difficulty based on house level (time only - obstacles are manual)
         float timeLimit = houseLevel switch
         {
             1 => pathTimeHouse1,
@@ -220,31 +214,13 @@ public class MiniGameManager : MonoBehaviour
             3 => pathTimeHouse3,
             _ => pathTimeHouse1
         };
-        
-        int obstacleCount = houseLevel switch
-        {
-            1 => pathObstaclesHouse1,
-            2 => pathObstaclesHouse2,
-            3 => pathObstaclesHouse3,
-            _ => pathObstaclesHouse1
-        };
-        
-        Debug.Log($"[MiniGameManager] Starting Path Drawing Game (House {houseLevel}, {timeLimit}s, {obstacleCount} obstacles)");
-        
+
+        Debug.Log($"[MiniGameManager] Starting Path Drawing Game (House {houseLevel}, {timeLimit}s)");
+
         // Instantiate the prefab
         _activeMiniGameInstance = Instantiate(pathDrawingPrefab, Vector3.zero, Quaternion.identity);
-        
-        // Configure PathDrawingGame parameters
-        PathDrawingGame pathGame = _activeMiniGameInstance.GetComponent<PathDrawingGame>();
-        if (pathGame != null)
-        {
-            // Note: Could add public setter methods to PathDrawingGame for runtime config
-            Debug.Log($"[MiniGameManager] PathDrawingGame initialized");
-        }
-        else
-        {
-            Debug.LogError("[MiniGameManager] PathDrawingGame component not found on prefab!");
-        }
+
+        Debug.Log($"[MiniGameManager] PathDrawingGame initialized with manual obstacles");
     }
 
     [Button("Test Catch Game (House 1)")]

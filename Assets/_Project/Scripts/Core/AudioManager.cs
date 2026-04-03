@@ -62,8 +62,10 @@ public class AudioManager : MonoBehaviour
     {
         if (clip == null || musicSource == null) return;
 
+        musicSource.DOKill(); // Kill existing fade
         musicSource.DOFade(0f, 0.5f).OnComplete(() =>
         {
+            if (musicSource == null) return; // Guard for scene cleanup
             musicSource.clip = clip;
             musicSource.Play();
             musicSource.DOFade(1f, 0.5f);

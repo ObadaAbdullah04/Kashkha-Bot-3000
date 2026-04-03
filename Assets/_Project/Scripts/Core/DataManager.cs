@@ -23,6 +23,9 @@ public class DataManager : MonoBehaviour
             Instance = this;
             transform.SetParent(null);
             DontDestroyOnLoad(gameObject);
+            
+            // Auto-parse CSV on startup
+            ParseCSV();
         }
         else
         {
@@ -54,16 +57,25 @@ public class DataManager : MonoBehaviour
 
             string[] fields = Regex.Split(lines[i], ",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
 
-            // Column structure: 28 columns for QTE input system (Phase 5)
-            // Backward compatible with old 23-column format
-            // ID, HouseLevel, SequenceOrder, EncounterType, MiniGameAfter, QTEType, QTEInputType, QTECount, QTETimeLimit, QTEDirection, QTEHoldDuration,
-            // Speaker, QuestionAR, OfferTextAR, Choice1AR, Choice1IsCorrect, Choice1Feedback, Choice2AR, Choice2IsCorrect, Choice2Feedback,
-            // Choice3AR, Choice3IsCorrect, Choice3Feedback, BatteryDelta, StomachDelta, EidiaReward, ScrapReward, ColorHex
             if (fields.Length < 23)
             {
                 Debug.LogWarning($"[DataManager] Line {i + 1}: Expected at least 23 columns, got {fields.Length}. Skipping.");
                 continue;
             }
+
+            int id = 0;
+            int houseLevel = 0;
+            int sequenceOrder = 0;
+
+            // Safe ID and HouseLevel parsing
+            if (!int.TryParse(fields[0], out id))
+            {
+                Debug.LogWarning($"[DataManager] Line {i + 1}: Invalid ID '{fields[0]}'. Skipping.");
+                continue;
+            }
+
+            houseLevel = ParseInt(fields[1]);
+            sequenceOrder = ParseInt(fields[2]);
 
             // Parse EncounterType
             string encounterTypeStr = fields[3].Trim('"');
@@ -102,9 +114,9 @@ public class DataManager : MonoBehaviour
 
             EncounterData data = new EncounterData
             {
-                ID = int.Parse(fields[0]),
-                HouseLevel = int.Parse(fields[1]),
-                SequenceOrder = int.Parse(fields[2]),
+                ID = id,
+                HouseLevel = houseLevel,
+                SequenceOrder = sequenceOrder,
                 EncounterType = encounterType,
                 MiniGameAfter = miniGameAfter,
                 QTEType = legacyQTEType, // Keep for backward compatibility
@@ -125,10 +137,10 @@ public class DataManager : MonoBehaviour
                 Choice3AR = fields.Length > 20 ? fields[20].Trim('"') : "",
                 Choice3IsCorrect = fields.Length > 21 ? ParseBool(fields[21]) : false,
                 Choice3Feedback = fields.Length > 22 ? fields[22].Trim('"') : "",
-                BatteryDelta = fields.Length > 23 ? float.Parse(fields[23]) : 0f,
-                StomachDelta = fields.Length > 24 ? float.Parse(fields[24]) : 0f,
-                EidiaReward = fields.Length > 25 ? int.Parse(fields[25]) : 0,
-                ScrapReward = fields.Length > 26 ? int.Parse(fields[26]) : 0,
+                BatteryDelta = fields.Length > 23 ? ParseFloat(fields[23]) : 0f,
+                StomachDelta = fields.Length > 24 ? ParseFloat(fields[24]) : 0f,
+                EidiaReward = fields.Length > 25 ? ParseInt(fields[25]) : 0,
+                ScrapReward = fields.Length > 26 ? ParseInt(fields[26]) : 0,
                 ColorHex = fields.Length > 27 ? fields[27].Trim('"') : ""
             };
 

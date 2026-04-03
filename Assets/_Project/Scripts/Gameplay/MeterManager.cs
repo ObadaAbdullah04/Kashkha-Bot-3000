@@ -120,7 +120,9 @@ public class MeterManager : MonoBehaviour
         currentBattery = Mathf.Clamp(currentBattery + amount, 0f, 100f);
         float delta = currentBattery - previous;
 
+#if UNITY_EDITOR
         Debug.Log($"[Meter] Battery: {previous:F0} → {currentBattery:F0} ({(amount > 0 ? "+" : "")}{amount:F0})");
+#endif
 
         if (currentBattery <= 0f && previous > 0f)
             OnBatteryDrained?.Invoke();

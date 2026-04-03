@@ -74,6 +74,7 @@ public class FloatingTextManager : MonoBehaviour
 
     private List<FloatingText> _pool;
     private Sequence _poolInitSequence;
+    private bool _isPoolInitialized;
 
     #endregion
 
@@ -104,6 +105,7 @@ public class FloatingTextManager : MonoBehaviour
             _pool.Add(newText);
         }
 
+        _isPoolInitialized = true;
         Debug.Log($"[FloatingTextManager] Pool initialized with {poolSize} objects.");
     }
 
@@ -122,11 +124,17 @@ public class FloatingTextManager : MonoBehaviour
         GameManager.OnRunStarted -= HandleRunStarted;
         MiniGameManager.OnMiniGameEnded -= HandleMiniGameRewards;
 
-        // Kill all active tweens to prevent memory leaks
-        foreach (var item in _pool)
+        // Kill all active tweens and return objects to pool state
+        if (_pool != null)
         {
-            if (item != null)
-                item.KillTween();
+            foreach (var item in _pool)
+            {
+                if (item != null)
+                {
+                    item.KillTween();
+                    item.gameObject.SetActive(false);
+                }
+            }
         }
     }
 
@@ -136,6 +144,11 @@ public class FloatingTextManager : MonoBehaviour
 
     private void HandleBatteryModified(float value, float delta)
     {
+        if (!_isPoolInitialized)
+        {
+            Debug.LogWarning("[FloatingTextManager] Pool not initialized! Check prefab assignment.");
+            return;
+        }
         if (Mathf.Abs(delta) < 0.1f) return;
 
         Color color = delta > 0 ? batteryGainColor : batteryLossColor;
@@ -145,6 +158,11 @@ public class FloatingTextManager : MonoBehaviour
 
     private void HandleStomachModified(float value, float delta)
     {
+        if (!_isPoolInitialized)
+        {
+            Debug.LogWarning("[FloatingTextManager] Pool not initialized! Check prefab assignment.");
+            return;
+        }
         if (Mathf.Abs(delta) < 0.1f) return;
 
         // Invert color logic: +stomach is BAD (red), -stomach is GOOD (cyan)
@@ -155,6 +173,8 @@ public class FloatingTextManager : MonoBehaviour
 
     private void HandleRunStarted()
     {
+        if (!_isPoolInitialized) return;
+
         // Reset all pool objects on new run
         foreach (var item in _pool)
         {
@@ -168,9 +188,11 @@ public class FloatingTextManager : MonoBehaviour
 
     private void HandleMiniGameRewards(int eidiaEarned, int scrapEarned)
     {
+        if (!_isPoolInitialized) return;
+
         if (eidiaEarned > 0)
             SpawnEidiaReward(eidiaEarned);
-        
+
         if (scrapEarned > 0)
             SpawnScrapReward(scrapEarned);
     }
@@ -267,6 +289,7 @@ public class FloatingTextManager : MonoBehaviour
 
     #region Inspector Test Buttons
 
+    #if UNITY_EDITOR
     [UnityEditor.MenuItem("Tools/FloatingText/Test Battery Gain")]
     private static void TestBatteryGain()
     {
@@ -287,6 +310,7 @@ public class FloatingTextManager : MonoBehaviour
         if (Instance != null)
             Instance.SpawnEidiaReward(50);
     }
+    #endif
 
     #endregion
 }

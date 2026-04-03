@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using NaughtyAttributes;
+using System.Text.RegularExpressions;
 
 /// <summary>
 /// Manages the Wardrobe meta-progression system.
@@ -115,8 +116,8 @@ public class WardrobeManager : MonoBehaviour
         {
             if (string.IsNullOrWhiteSpace(lines[i])) continue;
 
-            // Simple CSV split (no quoted strings expected in outfit data)
-            string[] fields = lines[i].Split(',');
+            // Use Regex to safely handle commas in quoted strings (Arabic text)
+            string[] fields = Regex.Split(lines[i], ",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
 
             if (fields.Length < 9)
             {
@@ -124,17 +125,28 @@ public class WardrobeManager : MonoBehaviour
                 continue;
             }
 
+            // Safe parsing
+            if (!int.TryParse(fields[0], out int id)) continue;
+            int scrapCost = 0;
+            int.TryParse(fields[5], out scrapCost);
+            int statTypeInt = 0;
+            int.TryParse(fields[6], out statTypeInt);
+            float statValue = 0f;
+            float.TryParse(fields[7], out statValue);
+            int rarityInt = 0;
+            int.TryParse(fields[8], out rarityInt);
+
             OutfitData data = new OutfitData
             {
-                ID = int.Parse(fields[0]),
+                ID = id,
                 internalName = fields[1].Trim('"'),
                 displayNameAR = fields[2].Trim('"'),
                 descriptionAR = fields[3].Trim('"'),
                 iconSpritePath = fields[4].Trim('"'),
-                scrapCost = int.Parse(fields[5]),
-                statType = (OutfitStatType)int.Parse(fields[6]),
-                statValue = float.Parse(fields[7]),
-                rarity = (OutfitRarity)int.Parse(fields[8])
+                scrapCost = scrapCost,
+                statType = (OutfitStatType)statTypeInt,
+                statValue = statValue,
+                rarity = (OutfitRarity)rarityInt
             };
 
             allOutfits.Add(data);

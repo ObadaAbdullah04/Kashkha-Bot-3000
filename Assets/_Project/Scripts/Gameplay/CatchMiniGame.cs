@@ -99,6 +99,7 @@ public class CatchMiniGame : MonoBehaviour
 
     // Game state - TIME ATTACK
     private float _timeRemaining;
+    private int _lastCachedSecond = -1; // NEW: Cache for timer text
     private int _score = 0;
     private bool _isPlaying = false;
     private float _spawnTimer = 0f;
@@ -149,11 +150,15 @@ public class CatchMiniGame : MonoBehaviour
         {
             Destroy(_spawnedPlayerBasket);
         }
+
+        // Clear tracking list to prevent stale references
+        _activeItems.Clear();
     }
 
     private void Start()
     {
         // === DIAGNOSTIC LOGGER ===
+#if UNITY_EDITOR
         Debug.Log("=== [CatchMiniGame] WORLD SPACE SETUP ===");
         Debug.Log($"[CatchMiniGame] playerBasketPrefab: {(playerBasketPrefab != null ? "ASSIGNED" : "NULL!")}");
         Debug.Log($"[CatchMiniGame] itemsParent: {(itemsParent != null ? "ASSIGNED" : "NULL!")}");
@@ -164,11 +169,14 @@ public class CatchMiniGame : MonoBehaviour
 
         Debug.Log($"[CatchMiniGame] Spawn Interval: {spawnInterval}s | Eidia Chance: {eidiaSpawnChance * 100:F0}%");
         Debug.Log("========================================");
+#endif
 
         // Calculate world space boundaries from camera
         CalculateWorldBoundaries();
 
+#if UNITY_EDITOR
         Debug.Log("[CatchMiniGame] Waiting for Initialize() call from MiniGameManager...");
+#endif
     }
 
     /// <summary>
@@ -193,7 +201,7 @@ public class CatchMiniGame : MonoBehaviour
         // Get player sprite width for padding (from prefab if basket not spawned yet)
         float playerHalfWidth = 0.5f; // Default fallback
         SpriteRenderer sr = null;
-        
+
         if (playerBasket != null)
         {
             sr = playerBasket.GetComponent<SpriteRenderer>();
@@ -202,7 +210,7 @@ public class CatchMiniGame : MonoBehaviour
         {
             sr = playerBasketPrefab.GetComponent<SpriteRenderer>();
         }
-        
+
         if (sr != null && sr.sprite != null)
         {
             playerHalfWidth = sr.sprite.bounds.extents.x;
@@ -218,7 +226,9 @@ public class CatchMiniGame : MonoBehaviour
         // Destroy Y: just below the bottom of the screen
         _destroyY = Camera.main.ViewportToWorldPoint(new Vector3(0, -0.1f, 0)).y;
 
+#if UNITY_EDITOR
         Debug.Log($"[CatchMiniGame] World Boundaries: minX={_minX:F2}, maxX={_maxX:F2}, spawnY={_spawnY:F2}, destroyY={_destroyY:F2}");
+#endif
     }
 
     /// <summary>
@@ -239,7 +249,9 @@ public class CatchMiniGame : MonoBehaviour
             GameObject basketGo = Instantiate(playerBasketPrefab, new Vector3(0, _playerY, 0), Quaternion.identity);
             playerBasket = basketGo.transform;
             _spawnedPlayerBasket = basketGo;
+#if UNITY_EDITOR
             Debug.Log($"[CatchMiniGame] PlayerBasket spawned at (0, {_playerY}, 0)");
+#endif
         }
         else
         {
@@ -249,7 +261,9 @@ public class CatchMiniGame : MonoBehaviour
         if (scoreText != null)
             scoreText.text = "0";
 
+#if UNITY_EDITOR
         Debug.Log($"[CatchMiniGame] TIME ATTACK STARTED! Duration: {gameDuration}s");
+#endif
     }
 
     /// <summary>
@@ -262,9 +276,14 @@ public class CatchMiniGame : MonoBehaviour
         // === TIME ATTACK TIMER ===
         _timeRemaining -= Time.deltaTime;
 
-        // Update UI timer
-        if (timerText != null)
-            timerText.text = Mathf.CeilToInt(_timeRemaining).ToString();
+        // Update UI timer (CACHED to reduce GC)
+        int currentSecond = Mathf.CeilToInt(_timeRemaining);
+        if (currentSecond != _lastCachedSecond)
+        {
+            _lastCachedSecond = currentSecond;
+            if (timerText != null)
+                timerText.text = _lastCachedSecond.ToString();
+        }
 
         // === SPAWNER LOOP ===
         if (_timeRemaining > 0f)
@@ -316,7 +335,10 @@ public class CatchMiniGame : MonoBehaviour
         }
 
         // === MOBILE TOUCH OVERRIDE (Screen Halves) ===
-        if (Touchscreen.current != null && Touchscreen.current.primaryTouch.press.isPressed)
+        // Check if touch is actually pressed (not just touchscreen exists)
+        if (Touchscreen.current != null &&
+            Touchscreen.current.primaryTouch.press.isPressed &&
+            Touchscreen.current.primaryTouch.phase.ReadValue() == UnityEngine.InputSystem.TouchPhase.Moved)
         {
             // Read touch pixel position
             Vector2 touchPos = Touchscreen.current.primaryTouch.position.ReadValue();
@@ -387,22 +409,23 @@ public class CatchMiniGame : MonoBehaviour
         // Track for cleanup
         _activeItems.Add(newItem.transform);
 
+#if UNITY_EDITOR
         Debug.Log($"[CatchMiniGame] Spawned {(isEidia ? "Eidia" : "Ma'amoul")} at X={randomX:F2}");
+#endif
     }
 
     /// <summary>
-    /// Update falling items - MOVEMENT ONLY.
-    /// Collision is handled by FallingItem script on each prefab!
+    /// Update falling items - cleanup destroyed references only.
+    /// Movement and collision handled by FallingItem script on each prefab.
     /// </summary>
     private void UpdateFallingItems()
     {
+        // Cleanup destroyed items from tracking list
         for (int i = _activeItems.Count - 1; i >= 0; i--)
         {
-            Transform item = _activeItems[i];
-            if (item == null)
+            if (_activeItems[i] == null)
             {
                 _activeItems.RemoveAt(i);
-                continue;
             }
         }
     }
@@ -431,7 +454,9 @@ public class CatchMiniGame : MonoBehaviour
             if (catchSound != null && AudioManager.Instance != null)
                 AudioManager.Instance.PlaySFX(catchSound);
 
+#if UNITY_EDITOR
             Debug.Log($"[CatchMiniGame] Eidia caught! Score: {_score}");
+#endif
         }
         else
         {
@@ -450,7 +475,9 @@ public class CatchMiniGame : MonoBehaviour
             if (avoidSound != null && AudioManager.Instance != null)
                 AudioManager.Instance.PlaySFX(avoidSound);
 
+#if UNITY_EDITOR
             Debug.Log($"[CatchMiniGame] Ma'amoul caught! Score: {_score}");
+#endif
         }
     }
 
@@ -461,7 +488,9 @@ public class CatchMiniGame : MonoBehaviour
     {
         _isPlaying = false;
 
+#if UNITY_EDITOR
         Debug.Log($"[CatchMiniGame] TIME'S UP! Final Score: {_score}");
+#endif
 
         // Closing the Economic Loop (Phase 3)
         // Balancing: 1 Eidia per score, 1 Scrap per 2 score (min 1 if score > 0)

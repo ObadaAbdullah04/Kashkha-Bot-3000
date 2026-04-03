@@ -1087,7 +1087,7 @@ MonoBehaviour:
     TotalScrap: 0
     TotalEidia: 0
     HighScore: 0
-    LastSaveDate: 2026-04-01 17:40:21
+    LastSaveDate: 2026-04-03 01:36:41
     ownedOutfitIDs: 
     equippedOutfitID: 0
 --- !u!1 &366109530
@@ -7087,24 +7087,26 @@ MonoBehaviour:
     QTEHoldDuration: 0
     Speaker: "\u062C\u062F\u0629"
     QuestionAR: 
-    Choice1AR: "\u062D\u0637 \u0627\u064A\u062F\u0643 \u0639\u0644\u0649 \u0642\u0644\u0628\u0643"
+    Choice1AR: "\u062D\u0637 \u0627\u064A\u062F\u0643 \u0639\u0644\u0649 \u0642\u0644\u0628\u0643
+      \u0648\u0627\u0628\u062A\u0633\u0645"
     Choice1IsCorrect: 1
-    Choice1Feedback: "\u0623\u062D\u0633\u0646\u062A! \u062D\u0637\u062A \u0627\u064A\u062F\u0643
-      \u0639\u0644\u0649 \u0642\u0644\u0628\u0643 \u0648\u0627\u0628\u062A\u0633\u0645\u062A"
+    Choice1Feedback: "\u0623\u062D\u0633\u0646\u062A! \u0627\u0644\u062C\u062F\u0629
+      \u0641\u0631\u062D\u0627\u0646\u0629 \u0641\u064A\u0643"
     Choice2AR: "\u0645\u0627 \u0631\u062F\u064A\u062A"
     Choice2IsCorrect: 0
-    Choice2Feedback: "\u0645\u0627 \u0631\u062F\u064A\u062A \u0639\u0644\u0649 \u0627\u0644\u062C\u062F\u0629"
-    Choice3AR: "\u0647\u0632\u062A \u0631\u0627\u0633\u0643"
+    Choice2Feedback: "\u0627\u0644\u062C\u062F\u0629 \u0632\u0639\u0644\u062A \u0644\u0623\u0646\u0643
+      \u0645\u0627 \u0631\u062F\u064A\u062A"
+    Choice3AR: "\u0647\u0632\u062A \u0631\u0627\u0633\u0643 \u0628\u0633"
     Choice3IsCorrect: 0
-    Choice3Feedback: "\u0647\u0632\u062A \u0631\u0627\u0633\u0643 \u0628\u0633 \u0645\u0627
-      \u062A\u0643\u0641\u064A"
+    Choice3Feedback: "\u0627\u0644\u0647\u0632 \u0645\u0634 \u0643\u0627\u0641\u064A
+      \u064A\u0627 \u062D\u0628\u064A\u0628\u064A"
     OfferTextAR: "\u064A\u0627 \u062D\u0628\u064A\u0628\u064A \u0648\u064A\u0646\u0643\u061F
-      \u0627\u0634\u062A\u0642\u0646\u0627\u0644\u0646\u0627\u061F"
-    BatteryDelta: 0
+      \u0627\u0634\u062A\u0642\u0646\u0627\u0644\u0646\u0627 \u064A\u0627 \u0631\u0648\u062D\u064A"
+    BatteryDelta: -5
     StomachDelta: 0
-    EidiaReward: 0
-    ScrapReward: 0
-    ColorHex: '#FF4500'
+    EidiaReward: 10
+    ScrapReward: 5
+    ColorHex: '#FF69B4'
   - ID: 2
     HouseLevel: 1
     SequenceOrder: 2
@@ -7118,31 +7120,25 @@ MonoBehaviour:
     QTEHoldDuration: 2
     Speaker: "\u062E\u0627\u0644\u0629 \u0623\u0645 \u0645\u062D\u0645\u062F"
     QuestionAR: "\u064A\u0627 \u0647\u0644\u0627 \u0648\u0627\u0644\u0644\u0647!
-      \u0646\u0648\u0631\u062A \u0627\u0644\u0628\u064A\u062A \u064A\u0627 \u062D\u0628\u064A\u0628\u064A\u060C
-      \u0643\u0644 \u0639\u0627\u0645 \u0648\u0623\u0646\u062A \u0628\u062E\u064A\u0631!"
-    Choice1AR: "\u0648\u0623\u0646\u062A\u0650 \u0628\u062E\u064A\u0631 \u0648\u0635\u062D\u0629
-      \u0648\u0633\u0644\u0627\u0645\u0629 \u064A\u0627 \u062E\u0627\u0644\u0629\u060C
-      \u0643\u0644\u0643 \u0630\u0648\u0642"
+      \u0646\u0648\u0631\u062A \u0627\u0644\u0628\u064A\u062A \u064A\u0627 \u0628\u0637\u0644"
+    Choice1AR: "\u0648\u0623\u0646\u062A\u0650 \u0628\u062E\u064A\u0631 \u064A\u0627
+      \u062E\u0627\u0644\u0629\u060C \u0627\u0644\u0644\u0647 \u064A\u062E\u0644\u064A\u0643
+      \u0644\u064A"
     Choice1IsCorrect: 1
-    Choice1Feedback: "\u0631\u062F \u0645\u062B\u0627\u0644\u064A \u0648\u0645\u0647\u0630\u0628
-      \u062C\u062F\u0627\u064B\u060C \u0627\u0644\u062E\u0627\u0644\u0627\u062A \u064A\u0639\u0634\u0642\u0646
-      \u0627\u0644\u0643\u0644\u0627\u0645 \u0627\u0644\u0644\u0628\u0642."
-    Choice2AR: "\u0623\u0647\u0644\u0627\u064B\u060C \u0648\u0623\u0646\u062A\u0650
-      \u0628\u062E\u064A\u0631"
+    Choice1Feedback: "\u0631\u062F \u0645\u062B\u0627\u0644\u064A! \u0627\u0644\u062E\u0627\u0644\u0627\u062A
+      \u064A\u0639\u0634\u0642\u0646 \u0627\u0644\u0623\u062F\u0628"
+    Choice2AR: "\u0623\u0647\u0644\u0627\u064B \u0648\u0633\u0647\u0644\u0627\u064B"
     Choice2IsCorrect: 0
-    Choice2Feedback: "\u0631\u062F \u062C\u0627\u0641 \u0646\u0648\u0639\u0627\u064B
-      \u0645\u0627\u060C \u0641\u064A \u0627\u0644\u0639\u064A\u062F \u0646\u062D\u062A\u0627\u062C
-      \u0644\u0645\u0632\u064A\u062F \u0645\u0646 \u0627\u0644\u062F\u0641\u0621."
-    Choice3AR: "\u062A\u0633\u0644\u0645\u064A\u060C \u0648\u064A\u0646 \u0627\u0644\u0639\u064A\u062F\u064A\u0629\u061F"
+    Choice2Feedback: "\u0631\u062F \u062C\u0627\u0641 \u0634\u0648\u064A\u060C \u0641\u064A
+      \u0627\u0644\u0639\u064A\u062F \u0646\u062D\u062A\u0627\u062C \u062F\u0641\u0621"
+    Choice3AR: "\u062A\u0633\u0644\u0645\u064A"
     Choice3IsCorrect: 0
-    Choice3Feedback: "\u0648\u0642\u0627\u062D\u0629! \u0644\u0627 \u062A\u0637\u0644\u0628
-      \u0627\u0644\u0639\u064A\u062F\u064A\u0629 \u0623\u0648\u0644 \u0645\u0627
-      \u062A\u062F\u062E\u0644 \u0623\u0628\u062F\u0627\u064B."
+    Choice3Feedback: "\u0631\u062F \u0639\u0627\u062F\u064A \u0628\u0633 \u0645\u0642\u0628\u0648\u0644"
     OfferTextAR: 
     BatteryDelta: -5
     StomachDelta: 0
     EidiaReward: 15
-    ScrapReward: 5
+    ScrapReward: 8
     ColorHex: '#FFD700'
   - ID: 3
     HouseLevel: 1
@@ -7151,34 +7147,30 @@ MonoBehaviour:
     EncounterType: 1
     QTEType: CoffeeRefuse
     QTEInputType: Shake
-    QTECount: 3
+    QTECount: 2
     QTETimeLimit: 3
     QTEDirection: _
     QTEHoldDuration: 0
     Speaker: "\u0639\u0645\u0648 \u0623\u0628\u0648 \u0623\u062D\u0645\u062F"
     QuestionAR: 
-    Choice1AR: "\u0647\u0632 \u0627\u0644\u062C\u0648\u0627\u0644"
+    Choice1AR: "\u0647\u0632 \u0627\u0644\u0641\u0646\u062C\u0627\u0646 \u0645\u0631\u062A\u064A\u0646"
     Choice1IsCorrect: 1
     Choice1Feedback: "\u0623\u062D\u0633\u0646\u062A! \u0647\u0632 \u0627\u0644\u0641\u0646\u062C\u0627\u0646
-      \u062D\u0631\u0643\u0629 \u0623\u0631\u062F\u0646\u064A\u0629 \u0623\u0635\u064A\u0644\u0629
-      \u062A\u0639\u0646\u064A '\u0627\u0643\u062A\u0641\u064A\u062A'."
-    Choice2AR: "\u0634\u0643\u0631\u0627\u064B \u0645\u0627 \u0628\u062F\u064A \u0642\u0647\u0648\u0629"
+      \u064A\u0639\u0646\u064A \u0627\u0643\u062A\u0641\u064A\u062A"
+    Choice2AR: "\u0634\u0643\u0631\u0627\u064B \u0645\u0627 \u0628\u062F\u064A"
     Choice2IsCorrect: 0
-    Choice2Feedback: "\u0631\u0641\u0636 \u0627\u0644\u0642\u0647\u0648\u0629 \u0628\u0627\u0644\u0644\u0633\u0627\u0646
-      \u064A\u0639\u062A\u0628\u0631 \u0642\u0644\u0629 \u0630\u0648\u0642 \u0623\u062D\u064A\u0627\u0646\u0627\u064B
-      \u0623\u0645\u0627\u0645 \u0627\u0644\u0636\u064A\u0648\u0641."
-    Choice3AR: "\u062E\u0644\u064A\u0647 \u0639\u0646\u062F\u0643 \u0647\u0633\u0627
-      \u0628\u0634\u0631\u0628"
+    Choice2Feedback: "\u0627\u0644\u0631\u0641\u0636 \u0627\u0644\u0645\u0628\u0627\u0634\u0631
+      \u0642\u0644\u0629 \u0630\u0648\u0642"
+    Choice3AR: "\u0628\u0634\u0631\u0628\u0647\u0627 \u0628\u0639\u062F\u064A\u0646"
     Choice3IsCorrect: 0
-    Choice3Feedback: "\u062A\u0623\u062E\u064A\u0631 \u0634\u0631\u0628 \u0627\u0644\u0642\u0647\u0648\u0629
-      \u064A\u0628\u0631\u062F\u0647\u0627 \u0648\u064A\u0632\u0639\u062C \u0627\u0644\u0645\u0636\u064A\u0641."
-    OfferTextAR: "\u062A\u0641\u0636\u0644 \u0627\u0644\u0642\u0647\u0648\u0629 \u064A\u0627
-      \u0628\u0637\u0644\u060C \u0635\u0628 \u064A\u0627 \u0628\u0637\u0644 \u0648\u0639\u064A\u062F
-      \u0639\u0644\u0649 \u0627\u0644\u0645\u0648\u062C\u0648\u062F\u064A\u0646"
+    Choice3Feedback: "\u0627\u0644\u062A\u0623\u062C\u064A\u0644 \u064A\u0628\u0631\u062F
+      \u0627\u0644\u0642\u0647\u0648\u0629"
+    OfferTextAR: "\u062A\u0641\u0636\u0644 \u0627\u0644\u0642\u0647\u0648\u0629 \u0627\u0644\u0639\u0631\u0628\u064A\u0629
+      \u064A\u0627 \u0628\u0637\u0644"
     BatteryDelta: -5
     StomachDelta: 15
     EidiaReward: 10
-    ScrapReward: 3
+    ScrapReward: 5
     ColorHex: '#A52A2A'
   - ID: 4
     HouseLevel: 1
@@ -7191,71 +7183,60 @@ MonoBehaviour:
     QTETimeLimit: 3
     QTEDirection: Up
     QTEHoldDuration: 2
-    Speaker: "\u062E\u0627\u0644\u0629"
-    QuestionAR: "\u062A\u0641\u0636\u0644 \u064A\u0627 \u062D\u0628\u064A\u0628\u064A\u060C
-      \u0645\u062F \u0627\u064A\u062F\u0643 \u0639\u0644\u0649 \u0627\u0644\u0645\u0639\u0645\u0648\u0644\u060C
-      \u0648\u0627\u0644\u0644\u0647 \u0634\u063A\u0644 \u0627\u064A\u062F\u064A!"
-    Choice1AR: "\u064A\u0633\u0644\u0645\u0648\u0627 \u0627\u064A\u062F\u064A\u0643\u0650
-      \u064A\u0627 \u062E\u0627\u0644\u0629\u060C \u0634\u0643\u0644\u0647 \u0628\u064A\u0634\u0647\u064A"
+    Speaker: "\u062E\u0627\u0644 \u0643\u0631\u064A\u0645"
+    QuestionAR: "\u0634\u0648 \u0639\u0645 \u062A\u062F\u0631\u0633 \u064A\u0627
+      \u0628\u0637\u0644\u061F"
+    Choice1AR: "\u0647\u0646\u062F\u0633\u0629 \u064A\u0627 \u062E\u0627\u0644\u060C
+      \u0625\u0646 \u0634\u0627\u0621 \u0627\u0644\u0644\u0647 \u0628\u062A\u062E\u0631\u062C"
     Choice1IsCorrect: 1
-    Choice1Feedback: "\u0627\u0644\u0645\u062F\u062D \u0623\u0648\u0644\u0627\u064B
-      \u064A\u0641\u062A\u062D \u0627\u0644\u0642\u0644\u0648\u0628 \u0648\u064A\u0642\u0644\u0644
-      \u0645\u0646 \u0636\u063A\u0637 '\u0627\u0644\u0623\u0643\u0644 \u0627\u0644\u0625\u062C\u0628\u0627\u0631\u064A'."
-    Choice2AR: "\u0648\u0627\u0644\u0644\u0647 \u0634\u0628\u0639\u0627\u0646 \u0645\u0627
-      \u0628\u0642\u062F\u0631"
+    Choice1Feedback: "\u0645\u0627 \u0634\u0627\u0621 \u0627\u0644\u0644\u0647! \u0641\u062E\u0631
+      \u0644\u0644\u0639\u064A\u0644\u0629"
+    Choice2AR: "\u0644\u0633\u0647 \u0645\u0627 \u0642\u0631\u0631\u062A"
     Choice2IsCorrect: 0
-    Choice2Feedback: "\u0643\u0644\u0645\u0629 '\u0634\u0628\u0639\u0627\u0646' \u0645\u0645\u0646\u0648\u0639\u0629
-      \u0641\u064A \u0627\u0644\u0642\u0648\u0627\u0645\u064A\u0633 \u0627\u0644\u0623\u0631\u062F\u0646\u064A\u0629
-      \u0623\u064A\u0627\u0645 \u0627\u0644\u0639\u064A\u062F!"
-    Choice3AR: "\u0634\u0648 \u0627\u0644\u062D\u0634\u0648\u0629\u061F"
+    Choice2Feedback: "\u0627\u0644\u062A\u0631\u062F\u062F \u0645\u0634 \u0632\u064A\u0646
+      \u0642\u062F\u0627\u0645 \u0627\u0644\u0643\u0628\u0627\u0631"
+    Choice3AR: "\u0637\u0628 \u0648\u0623\u0646\u062A \u0634\u0648 \u0631\u0623\u064A\u0643\u061F"
     Choice3IsCorrect: 0
-    Choice3Feedback: "\u0633\u0624\u0627\u0644 \u062A\u0642\u0646\u064A \u0641\u064A
-      \u063A\u064A\u0631 \u0645\u0643\u0627\u0646\u0647\u060C \u0627\u0644\u0645\u0639\u0645\u0648\u0644
-      \u064A\u0624\u0643\u0644 \u0648\u0644\u0627 \u064A\u0633\u0623\u0644 \u0639\u0646\u0647."
+    Choice3Feedback: "\u0631\u062F \u0627\u0644\u0633\u0624\u0627\u0644 \u0645\u0648
+      \u0645\u0643\u0627\u0646\u0647"
     OfferTextAR: 
     BatteryDelta: -5
     StomachDelta: 0
-    EidiaReward: 10
-    ScrapReward: 5
-    ColorHex: '#FFA500'
+    EidiaReward: 12
+    ScrapReward: 6
+    ColorHex: '#87CEEB'
   - ID: 5
     HouseLevel: 1
     SequenceOrder: 5
     MiniGameAfter: 1
     EncounterType: 1
-    QTEType: None
-    QTEInputType: _
-    QTECount: 1
-    QTETimeLimit: 3
+    QTEType: TugOfWar
+    QTEInputType: Swipe
+    QTECount: 2
+    QTETimeLimit: 2.5
     QTEDirection: Up
-    QTEHoldDuration: 2
-    Speaker: "\u062E\u0627\u0644\u0629"
+    QTEHoldDuration: 0
+    Speaker: "\u0639\u0645\u0629"
     QuestionAR: 
-    Choice1AR: "\u0623\u0643\u0644\u0647 \u0643\u0644\u0647 \u0639\u0634\u0627\u0646
-      \u0645\u0627 \u062A\u0632\u0639\u0644"
+    Choice1AR: "\u0627\u0633\u062D\u0628 \u0644\u0625\u0628\u0639\u0627\u062F \u0627\u0644\u0641\u0646\u062C\u0627\u0646"
     Choice1IsCorrect: 1
-    Choice1Feedback: "\u0627\u0644\u0637\u0627\u0639\u0629 \u0628\u062A\u062E\u0644\u064A
-      \u0627\u0644\u0639\u0645\u0629 \u0641\u0631\u062D\u0627\u0646\u0629... \u0628\u0633
-      \u0628\u062A\u0645\u0644\u0623 \u0627\u0644\u0645\u0639\u062F\u0629."
-    Choice2AR: "\u0623\u0639\u062A\u0630\u0631 \u0628\u0644\u0637\u0641\u060C \u0623\u0646\u0627
-      \u0635\u0627\u064A\u0645"
+    Choice1Feedback: "\u0623\u062D\u0633\u0646\u062A! \u0623\u0628\u0639\u062F\u062A
+      \u0627\u0644\u0634\u0627\u064A \u0628\u0644\u0637\u0641"
+    Choice2AR: "\u0645\u0627 \u0628\u062D\u0628 \u0627\u0644\u0634\u0627\u064A"
     Choice2IsCorrect: 0
-    Choice2Feedback: "\u0627\u0644\u0631\u0641\u0636 \u0627\u0644\u0645\u0647\u0630\u0628
-      \u064A\u0648\u0641\u0631 \u0627\u0644\u0645\u0639\u062F\u0629 \u0644\u0643\u0646
-      \u064A\u062E\u064A\u0628 \u0627\u0644\u0638\u0646."
-    Choice3AR: "\u0628\u0622\u062E\u0630 \u0628\u0633 \u062D\u0628\u0629 \u0648\u062D\u062F\u0629"
+    Choice2Feedback: "\u0627\u0644\u0631\u0641\u0636 \u0627\u0644\u0645\u0628\u0627\u0634\u0631
+      \u0628\u0632\u0639\u0644 \u0627\u0644\u0639\u0645\u0629"
+    Choice3AR: "\u0628\u0639\u062F\u064A\u0646 \u0628\u0634\u0631\u0628\u0647"
     Choice3IsCorrect: 0
-    Choice3Feedback: "\u0627\u0644\u062A\u0648\u0633\u0637 \u0642\u062F \u064A\u0646\u062C\u062D
-      \u0644\u0643\u0646 \u0627\u0644\u0639\u0645\u0629 \u0628\u062A\u0639\u0631\u0641
-      \u0625\u0646\u0643 \u0628\u062A\u0627\u062E\u062F \u0623\u0642\u0644!"
-    OfferTextAR: "\u062A\u0641\u0636\u0644 \u064A\u0627 \u062D\u0628\u064A\u0628\u064A\u060C
-      \u0645\u0639\u0645\u0648\u0644 \u0645\u062E\u0635\u0648\u0635!"
-    BatteryDelta: -10
-    StomachDelta: 20
-    EidiaReward: 5
+    Choice3Feedback: "\u0627\u0644\u062A\u0623\u062C\u064A\u0644 \u0642\u062F \u064A\u0646\u062C\u062D"
+    OfferTextAR: "\u062A\u0641\u0636\u0644 \u064A\u0627 \u062D\u0628\u064A\u0628\u064A
+      \u0634\u0627\u064A \u0648\u0646\u0639\u0646\u0627\u0639"
+    BatteryDelta: -8
+    StomachDelta: 18
+    EidiaReward: 8
     ScrapReward: 5
     ColorHex: '#FF6347'
-  - ID: 16
+  - ID: 6
     HouseLevel: 1
     SequenceOrder: 6
     MiniGameAfter: 0
@@ -7266,97 +7247,28 @@ MonoBehaviour:
     QTETimeLimit: 3
     QTEDirection: Up
     QTEHoldDuration: 2
-    Speaker: "\u062E\u0627\u0644"
-    QuestionAR: "\u0634\u0648 \u0639\u0645 \u062A\u062F\u0631\u0633 \u064A\u0627
-      \u0628\u0637\u0644\u061F"
-    Choice1AR: "\u0647\u0646\u062F\u0633\u0629 \u064A\u0627 \u062E\u0627\u0644\u060C
-      \u0625\u0646 \u0634\u0627\u0621 \u0627\u0644\u0644\u0647 \u0628\u062A\u062E\u0631\u062C
-      \u0642\u0631\u064A\u0628"
-    Choice1IsCorrect: 1
-    Choice1Feedback: "\u0631\u062F \u0648\u0627\u0636\u062D \u0648\u0645\u0647\u0630\u0628
-      \u064A\u0638\u0647\u0631 \u0627\u0644\u0637\u0645\u0648\u062D."
-    Choice2AR: "\u0644\u0633\u0647 \u0645\u0627 \u0642\u0631\u0631\u062A"
+    Speaker: "\u062C\u062F\u0629"
+    QuestionAR: 
+    Choice1AR: 
+    Choice1IsCorrect: 0
+    Choice1Feedback: 1
+    Choice2AR: "\u0631\u062F \u0644\u0637\u064A\u0641 \u064A\u0628\u0631\u0631 \u0627\u0644\u063A\u064A\u0627\u0628"
     Choice2IsCorrect: 0
-    Choice2Feedback: "\u0627\u0644\u062A\u0631\u062F\u062F \u0645\u0634 \u0643\u0648\u064A\u0633
-      \u0642\u062F\u0627\u0645 \u0627\u0644\u0639\u0627\u0626\u0644\u0629."
-    Choice3AR: "\u0637\u0628 \u0648\u0623\u0646\u062A \u0634\u0648 \u0631\u0623\u064A\u0643\u061F"
+    Choice2Feedback: 0
+    Choice3AR: "\u0627\u0644\u0639\u0627\u0626\u0644\u0629 \u0628\u062A\u0641\u0647\u0645
+      \u0628\u0633 \u0628\u062A\u0632\u0639\u0644"
     Choice3IsCorrect: 0
-    Choice3Feedback: "\u0631\u062F \u0627\u0644\u0633\u0624\u0627\u0644 \u0639\u0644\u0649
-      \u0627\u0644\u0633\u0627\u0626\u0644 \u0642\u062F \u064A\u062D\u0631\u062C\u0643."
-    OfferTextAR: 
-    BatteryDelta: -5
-    StomachDelta: 0
-    EidiaReward: 12
-    ScrapReward: 8
-    ColorHex: '#87CEEB'
-  - ID: 17
+    Choice3Feedback: 0
+    OfferTextAR: "\u0644\u064A\u0634 \u0645\u0627 \u062A\u0632\u0648\u0631\u0646\u0627
+      \u064A\u0627 \u0648\u0644\u062F\u064A\u061F"
+    BatteryDelta: 0
+    StomachDelta: -5
+    EidiaReward: 0
+    ScrapReward: 18
+    ColorHex: 10
+  - ID: 7
     HouseLevel: 1
     SequenceOrder: 7
-    MiniGameAfter: 0
-    EncounterType: 1
-    QTEType: TugOfWar
-    QTEInputType: Swipe
-    QTECount: 2
-    QTETimeLimit: 2.5
-    QTEDirection: Up
-    QTEHoldDuration: 0
-    Speaker: "\u0639\u0645\u0629"
-    QuestionAR: 
-    Choice1AR: "\u0627\u0633\u062D\u0628 \u0645\u0631\u062A\u064A\u0646"
-    Choice1IsCorrect: 1
-    Choice1Feedback: "\u0634\u0631\u0628 \u0627\u0644\u0634\u0627\u064A \u0648\u0627\u062C\u0628
-      \u0639\u0627\u0626\u0644\u064A."
-    Choice2AR: "\u0645\u0627 \u0628\u062D\u0628 \u0627\u0644\u0634\u0627\u064A"
-    Choice2IsCorrect: 0
-    Choice2Feedback: "\u0631\u0641\u0636 \u0627\u0644\u0634\u0627\u064A \u0642\u062F
-      \u064A\u0632\u0639\u0644 \u0627\u0644\u0639\u0645\u0629."
-    Choice3AR: "\u0628\u0639\u062F\u064A\u0646 \u0628\u0634\u0631\u0628\u0647"
-    Choice3IsCorrect: 0
-    Choice3Feedback: "\u0627\u0644\u062A\u0623\u062C\u064A\u0644 \u0642\u062F \u064A\u0646\u062C\u062D
-      \u0644\u0643\u0646 \u0627\u0644\u0639\u0645\u0629 \u0645\u0635\u0631\u0629."
-    OfferTextAR: "\u062A\u0641\u0636\u0644 \u064A\u0627 \u062D\u0628\u064A\u0628\u064A
-      \u0634\u0627\u064A \u0648\u0646\u0639\u0646\u0627\u0639!"
-    BatteryDelta: -8
-    StomachDelta: 18
-    EidiaReward: 10
-    ScrapReward: 5
-    ColorHex: '#FF69B4'
-  - ID: 18
-    HouseLevel: 1
-    SequenceOrder: 8
-    MiniGameAfter: 0
-    EncounterType: 0
-    QTEType: None
-    QTEInputType: _
-    QTECount: 1
-    QTETimeLimit: 3
-    QTEDirection: Up
-    QTEHoldDuration: 2
-    Speaker: "\u0639\u0645\u0648"
-    QuestionAR: "\u0644\u064A\u0634 \u0645\u0627 \u062A\u0632\u0648\u0631\u0646\u0627
-      \u064A\u0627 \u0648\u0644\u062F\u064A\u061F"
-    Choice1AR: "\u0648\u0627\u0644\u0644\u0647 \u064A\u0627 \u0639\u0645\u0648 \u0627\u0644\u0638\u0631\u0648\u0641
-      \u0635\u0639\u0628\u0629\u060C \u0628\u0633 \u0642\u0644\u0628\u064A \u0645\u0639\u0627\u0643\u0645"
-    Choice1IsCorrect: 1
-    Choice1Feedback: "\u0631\u062F \u0644\u0637\u064A\u0641 \u064A\u0628\u0631\u0631
-      \u0627\u0644\u063A\u064A\u0627\u0628 \u0648\u064A\u0638\u0647\u0631 \u0627\u0644\u0645\u062D\u0628\u0629."
-    Choice2AR: "\u0627\u0644\u0634\u063A\u0644 \u0643\u062A\u064A\u0631"
-    Choice2IsCorrect: 0
-    Choice2Feedback: "\u0643\u0644\u0645\u0629 \u0634\u063A\u0644 \u0628\u0633 \u062A\u0639\u062A\u0628\u0631\u0647\u0627
-      \u0627\u0644\u0639\u064A\u0644\u0629 \u0643\u0633\u0644."
-    Choice3AR: "\u0627\u0646\u062A\u0648 \u0645\u0627 \u0628\u062A\u0632\u0648\u0631\u0648\u0646\u0627"
-    Choice3IsCorrect: 0
-    Choice3Feedback: "\u0627\u0644\u0644\u0648\u0645 \u0627\u0644\u0645\u062A\u0628\u0627\u062F\u0644
-      \u0645\u0627 \u0628\u064A\u062D\u0644 \u0627\u0644\u0645\u0634\u0643\u0644\u0629."
-    OfferTextAR: 
-    BatteryDelta: -5
-    StomachDelta: 0
-    EidiaReward: 15
-    ScrapReward: 10
-    ColorHex: '#20B2AA'
-  - ID: 19
-    HouseLevel: 1
-    SequenceOrder: 9
     MiniGameAfter: 0
     EncounterType: 1
     QTEType: HandOnHeart
@@ -7365,31 +7277,29 @@ MonoBehaviour:
     QTETimeLimit: 2
     QTEDirection: Up
     QTEHoldDuration: 0
-    Speaker: "\u062C\u062F\u0629"
+    Speaker: "\u0639\u0645\u0648"
     QuestionAR: 
     Choice1AR: "\u062D\u0637 \u0627\u064A\u062F\u0643 \u0639\u0644\u0649 \u0642\u0644\u0628\u0643"
     Choice1IsCorrect: 1
-    Choice1Feedback: "\u0627\u0644\u062A\u0642\u062F\u064A\u0631 \u0644\u0644\u062D\u0628
-      \u0627\u0644\u0639\u0627\u0626\u0644\u064A \u0648\u0627\u062C\u0628."
-    Choice2AR: "\u0623\u0646\u0627 \u0645\u0627 \u0628\u0633\u062A\u0627\u0647\u0644"
+    Choice1Feedback: "\u0627\u0644\u062A\u0642\u062F\u064A\u0631 \u0648\u0627\u062C\u0628
+      \u0644\u0644\u0636\u064A\u0627\u0641\u0629"
+    Choice2AR: "\u0623\u0646\u0627 \u0635\u0627\u064A\u0645"
     Choice2IsCorrect: 0
-    Choice2Feedback: "\u0627\u0644\u062A\u0648\u0627\u0636\u0639 \u0627\u0644\u0632\u0627\u0626\u062F
-      \u0642\u062F \u064A\u0638\u0647\u0631 \u0636\u0639\u0641 \u062B\u0642\u0629."
-    Choice3AR: "\u0627\u0644\u0644\u0647 \u064A\u062E\u0644\u064A\u0643\u0645 \u0644\u064A"
+    Choice2Feedback: "\u0627\u0644\u0635\u064A\u0627\u0645 \u0639\u0630\u0631 \u0645\u0642\u0628\u0648\u0644"
+    Choice3AR: "\u0628\u0639\u062F\u064A\u0646"
     Choice3IsCorrect: 0
-    Choice3Feedback: "\u0631\u062F \u062C\u0645\u064A\u0644 \u0628\u0633 \u0645\u0634
-      \u0643\u0627\u0641\u064A."
-    OfferTextAR: "\u064A\u0627 \u062D\u0628\u064A\u0628\u064A \u0647\u0627\u062F
-      \u0643\u0644\u0647 \u0645\u0646 \u062D\u0628\u0646\u0627 \u0644\u0643\u060C
-      \u0643\u0644 \u0634\u0648\u064A"
-    BatteryDelta: 0
-    StomachDelta: 0
-    EidiaReward: 0
-    ScrapReward: 0
-    ColorHex: '#FF4500'
-  - ID: 20
+    Choice3Feedback: "\u0627\u0644\u062A\u0623\u062C\u064A\u0644 \u0642\u062F \u0644\u0627
+      \u064A\u0646\u062C\u062D"
+    OfferTextAR: "\u062A\u0641\u0636\u0644 \u0645\u0639\u0645\u0648\u0644 \u064A\u0627
+      \u062D\u0628\u064A\u0628\u064A\u060C \u0634\u063A\u0644 \u0625\u064A\u062F\u064A"
+    BatteryDelta: -5
+    StomachDelta: 20
+    EidiaReward: 10
+    ScrapReward: 8
+    ColorHex: '#FFA500'
+  - ID: 8
     HouseLevel: 1
-    SequenceOrder: 10
+    SequenceOrder: 8
     MiniGameAfter: 1
     EncounterType: 0
     QTEType: None
@@ -7399,30 +7309,28 @@ MonoBehaviour:
     QTEDirection: Up
     QTEHoldDuration: 2
     Speaker: "\u062E\u0627\u0644\u0629"
-    QuestionAR: "\u0633\u0645\u0639\u0646\u0627 \u0627\u0646\u0643 \u0628\u062A\u0644\u0639\u0628
-      \u0623\u0644\u0639\u0627\u0628 \u0625\u0644\u0643\u062A\u0631\u0648\u0646\u064A\u0629\u060C
-      \u0647\u0627\u062F\u0643 \u0634\u063A\u0644\u061F"
-    Choice1AR: "\u0623\u064A\u0648\u0647 \u064A\u0627 \u062E\u0627\u0644\u0629\u060C
-      \u0648\u0628\u0643\u0633\u0628 \u0645\u0646\u0647\u0627 \u0643\u0645\u0627\u0646"
-    Choice1IsCorrect: 1
-    Choice1Feedback: "\u0627\u0644\u0635\u062F\u0642 \u0645\u0639 \u062A\u0648\u0636\u064A\u062D
-      \u0627\u0644\u062C\u0627\u0646\u0628 \u0627\u0644\u0645\u0627\u062F\u064A \u064A\u0642\u0646\u0639."
-    Choice2AR: "\u0644\u0627 \u0644\u0623\u060C \u0623\u0646\u0627 \u0628\u0633 \u0628\u062A\u0633\u0644\u0651\u0649"
+    QuestionAR: 
+    Choice1AR: 
+    Choice1IsCorrect: 0
+    Choice1Feedback: 1
+    Choice2AR: "\u0627\u0644\u0635\u062F\u0642 \u0645\u0639 \u0627\u0644\u0625\u0646\u062C\u0627\u0632
+      \u064A\u0642\u0646\u0639"
     Choice2IsCorrect: 0
-    Choice2Feedback: "\u0627\u0644\u0643\u0630\u0628 \u0642\u062F \u064A\u0646\u0643\u0634\u0641
-      \u0644\u0627\u062D\u0642\u0627\u064B."
-    Choice3AR: "\u0645\u0634 \u0645\u0646 \u0634\u0623\u0646\u0643"
+    Choice2Feedback: 0
+    Choice3AR: "\u0627\u0644\u062A\u0648\u0627\u0636\u0639 \u0627\u0644\u0632\u0627\u0626\u062F
+      \u0645\u0648 \u0632\u064A\u0646"
     Choice3IsCorrect: 0
-    Choice3Feedback: "\u0648\u0642\u0627\u062D\u0629 \u0635\u0631\u064A\u062D\u0629!"
-    OfferTextAR: 
-    BatteryDelta: -5
-    StomachDelta: 0
-    EidiaReward: 18
-    ScrapReward: 12
-    ColorHex: '#DDA0DD'
-  - ID: 21
+    Choice3Feedback: 0
+    OfferTextAR: "\u0633\u0645\u0639\u0646\u0627 \u0627\u0646\u0643 \u0628\u062A\u0644\u0639\u0628
+      \u0623\u0644\u0639\u0627\u0628 \u0625\u0644\u0643\u062A\u0631\u0648\u0646\u064A\u0629\u061F"
+    BatteryDelta: 0
+    StomachDelta: -5
+    EidiaReward: 0
+    ScrapReward: 20
+    ColorHex: 12
+  - ID: 9
     HouseLevel: 2
-    SequenceOrder: 6
+    SequenceOrder: 1
     MiniGameAfter: 0
     EncounterType: 0
     QTEType: None
@@ -7432,30 +7340,26 @@ MonoBehaviour:
     QTEDirection: Up
     QTEHoldDuration: 2
     Speaker: "\u0639\u0645\u0648"
-    QuestionAR: "\u0628\u062A\u0639\u0631\u0641 \u062A\u0635\u0644\u064A \u0627\u0644\u0639\u064A\u062F\u061F"
-    Choice1AR: "\u0623\u064A\u0648\u0647 \u064A\u0627 \u0639\u0645\u0648\u060C \u0627\u0646
-      \u0634\u0627\u0621 \u0627\u0644\u0644\u0647 \u0628\u0646\u0635\u0644\u064A
-      \u0633\u0648\u0627"
-    Choice1IsCorrect: 1
-    Choice1Feedback: "\u0625\u0638\u0647\u0627\u0631 \u0627\u0644\u0627\u0644\u062A\u0632\u0627\u0645
-      \u0627\u0644\u062F\u064A\u0646\u064A \u064A\u0631\u0636\u064A \u0627\u0644\u0643\u0628\u0627\u0631."
-    Choice2AR: "\u0644\u0633\u0647 \u0628\u062A\u0639\u0644\u0645"
+    QuestionAR: 
+    Choice1AR: 
+    Choice1IsCorrect: 0
+    Choice1Feedback: 1
+    Choice2AR: "\u0625\u0638\u0647\u0627\u0631 \u0627\u0644\u0627\u0644\u062A\u0632\u0627\u0645
+      \u064A\u0631\u0636\u064A \u0627\u0644\u0643\u0628\u0627\u0631"
     Choice2IsCorrect: 0
-    Choice2Feedback: "\u0627\u0644\u0635\u062F\u0642 \u0623\u0641\u0636\u0644 \u0645\u0646
-      \u0627\u0644\u062A\u0643\u0644\u0641."
-    Choice3AR: "\u0627\u0646\u062A \u0627\u0648\u0644\u0627\u064B \u0635\u0644\u0651"
+    Choice2Feedback: 0
+    Choice3AR: "\u0627\u0644\u0635\u062F\u0642 \u0623\u0641\u0636\u0644"
     Choice3IsCorrect: 0
-    Choice3Feedback: "\u0631\u062F \u0627\u0644\u0647\u062C\u0648\u0645 \u0642\u062F
-      \u064A\u0633\u0628\u0628 \u0645\u0634\u0643\u0644\u0629."
-    OfferTextAR: 
-    BatteryDelta: -5
-    StomachDelta: 0
-    EidiaReward: 20
-    ScrapReward: 15
-    ColorHex: '#4682B4'
-  - ID: 22
+    Choice3Feedback: 0
+    OfferTextAR: "\u0628\u062A\u0639\u0631\u0641 \u062A\u0635\u0644\u064A \u0627\u0644\u0639\u064A\u062F\u061F"
+    BatteryDelta: 0
+    StomachDelta: -5
+    EidiaReward: 0
+    ScrapReward: 22
+    ColorHex: 15
+  - ID: 10
     HouseLevel: 2
-    SequenceOrder: 7
+    SequenceOrder: 2
     MiniGameAfter: 0
     EncounterType: 1
     QTEType: CoffeeRefuse
@@ -7466,27 +7370,27 @@ MonoBehaviour:
     QTEHoldDuration: 0
     Speaker: "\u062E\u0627\u0644\u0629"
     QuestionAR: 
-    Choice1AR: "\u0647\u0632 \u0627\u0644\u062C\u0648\u0627\u0644"
+    Choice1AR: "\u0647\u0632 \u0627\u0644\u0643\u0648\u0628 3 \u0645\u0631\u0627\u062A"
     Choice1IsCorrect: 1
-    Choice1Feedback: "\u0647\u0632 \u0627\u0644\u0643\u0648\u0628 \u064A\u0639\u0646\u064A
-      \u0627\u0643\u062A\u0641\u064A\u062A."
+    Choice1Feedback: "\u0623\u062D\u0633\u0646\u062A! \u0627\u0644\u0647\u0632 \u064A\u0639\u0646\u064A
+      \u0627\u0643\u062A\u0641\u064A\u062A"
     Choice2AR: "\u0645\u0627 \u0628\u0639\u0634\u0642 \u0627\u0644\u0639\u0635\u064A\u0631"
     Choice2IsCorrect: 0
     Choice2Feedback: "\u0627\u0644\u0631\u0641\u0636 \u0627\u0644\u0645\u0628\u0627\u0634\u0631
-      \u0642\u062F \u064A\u0632\u0639\u0644."
+      \u0628\u0632\u0639\u0644"
     Choice3AR: "\u0628\u0639\u062F\u064A\u0646 \u0628\u0634\u0631\u0628\u0647"
     Choice3IsCorrect: 0
-    Choice3Feedback: "\u0627\u0644\u062A\u0623\u062C\u064A\u0644 \u0642\u062F \u064A\u0646\u062C\u062D."
-    OfferTextAR: "\u062A\u0641\u064E\u0636\u0651\u0644 \u064A\u0627 \u062D\u0628\u064A\u0628\u064A
-      \u0639\u0635\u064A\u0631 \u0637\u0628\u064A\u0639\u064A!"
+    Choice3Feedback: "\u0627\u0644\u062A\u0623\u062C\u064A\u0644 \u0642\u062F \u064A\u0646\u062C\u062D"
+    OfferTextAR: "\u062A\u0641\u0636\u0644 \u0639\u0635\u064A\u0631 \u0637\u0628\u064A\u0639\u064A
+      \u064A\u0627 \u062D\u0628\u064A\u0628\u064A"
     BatteryDelta: -6
     StomachDelta: 20
     EidiaReward: 12
     ScrapReward: 8
     ColorHex: '#FF8C00'
-  - ID: 23
+  - ID: 11
     HouseLevel: 2
-    SequenceOrder: 8
+    SequenceOrder: 3
     MiniGameAfter: 0
     EncounterType: 0
     QTEType: None
@@ -7496,29 +7400,27 @@ MonoBehaviour:
     QTEDirection: Up
     QTEHoldDuration: 2
     Speaker: "\u0639\u0645\u0629"
-    QuestionAR: "\u0644\u064A\u0634 \u0645\u0627 \u062A\u0632\u0648\u0631 \u062E\u0627\u0644\u062A\u0643\u061F"
-    Choice1AR: "\u0628\u0632\u0631\u0639\u0647\u0627 \u0628\u0643\u0631\u0629 \u0627\u0646
-      \u0634\u0627\u0621 \u0627\u0644\u0644\u0647"
-    Choice1IsCorrect: 1
-    Choice1Feedback: "\u0627\u0644\u0648\u0639\u062F \u0628\u0627\u0644\u0632\u064A\u0627\u0631\u0629
-      \u064A\u0631\u0636\u064A."
-    Choice2AR: "\u0637\u0631\u064A\u0642 \u0628\u0639\u064A\u062F"
+    QuestionAR: 
+    Choice1AR: 
+    Choice1IsCorrect: 0
+    Choice1Feedback: 1
+    Choice2AR: "\u0627\u0644\u0648\u0639\u062F \u0628\u0627\u0644\u0632\u064A\u0627\u0631\u0629
+      \u064A\u0631\u0636\u064A"
     Choice2IsCorrect: 0
-    Choice2Feedback: "\u0627\u0644\u0623\u0639\u0630\u0627\u0631 \u0627\u0644\u062C\u063A\u0631\u0627\u0641\u064A\u0629
-      \u0645\u0627 \u0628\u062A\u0647\u0645."
-    Choice3AR: "\u0647\u064A \u0645\u0627 \u0628\u062A\u0632\u0648\u0631\u0646\u064A"
+    Choice2Feedback: 0
+    Choice3AR: "\u0627\u0644\u0623\u0639\u0630\u0627\u0631 \u0627\u0644\u062C\u063A\u0631\u0627\u0641\u064A\u0629
+      \u0645\u0627 \u0628\u062A\u0647\u0645"
     Choice3IsCorrect: 0
-    Choice3Feedback: "\u0627\u0644\u0645\u0642\u0627\u0631\u0646\u0629 \u0642\u062F
-      \u062A\u0633\u0628\u0628 \u0645\u0634\u0627\u0643\u0644."
-    OfferTextAR: 
-    BatteryDelta: -5
-    StomachDelta: 0
-    EidiaReward: 18
-    ScrapReward: 12
-    ColorHex: '#9370DB'
-  - ID: 24
+    Choice3Feedback: 0
+    OfferTextAR: "\u0644\u064A\u0634 \u0645\u0627 \u062A\u0632\u0648\u0631 \u062E\u0627\u0644\u062A\u0643\u061F"
+    BatteryDelta: 0
+    StomachDelta: -5
+    EidiaReward: 0
+    ScrapReward: 18
+    ColorHex: 12
+  - ID: 12
     HouseLevel: 2
-    SequenceOrder: 9
+    SequenceOrder: 4
     MiniGameAfter: 0
     EncounterType: 1
     QTEType: HandOnHeart
@@ -7531,25 +7433,25 @@ MonoBehaviour:
     QuestionAR: 
     Choice1AR: "\u062D\u0637 \u0627\u064A\u062F\u0643 \u0639\u0644\u0649 \u0642\u0644\u0628\u0643"
     Choice1IsCorrect: 1
-    Choice1Feedback: "\u0623\u0643\u0644 \u0627\u0644\u062D\u0644\u0649 \u0648\u0627\u062C\u0628
-      \u0636\u064A\u0627\u0641\u0629."
+    Choice1Feedback: "\u0627\u0644\u062A\u0642\u062F\u064A\u0631 \u0644\u0644\u062D\u0644\u0649
+      \u0648\u0627\u062C\u0628"
     Choice2AR: "\u0623\u0646\u0627 \u0635\u0627\u064A\u0645"
     Choice2IsCorrect: 0
-    Choice2Feedback: "\u0627\u0644\u0635\u064A\u0627\u0645 \u0639\u0630\u0631 \u0645\u0642\u0628\u0648\u0644."
+    Choice2Feedback: "\u0627\u0644\u0635\u064A\u0627\u0645 \u0639\u0630\u0631 \u0645\u0642\u0628\u0648\u0644"
     Choice3AR: "\u0628\u0639\u062F\u064A\u0646"
     Choice3IsCorrect: 0
     Choice3Feedback: "\u0627\u0644\u062A\u0623\u062C\u064A\u0644 \u0642\u062F \u0644\u0627
-      \u064A\u0646\u062C\u062D."
-    OfferTextAR: "\u062A\u0641\u0636\u0644 \u064A\u0627 \u0648\u0644\u062F\u064A
-      \u062D\u0644\u0649 \u0639\u0631\u0628\u064A!"
+      \u064A\u0646\u062C\u062D"
+    OfferTextAR: "\u062A\u0641\u0636\u0644 \u062D\u0644\u0649 \u0639\u0631\u0628\u064A
+      \u064A\u0627 \u0648\u0644\u062F\u064A"
     BatteryDelta: -8
     StomachDelta: 22
     EidiaReward: 10
     ScrapReward: 10
     ColorHex: '#FFD700'
-  - ID: 25
+  - ID: 13
     HouseLevel: 2
-    SequenceOrder: 10
+    SequenceOrder: 5
     MiniGameAfter: 1
     EncounterType: 0
     QTEType: None
@@ -7559,61 +7461,27 @@ MonoBehaviour:
     QTEDirection: Up
     QTEHoldDuration: 2
     Speaker: "\u062E\u0627\u0644"
-    QuestionAR: "\u0634\u0648 \u0631\u0623\u064A\u0643 \u0628\u0627\u0644\u0633\u064A\u0627\u0633\u0629\u061F"
-    Choice1AR: "\u0627\u0644\u0644\u064A \u0628\u064A\u0641\u0647\u0645 \u0623\u0643\u062A\u0631
-      \u0645\u0646\u064A \u0623\u0641\u0636\u0644"
-    Choice1IsCorrect: 1
-    Choice1Feedback: "\u0627\u0644\u062A\u0648\u0627\u0636\u0639 \u0627\u0644\u0633\u064A\u0627\u0633\u064A
-      \u062D\u0643\u064A\u0645."
-    Choice2AR: "\u0627\u0644\u062D\u0643\u0648\u0645\u0629 \u063A\u0644\u0637\u0627\u0646\u0629"
+    QuestionAR: 
+    Choice1AR: 
+    Choice1IsCorrect: 0
+    Choice1Feedback: 1
+    Choice2AR: "\u0627\u0644\u062A\u0648\u0627\u0636\u0639 \u0627\u0644\u0633\u064A\u0627\u0633\u064A
+      \u062D\u0643\u064A\u0645"
     Choice2IsCorrect: 0
-    Choice2Feedback: "\u0627\u0644\u0646\u0642\u062F \u0642\u062F \u064A\u0633\u0628\u0628
-      \u062C\u062F\u0644."
-    Choice3AR: "\u0623\u0646\u0627 \u0645\u0639 \u0627\u0644\u062D\u0643\u0648\u0645\u0629"
+    Choice2Feedback: 0
+    Choice3AR: "\u0627\u0644\u0646\u0642\u062F \u0642\u062F \u064A\u0633\u0628\u0628
+      \u062C\u062F\u0644"
     Choice3IsCorrect: 0
-    Choice3Feedback: "\u0627\u0644\u062F\u0641\u0627\u0639 \u0642\u062F \u064A\u0633\u0628\u0628
-      \u0645\u0634\u0627\u0643\u0644."
-    OfferTextAR: 
-    BatteryDelta: -5
-    StomachDelta: 0
-    EidiaReward: 22
-    ScrapReward: 15
-    ColorHex: '#48D1CC'
-  - ID: 26
-    HouseLevel: 3
+    Choice3Feedback: 0
+    OfferTextAR: "\u0634\u0648 \u0631\u0623\u064A\u0643 \u0628\u0627\u0644\u0633\u064A\u0627\u0633\u0629\u061F"
+    BatteryDelta: 0
+    StomachDelta: -5
+    EidiaReward: 0
+    ScrapReward: 25
+    ColorHex: 15
+  - ID: 14
+    HouseLevel: 2
     SequenceOrder: 6
-    MiniGameAfter: 0
-    EncounterType: 0
-    QTEType: None
-    QTEInputType: _
-    QTECount: 1
-    QTETimeLimit: 3
-    QTEDirection: Up
-    QTEHoldDuration: 2
-    Speaker: "\u0639\u0645\u0648"
-    QuestionAR: "\u0634\u0648 \u0622\u062E\u0631 \u0623\u062E\u0628\u0627\u0631 \u0627\u0644\u0634\u063A\u0644\u061F"
-    Choice1AR: "\u0628\u062E\u064A\u0631 \u064A\u0627 \u0639\u0645\u0648\u060C \u0628\u062C\u0647\u0651\u062F
-      \u062D\u0627\u0644\u064A"
-    Choice1IsCorrect: 1
-    Choice1Feedback: "\u0627\u0644\u0625\u064A\u062C\u0627\u0628\u064A\u0629 \u062A\u0638\u0647\u0631
-      \u0627\u0644\u0637\u0645\u0648\u062D."
-    Choice2AR: "\u0627\u0644\u0634\u063A\u0644 \u0642\u0644\u064A\u0644"
-    Choice2IsCorrect: 0
-    Choice2Feedback: "\u0627\u0644\u0634\u0643\u0648\u0649 \u0642\u062F \u062A\u0638\u0647\u0631
-      \u0636\u0639\u0641."
-    Choice3AR: "\u0645\u0634 \u0644\u0627\u0642\u064A \u0634\u063A\u0644"
-    Choice3IsCorrect: 0
-    Choice3Feedback: "\u0627\u0644\u0628\u0637\u0627\u0644\u0629 \u0642\u062F \u062A\u0633\u0628\u0628
-      \u0634\u0641\u0642\u0629."
-    OfferTextAR: 
-    BatteryDelta: -5
-    StomachDelta: 0
-    EidiaReward: 25
-    ScrapReward: 20
-    ColorHex: '#5F9EA0'
-  - ID: 27
-    HouseLevel: 3
-    SequenceOrder: 7
     MiniGameAfter: 0
     EncounterType: 1
     QTEType: TugOfWar
@@ -7624,25 +7492,91 @@ MonoBehaviour:
     QTEHoldDuration: 0
     Speaker: "\u062E\u0627\u0644\u0629"
     QuestionAR: 
-    Choice1AR: "\u0627\u0633\u062D\u0628 \u0645\u0631\u062A\u064A\u0646"
+    Choice1AR: "\u0627\u0633\u062D\u0628 \u0644\u0625\u0628\u0639\u0627\u062F \u0627\u0644\u0635\u062D\u0646"
     Choice1IsCorrect: 1
-    Choice1Feedback: "\u0623\u0643\u0644 \u0627\u0644\u0643\u0628\u0651\u0629 \u0648\u0627\u062C\u0628."
-    Choice2AR: "\u0645\u0627 \u0628\u062D\u0628 \u0627\u0644\u0646\u064A\u0651\u0629"
+    Choice1Feedback: "\u0623\u062D\u0633\u0646\u062A! \u0623\u0628\u0639\u062F\u062A
+      \u0627\u0644\u0643\u0628\u0651\u0629 \u0628\u0644\u0637\u0641"
+    Choice2AR: "\u0645\u0627 \u0628\u062D\u0628 \u0627\u0644\u0643\u0628\u0651\u0629"
     Choice2IsCorrect: 0
-    Choice2Feedback: "\u0627\u0644\u0631\u0641\u0636 \u0642\u062F \u064A\u0632\u0639\u0644."
+    Choice2Feedback: "\u0627\u0644\u0631\u0641\u0636 \u0627\u0644\u0645\u0628\u0627\u0634\u0631
+      \u0628\u0632\u0639\u0644"
     Choice3AR: "\u0628\u0639\u062F\u064A\u0646"
     Choice3IsCorrect: 0
-    Choice3Feedback: "\u0627\u0644\u062A\u0623\u062C\u064A\u0644 \u0642\u062F \u064A\u0646\u062C\u062D."
-    OfferTextAR: "\u062A\u0641\u0636\u0644 \u064A\u0627 \u062D\u0628\u064A\u0628\u064A
-      \u0643\u0628\u0651\u0629 \u0646\u064A\u0651\u0629!"
+    Choice3Feedback: "\u0627\u0644\u062A\u0623\u062C\u064A\u0644 \u0642\u062F \u064A\u0628\u0631\u062F
+      \u0627\u0644\u0623\u0643\u0644"
+    OfferTextAR: "\u062A\u0641\u0636\u0644 \u0643\u0628\u0651\u0629 \u064A\u0627
+      \u062D\u0628\u064A\u0628\u064A"
     BatteryDelta: -10
-    StomachDelta: 30
+    StomachDelta: 25
     EidiaReward: 15
-    ScrapReward: 15
+    ScrapReward: 12
     ColorHex: '#FFE4B5'
-  - ID: 28
+  - ID: 15
+    HouseLevel: 2
+    SequenceOrder: 7
+    MiniGameAfter: 0
+    EncounterType: 0
+    QTEType: None
+    QTEInputType: _
+    QTECount: 1
+    QTETimeLimit: 3
+    QTEDirection: Up
+    QTEHoldDuration: 2
+    Speaker: "\u0639\u0645\u0648"
+    QuestionAR: 
+    Choice1AR: 
+    Choice1IsCorrect: 0
+    Choice1Feedback: 1
+    Choice2AR: "\u0627\u0644\u0625\u064A\u062C\u0627\u0628\u064A\u0629 \u062A\u0638\u0647\u0631
+      \u0627\u0644\u0637\u0645\u0648\u062D"
+    Choice2IsCorrect: 0
+    Choice2Feedback: 0
+    Choice3AR: "\u0627\u0644\u0634\u0643\u0648\u0649 \u0642\u062F \u062A\u0638\u0647\u0631
+      \u0636\u0639\u0641"
+    Choice3IsCorrect: 0
+    Choice3Feedback: 0
+    OfferTextAR: "\u0634\u0648 \u0622\u062E\u0631 \u0623\u062E\u0628\u0627\u0631
+      \u0627\u0644\u0634\u063A\u0644\u061F"
+    BatteryDelta: 0
+    StomachDelta: -5
+    EidiaReward: 0
+    ScrapReward: 28
+    ColorHex: 18
+  - ID: 16
     HouseLevel: 3
-    SequenceOrder: 8
+    SequenceOrder: 1
+    MiniGameAfter: 0
+    EncounterType: 1
+    QTEType: CoffeeRefuse
+    QTEInputType: Shake
+    QTECount: 3
+    QTETimeLimit: 3
+    QTEDirection: _
+    QTEHoldDuration: 0
+    Speaker: "\u062E\u0627\u0644\u0629"
+    QuestionAR: 
+    Choice1AR: "\u0647\u0632 \u0627\u0644\u0641\u0646\u062C\u0627\u0646 3 \u0645\u0631\u0627\u062A"
+    Choice1IsCorrect: 1
+    Choice1Feedback: "\u0623\u062D\u0633\u0646\u062A! \u0627\u0644\u0647\u0632 \u064A\u0639\u0646\u064A
+      \u0627\u0643\u062A\u0641\u064A\u062A"
+    Choice2AR: "\u0645\u0627 \u0628\u062F\u064A"
+    Choice2IsCorrect: 0
+    Choice2Feedback: "\u0627\u0644\u0631\u0641\u0636 \u0627\u0644\u0645\u0628\u0627\u0634\u0631
+      \u0642\u0644\u0629 \u0630\u0648\u0642"
+    Choice3AR: "\u0628\u0639\u062F\u064A\u0646"
+    Choice3IsCorrect: 0
+    Choice3Feedback: "\u0627\u0644\u062A\u0623\u062C\u064A\u0644 \u0642\u062F \u064A\u0628\u0631\u062F
+      \u0627\u0644\u0642\u0647\u0648\u0629"
+    OfferTextAR: "\u0647\u064A\u0643 \u0645\u0646 \u062D\u0628\u0646\u0627 \u0644\u0643\u060C
+      \u062E\u0630 \u0642\u0647\u0648\u0629 \u062A\u0627\u0646\u064A\u0629!"
+    BatteryDelta: -5
+    StomachDelta: 15
+    EidiaReward: 20
+    ScrapReward: 15
+    ColorHex: '#D2691E'
+  - ID: 17
+    HouseLevel: 3
+    SequenceOrder: 2
     MiniGameAfter: 0
     EncounterType: 0
     QTEType: None
@@ -7652,81 +7586,50 @@ MonoBehaviour:
     QTEDirection: Up
     QTEHoldDuration: 2
     Speaker: "\u0639\u0645\u0629"
-    QuestionAR: "\u0645\u062A\u0649 \u0627\u0644\u062E\u0637\u0648\u0628\u0629\u061F"
-    Choice1AR: "\u0642\u0631\u064A\u0628 \u0627\u0646 \u0634\u0627\u0621 \u0627\u0644\u0644\u0647"
-    Choice1IsCorrect: 1
-    Choice1Feedback: "\u0627\u0644\u063A\u0645\u0648\u0636 \u0627\u0644\u062F\u0628\u0644\u0648\u0645\u0627\u0633\u064A
-      \u0623\u0641\u0636\u0644."
-    Choice2AR: "\u0644\u0633\u0647 \u0645\u0627 \u0644\u0642\u064A\u062A"
-    Choice2IsCorrect: 1
-    Choice2Feedback: "\u0627\u0644\u0635\u062F\u0642 \u0642\u062F \u064A\u0641\u062A\u062D
-      \u0646\u0642\u0627\u0634."
-    Choice3AR: "\u0645\u0634 \u0645\u0646 \u0634\u0623\u0646\u0643"
+    QuestionAR: 
+    Choice1AR: 
+    Choice1IsCorrect: 0
+    Choice1Feedback: 1
+    Choice2AR: "\u0627\u0644\u063A\u0645\u0648\u0636 \u0627\u0644\u062F\u0628\u0644\u0648\u0645\u0627\u0633\u064A
+      \u0623\u0641\u0636\u0644"
+    Choice2IsCorrect: 0
+    Choice2Feedback: 0
+    Choice3AR: "\u0627\u0644\u0635\u062F\u0642 \u0642\u062F \u064A\u0641\u062A\u062D
+      \u0646\u0642\u0627\u0634"
     Choice3IsCorrect: 0
-    Choice3Feedback: "\u0648\u0642\u0627\u062D\u0629!"
-    OfferTextAR: 
-    BatteryDelta: -5
-    StomachDelta: 0
-    EidiaReward: 28
-    ScrapReward: 20
-    ColorHex: '#DB7093'
-  - ID: 29
+    Choice3Feedback: 0
+    OfferTextAR: "\u0645\u062A\u0649 \u0627\u0644\u062E\u0637\u0648\u0628\u0629 \u064A\u0627
+      \u0628\u0637\u0644\u061F"
+    BatteryDelta: 0
+    StomachDelta: -5
+    EidiaReward: 0
+    ScrapReward: 30
+    ColorHex: 20
+  - ID: 18
     HouseLevel: 3
-    SequenceOrder: 9
-    MiniGameAfter: 0
+    SequenceOrder: 3
+    MiniGameAfter: 1
     EncounterType: 1
-    QTEType: CoffeeRefuse
-    QTEInputType: Shake
-    QTECount: 3
-    QTETimeLimit: 3
-    QTEDirection: _
+    QTEType: HandOnHeart
+    QTEInputType: Tap
+    QTECount: 1
+    QTETimeLimit: 2
+    QTEDirection: Up
     QTEHoldDuration: 0
     Speaker: "\u0639\u0645\u0648"
     QuestionAR: 
-    Choice1AR: "\u0647\u0632 \u0627\u0644\u062C\u0648\u0627\u0644"
-    Choice1IsCorrect: 1
-    Choice1Feedback: "\u0647\u0632 \u0627\u0644\u0641\u0646\u062C\u0627\u0646 \u064A\u0639\u0646\u064A
-      \u0627\u0643\u062A\u0641\u064A\u062A."
-    Choice2AR: "\u0645\u0627 \u0628\u062F\u064A"
-    Choice2IsCorrect: 0
-    Choice2Feedback: "\u0627\u0644\u0631\u0641\u0636 \u0627\u0644\u0645\u0628\u0627\u0634\u0631
-      \u0642\u0644\u0629 \u0630\u0648\u0642."
-    Choice3AR: "\u0628\u0639\u062F\u064A\u0646"
-    Choice3IsCorrect: 0
-    Choice3Feedback: "\u0627\u0644\u062A\u0623\u062C\u064A\u0644 \u0642\u062F \u064A\u0628\u0631\u062F
-      \u0627\u0644\u0642\u0647\u0648\u0629."
-    OfferTextAR: "\u0647\u064A\u0643 \u0645\u0646 \u062D\u0628\u0646\u0627 \u0644\u0643\u060C
-      \u062E\u0630 \u0643\u0645\u0627\u0646 \u0642\u0647\u0648\u0629!"
-    BatteryDelta: -5
-    StomachDelta: 15
-    EidiaReward: 20
-    ScrapReward: 15
-    ColorHex: '#D2691E'
-  - ID: 30
-    HouseLevel: 3
-    SequenceOrder: 10
-    MiniGameAfter: 1
-    EncounterType: 1
-    QTEType: None
-    QTEInputType: _
-    QTECount: 1
-    QTETimeLimit: 3
-    QTEDirection: Up
-    QTEHoldDuration: 2
-    Speaker: "\u0627\u0644\u0639\u0627\u0626\u0644\u0629"
-    QuestionAR: 
-    Choice1AR: "\u062E\u0630\u0647\u0627 \u0628\u0627\u0628\u062A\u0633\u0627\u0645\u0629
-      \u0648\u062D\u0637\u0647\u0627 \u0639\u0644\u0649 \u0642\u0644\u0628\u0643"
+    Choice1AR: "\u062D\u0637 \u0627\u064A\u062F\u0643 \u0639\u0644\u0649 \u0642\u0644\u0628\u0643
+      \u0648\u062E\u0630\u0647\u0627"
     Choice1IsCorrect: 1
     Choice1Feedback: "\u0623\u062E\u0630 \u0627\u0644\u0639\u064A\u062F\u064A\u0629
-      \u0628\u0634\u0643\u0631 \u0648\u0627\u062C\u0628."
+      \u0628\u0634\u0643\u0631 \u0648\u0627\u062C\u0628"
     Choice2AR: "\u0645\u0627 \u0628\u0633\u062A\u0627\u0647\u0644"
     Choice2IsCorrect: 0
-    Choice2Feedback: "\u0627\u0644\u0631\u0641\u0636 \u0642\u062F \u064A\u0632\u0639\u0644."
+    Choice2Feedback: "\u0627\u0644\u0631\u0641\u0636 \u0642\u062F \u064A\u0632\u0639\u0644"
     Choice3AR: "\u0643\u062B\u064A\u0631 \u0647\u064A\u0643\u061F"
     Choice3IsCorrect: 0
     Choice3Feedback: "\u0627\u0644\u0633\u0624\u0627\u0644 \u0642\u062F \u064A\u0638\u0647\u0631
-      \u0637\u0645\u0639."
+      \u0637\u0645\u0639"
     OfferTextAR: "\u062A\u0641\u0636\u0644 \u0639\u064A\u062F\u064A\u0629 \u0645\u0646
       \u062D\u0628\u0646\u0627 \u0644\u0643!"
     BatteryDelta: -3
@@ -7734,7 +7637,131 @@ MonoBehaviour:
     EidiaReward: 50
     ScrapReward: 30
     ColorHex: '#FFD700'
-  - ID: 31
+  - ID: 19
+    HouseLevel: 3
+    SequenceOrder: 4
+    MiniGameAfter: 0
+    EncounterType: 0
+    QTEType: None
+    QTEInputType: _
+    QTECount: 1
+    QTETimeLimit: 3
+    QTEDirection: Up
+    QTEHoldDuration: 2
+    Speaker: "\u062E\u0627\u0644"
+    QuestionAR: 
+    Choice1AR: 
+    Choice1IsCorrect: 0
+    Choice1Feedback: 1
+    Choice2AR: "\u0627\u0644\u0625\u064A\u062C\u0627\u0628\u064A\u0629 \u0639\u0646
+      \u0627\u0644\u0648\u0637\u0646 \u062A\u0632\u0639\u0644 \u0627\u0644\u0643\u0628\u0627\u0631"
+    Choice2IsCorrect: 0
+    Choice2Feedback: 0
+    Choice3AR: "\u0627\u0644\u0646\u0642\u062F \u0642\u062F \u064A\u0633\u0628\u0628
+      \u062C\u062F\u0644"
+    Choice3IsCorrect: 0
+    Choice3Feedback: 0
+    OfferTextAR: "\u0634\u0648 \u0631\u0623\u064A\u0643 \u0628\u0627\u0644\u062A\u0639\u0644\u064A\u0645
+      \u0628\u0627\u0644\u0623\u0631\u062F\u0646\u061F"
+    BatteryDelta: 0
+    StomachDelta: -5
+    EidiaReward: 0
+    ScrapReward: 32
+    ColorHex: 22
+  - ID: 20
+    HouseLevel: 3
+    SequenceOrder: 5
+    MiniGameAfter: 0
+    EncounterType: 1
+    QTEType: TugOfWar
+    QTEInputType: Swipe
+    QTECount: 2
+    QTETimeLimit: 2.5
+    QTEDirection: Up
+    QTEHoldDuration: 0
+    Speaker: "\u062C\u062F\u0629"
+    QuestionAR: 
+    Choice1AR: "\u0627\u0633\u062D\u0628 \u0644\u0625\u0628\u0639\u0627\u062F \u0627\u0644\u0635\u062D\u0646"
+    Choice1IsCorrect: 1
+    Choice1Feedback: "\u0623\u062D\u0633\u0646\u062A! \u0623\u0628\u0639\u062F\u062A
+      \u0628\u0644\u0637\u0641"
+    Choice2AR: "\u0623\u0646\u0627 \u0634\u0628\u0639\u0627\u0646"
+    Choice2IsCorrect: 0
+    Choice2Feedback: "\u0643\u0644\u0645\u0629 \u0634\u0628\u0639\u0627\u0646 \u0645\u0645\u0646\u0648\u0639\u0629
+      \u0623\u064A\u0627\u0645 \u0627\u0644\u0639\u064A\u062F"
+    Choice3AR: "\u0628\u0639\u062F\u064A\u0646"
+    Choice3IsCorrect: 0
+    Choice3Feedback: "\u0627\u0644\u062A\u0623\u062C\u064A\u0644 \u0642\u062F \u064A\u0646\u062C\u062D"
+    OfferTextAR: "\u062A\u0641\u0636\u0644 \u064A\u0627 \u062D\u0628\u064A\u0628\u064A
+      \u0647\u0627\u062F \u0643\u0644\u0647 \u0645\u0646 \u062D\u0628\u0646\u0627
+      \u0644\u0643"
+    BatteryDelta: -10
+    StomachDelta: 30
+    EidiaReward: 20
+    ScrapReward: 18
+    ColorHex: '#FFE4B5'
+  - ID: 21
+    HouseLevel: 3
+    SequenceOrder: 6
+    MiniGameAfter: 0
+    EncounterType: 0
+    QTEType: None
+    QTEInputType: _
+    QTECount: 1
+    QTETimeLimit: 3
+    QTEDirection: Up
+    QTEHoldDuration: 2
+    Speaker: "\u0639\u0645\u0629"
+    QuestionAR: 
+    Choice1AR: 
+    Choice1IsCorrect: 0
+    Choice1Feedback: 1
+    Choice2AR: "\u0627\u0644\u063A\u0645\u0648\u0636 \u0627\u0644\u062D\u0643\u064A\u0645"
+    Choice2IsCorrect: 0
+    Choice2Feedback: 0
+    Choice3AR: "\u0627\u0644\u0631\u0642\u0645 \u0627\u0644\u0645\u062D\u062F\u062F
+      \u0642\u062F \u064A\u0633\u0628\u0628 \u0645\u0642\u0627\u0631\u0646\u0629"
+    Choice3IsCorrect: 0
+    Choice3Feedback: 0
+    OfferTextAR: "\u0634\u0648 \u0631\u0627\u062A\u0628\u0643 \u0627\u0644\u0635\u0627\u0641\u064A\u061F"
+    BatteryDelta: 0
+    StomachDelta: -8
+    EidiaReward: 0
+    ScrapReward: 35
+    ColorHex: 25
+  - ID: 22
+    HouseLevel: 3
+    SequenceOrder: 7
+    MiniGameAfter: 1
+    EncounterType: 1
+    QTEType: CoffeeRefuse
+    QTEInputType: Shake
+    QTECount: 3
+    QTETimeLimit: 3
+    QTEDirection: _
+    QTEHoldDuration: 0
+    Speaker: "\u0639\u0645\u0648"
+    QuestionAR: 
+    Choice1AR: "\u0647\u0632 \u0627\u0644\u0641\u0646\u062C\u0627\u0646 3 \u0645\u0631\u0627\u062A"
+    Choice1IsCorrect: 1
+    Choice1Feedback: "\u0623\u062D\u0633\u0646\u062A! \u062A\u062C\u0646\u0628\u062A
+      \u0627\u0644\u0632\u0639\u0644"
+    Choice2AR: "\u0645\u0627 \u0628\u0642\u062F\u0631"
+    Choice2IsCorrect: 0
+    Choice2Feedback: "\u0627\u0644\u0631\u0641\u0636 \u0627\u0644\u0643\u0627\u0645\u0644
+      \u0628\u0632\u0639\u0644"
+    Choice3AR: "\u0648\u0627\u062D\u062F \u0628\u0633"
+    Choice3IsCorrect: 0
+    Choice3Feedback: "\u0627\u0644\u062A\u0648\u0633\u0637 \u0642\u062F \u0644\u0627
+      \u064A\u0646\u062C\u062D"
+    OfferTextAR: "\u0627\u0634\u0631\u0628 \u0642\u0647\u0648\u0629 \u0623\u0648
+      \u0632\u0639\u0644\u062A \u0645\u0646\u0643!"
+    BatteryDelta: -10
+    StomachDelta: 20
+    EidiaReward: 25
+    ScrapReward: 20
+    ColorHex: '#8B4513'
+  - ID: 23
     HouseLevel: 4
     SequenceOrder: 1
     MiniGameAfter: 0
@@ -7750,22 +7777,22 @@ MonoBehaviour:
     Choice1AR: "\u062D\u0637 \u0627\u064A\u062F\u0643 \u0639\u0644\u0649 \u0642\u0644\u0628\u0643
       \u0628\u0633\u0631\u0639\u0629"
     Choice1IsCorrect: 1
-    Choice1Feedback: "\u0628\u0631\u0651 \u0627\u0644\u062C\u062F\u0651\u0629 \u0648\u0627\u062C\u0628."
+    Choice1Feedback: "\u0628\u0631\u0651 \u0627\u0644\u062C\u062F\u0651\u0629 \u0648\u0627\u062C\u0628"
     Choice2AR: "\u0645\u0627 \u0639\u0646\u062F\u064A \u0648\u0642\u062A"
     Choice2IsCorrect: 0
-    Choice2Feedback: "\u0627\u0644\u0631\u0641\u0636 \u0642\u0633\u0648\u0629."
+    Choice2Feedback: "\u0627\u0644\u0631\u0641\u0636 \u0642\u0633\u0648\u0629"
     Choice3AR: "\u0628\u0639\u062F\u064A\u0646"
     Choice3IsCorrect: 0
     Choice3Feedback: "\u0627\u0644\u062A\u0623\u062C\u064A\u0644 \u0642\u062F \u064A\u0641\u0648\u062A
-      \u0627\u0644\u0623\u0648\u0627\u0646."
+      \u0627\u0644\u0623\u0648\u0627\u0646"
     OfferTextAR: "\u064A\u0627 \u062D\u0628\u064A\u0628\u064A \u0648\u064A\u0646\u0643\u061F
       \u062A\u0639\u0627\u0644 \u0628\u0648\u0633 \u0631\u0627\u0633\u0643"
-    BatteryDelta: 0
+    BatteryDelta: -5
     StomachDelta: 0
     EidiaReward: 0
     ScrapReward: 0
     ColorHex: '#FF1493'
-  - ID: 32
+  - ID: 24
     HouseLevel: 4
     SequenceOrder: 2
     MiniGameAfter: 0
@@ -7783,22 +7810,22 @@ MonoBehaviour:
       \u0627\u0644\u0635\u0639\u0628\u0629"
     Choice1IsCorrect: 1
     Choice1Feedback: "\u0627\u0644\u0623\u0639\u0630\u0627\u0631 \u0627\u0644\u0644\u0637\u064A\u0641\u0629
-      \u0623\u0641\u0636\u0644."
+      \u0623\u0641\u0636\u0644"
     Choice2AR: "\u0627\u0644\u0634\u063A\u0644 \u0630\u0628\u062D\u0646\u064A"
     Choice2IsCorrect: 0
     Choice2Feedback: "\u0627\u0644\u0634\u0643\u0648\u0649 \u0642\u062F \u062A\u0632\u064A\u062F
-      \u0627\u0644\u063A\u0636\u0628."
+      \u0627\u0644\u063A\u0636\u0628"
     Choice3AR: "\u0627\u0646\u062A\u0648 \u0645\u0627 \u0633\u0623\u0644\u062A\u0645
       \u0641\u064A\u0651"
     Choice3IsCorrect: 0
-    Choice3Feedback: "\u0627\u0644\u0644\u0648\u0645 \u064A\u0632\u064A\u062F \u0627\u0644\u0646\u0627\u0631."
+    Choice3Feedback: "\u0627\u0644\u0644\u0648\u0645 \u064A\u0632\u064A\u062F \u0627\u0644\u0646\u0627\u0631"
     OfferTextAR: 
     BatteryDelta: -10
     StomachDelta: 0
-    EidiaReward: 30
-    ScrapReward: 20
+    EidiaReward: 35
+    ScrapReward: 25
     ColorHex: '#8B0000'
-  - ID: 33
+  - ID: 25
     HouseLevel: 4
     SequenceOrder: 3
     MiniGameAfter: 0
@@ -7811,26 +7838,26 @@ MonoBehaviour:
     QTEHoldDuration: 0
     Speaker: "\u062E\u0627\u0644\u0629 \u0634\u0631\u0633\u0629"
     QuestionAR: 
-    Choice1AR: "\u0647\u0632 \u0627\u0644\u062C\u0648\u0627\u0644 3 \u0645\u0631\u0627\u062A"
+    Choice1AR: "\u0647\u0632 \u0627\u0644\u0641\u0646\u062C\u0627\u0646 5 \u0645\u0631\u0627\u062A"
     Choice1IsCorrect: 1
-    Choice1Feedback: "\u0627\u0644\u0647\u0632 \u0627\u0644\u0645\u062A\u0643\u0631\u0631
-      \u064A\u0639\u0646\u064A \u0627\u0643\u062A\u0641\u064A\u062A."
+    Choice1Feedback: "\u0623\u062D\u0633\u0646\u062A! \u062A\u062C\u0646\u0628\u062A
+      \u0627\u0644\u0632\u0639\u0644"
     Choice2AR: "\u0645\u0627 \u0628\u0642\u062F\u0631"
     Choice2IsCorrect: 0
     Choice2Feedback: "\u0627\u0644\u0631\u0641\u0636 \u0627\u0644\u0643\u0627\u0645\u0644
-      \u064A\u0632\u0639\u0644."
+      \u0628\u0632\u0639\u0644"
     Choice3AR: "\u0648\u0627\u062D\u062F \u0628\u0633"
     Choice3IsCorrect: 0
     Choice3Feedback: "\u0627\u0644\u062A\u0648\u0633\u0637 \u0642\u062F \u0644\u0627
-      \u064A\u0646\u062C\u062D."
+      \u064A\u0646\u062C\u062D"
     OfferTextAR: "\u0627\u0634\u0631\u0628 3 \u0641\u0646\u0627\u062C\u064A\u0646
       \u0642\u0647\u0648\u0629 \u0623\u0648 \u0632\u0639\u0644\u062A!"
     BatteryDelta: -15
     StomachDelta: 25
-    EidiaReward: 20
-    ScrapReward: 10
+    EidiaReward: 25
+    ScrapReward: 15
     ColorHex: '#8B4513'
-  - ID: 34
+  - ID: 26
     HouseLevel: 4
     SequenceOrder: 4
     MiniGameAfter: 0
@@ -7842,25 +7869,25 @@ MonoBehaviour:
     QTEDirection: Up
     QTEHoldDuration: 2
     Speaker: "\u0639\u0645\u0629 \u062E\u0628\u064A\u0631\u0629"
-    QuestionAR: "\u0634\u0648 \u0631\u0627\u062A\u0628\u0643 \u0627\u0644\u0635\u0627\u0641\u064A\u061F"
-    Choice1AR: "\u0627\u0644\u062D\u0645\u062F\u0644\u0644\u0647 \u0645\u0633\u062A\u0648\u0631"
-    Choice1IsCorrect: 1
-    Choice1Feedback: "\u0627\u0644\u063A\u0645\u0648\u0636 \u0627\u0644\u062D\u0643\u064A\u0645."
-    Choice2AR: "500 \u062F\u064A\u0646\u0627\u0631"
+    QuestionAR: 
+    Choice1AR: 
+    Choice1IsCorrect: 0
+    Choice1Feedback: 1
+    Choice2AR: "\u0627\u0644\u062A\u0641\u0627\u0624\u0644 \u0627\u0644\u062D\u0643\u064A\u0645"
     Choice2IsCorrect: 0
-    Choice2Feedback: "\u0627\u0644\u0631\u0642\u0645 \u0627\u0644\u0645\u062D\u062F\u062F
-      \u0642\u062F \u064A\u0633\u0628\u0628 \u0645\u0642\u0627\u0631\u0646\u0629."
-    Choice3AR: "\u0623\u0642\u0644 \u0645\u0646 1000"
+    Choice2Feedback: 0
+    Choice3AR: "\u0627\u0644\u0646\u0642\u062F \u0627\u0644\u0645\u0628\u0627\u0634\u0631
+      \u062E\u0637\u0631"
     Choice3IsCorrect: 0
-    Choice3Feedback: "\u0627\u0644\u0635\u062F\u0642 \u0642\u062F \u064A\u0633\u0628\u0628
-      \u0634\u0641\u0642\u0629."
-    OfferTextAR: 
-    BatteryDelta: -8
-    StomachDelta: 0
-    EidiaReward: 35
-    ScrapReward: 25
-    ColorHex: '#2F4F4F'
-  - ID: 35
+    Choice3Feedback: 0
+    OfferTextAR: "\u0634\u0648 \u0631\u0623\u064A\u0643 \u0628\u0627\u0644\u0623\u0632\u0645\u0629
+      \u0627\u0644\u0627\u0642\u062A\u0635\u0627\u062F\u064A\u0629\u061F"
+    BatteryDelta: 0
+    StomachDelta: -10
+    EidiaReward: 0
+    ScrapReward: 40
+    ColorHex: 30
+  - ID: 27
     HouseLevel: 4
     SequenceOrder: 5
     MiniGameAfter: 0
@@ -7875,23 +7902,24 @@ MonoBehaviour:
     QuestionAR: 
     Choice1AR: "\u0627\u0633\u062D\u0628 3 \u0645\u0631\u0627\u062A"
     Choice1IsCorrect: 1
-    Choice1Feedback: "\u0627\u0644\u0623\u0643\u0644 \u0648\u0627\u062C\u0628 \u0627\u0644\u0636\u064A\u0627\u0641\u0629."
+    Choice1Feedback: "\u0623\u062D\u0633\u0646\u062A! \u0623\u0628\u0639\u062F\u062A
+      \u0627\u0644\u0635\u062D\u0646"
     Choice2AR: "\u0623\u0646\u0627 \u0635\u0627\u064A\u0645"
     Choice2IsCorrect: 0
     Choice2Feedback: "\u0627\u0644\u0635\u064A\u0627\u0645 \u0642\u062F \u0644\u0627
-      \u064A\u064F\u0642\u0628\u0644 \u0639\u0630\u0631\u0627\u064B."
+      \u064A\u064F\u0642\u0628\u0644 \u0639\u0630\u0631\u0627\u064B"
     Choice3AR: "\u0628\u0639\u062F\u064A\u0646"
     Choice3IsCorrect: 0
     Choice3Feedback: "\u0627\u0644\u062A\u0623\u062C\u064A\u0644 \u0642\u062F \u0644\u0627
-      \u064A\u0646\u062C\u062D."
+      \u064A\u0646\u062C\u062D"
     OfferTextAR: "\u0645\u0627 \u0628\u062A\u0637\u0644\u0639 \u0642\u0628\u0644
       \u0645\u0627 \u062A\u0627\u0643\u0644 \u0635\u062D\u0646 \u0643\u0627\u0645\u0644!"
     BatteryDelta: -15
     StomachDelta: 40
-    EidiaReward: 25
-    ScrapReward: 15
+    EidiaReward: 30
+    ScrapReward: 20
     ColorHex: '#B22222'
-  - ID: 36
+  - ID: 28
     HouseLevel: 4
     SequenceOrder: 6
     MiniGameAfter: 0
@@ -7903,30 +7931,28 @@ MonoBehaviour:
     QTEDirection: Up
     QTEHoldDuration: 2
     Speaker: "\u062E\u0627\u0644 \u0633\u064A\u0627\u0633\u064A"
-    QuestionAR: "\u0634\u0648 \u0631\u0623\u064A\u0643 \u0628\u0627\u0644\u0623\u0632\u0645\u0629
-      \u0627\u0644\u0627\u0642\u062A\u0635\u0627\u062F\u064A\u0629\u061F"
-    Choice1AR: "\u0627\u0644\u0644\u0647 \u064A\u0641\u0631\u062C\u0647\u0627 \u064A\u0627
-      \u062E\u0627\u0644"
-    Choice1IsCorrect: 1
-    Choice1Feedback: "\u0627\u0644\u062A\u0641\u0627\u0624\u0644 \u0627\u0644\u062D\u0643\u064A\u0645."
-    Choice2AR: "\u0627\u0644\u062D\u0643\u0648\u0645\u0629 \u0641\u0627\u0634\u0644\u0629"
+    QuestionAR: 
+    Choice1AR: 
+    Choice1IsCorrect: 0
+    Choice1Feedback: 1
+    Choice2AR: "\u0627\u0644\u0627\u0644\u062A\u0632\u0627\u0645 \u0627\u0644\u0648\u0637\u0646\u064A
+      \u064A\u0631\u0636\u064A"
     Choice2IsCorrect: 0
-    Choice2Feedback: "\u0627\u0644\u0646\u0642\u062F \u0627\u0644\u0645\u0628\u0627\u0634\u0631
-      \u062E\u0637\u0631."
-    Choice3AR: "\u0627\u0644\u0645\u0639\u0627\u0631\u0636\u0629 \u0623\u062D\u0633\u0646"
+    Choice2Feedback: 0
+    Choice3AR: "\u0639\u062F\u0645 \u0627\u0644\u0645\u0634\u0627\u0631\u0643\u0629
+      \u0642\u062F \u064A\u0633\u0628\u0628 \u062C\u062F\u0644"
     Choice3IsCorrect: 0
-    Choice3Feedback: "\u0627\u0644\u062A\u062D\u064A\u0632 \u0642\u062F \u064A\u0633\u0628\u0628
-      \u062C\u062F\u0644."
-    OfferTextAR: 
-    BatteryDelta: -10
-    StomachDelta: 0
-    EidiaReward: 40
-    ScrapReward: 30
-    ColorHex: '#708090'
-  - ID: 37
+    Choice3Feedback: 0
+    OfferTextAR: "\u0634\u0648 \u0631\u0623\u064A\u0643 \u0628\u0627\u0644\u0627\u0646\u062A\u062E\u0627\u0628\u0627\u062A\u061F"
+    BatteryDelta: 0
+    StomachDelta: -10
+    EidiaReward: 0
+    ScrapReward: 45
+    ColorHex: 35
+  - ID: 29
     HouseLevel: 4
     SequenceOrder: 7
-    MiniGameAfter: 0
+    MiniGameAfter: 1
     EncounterType: 1
     QTEType: HandOnHeart
     QTEInputType: Tap
@@ -7934,53 +7960,21 @@ MonoBehaviour:
     QTETimeLimit: 1
     QTEDirection: Up
     QTEHoldDuration: 0
-    Speaker: "\u062C\u062F\u0629 \u0639\u0645\u064A\u0627\u0621"
-    QuestionAR: 
-    Choice1AR: "\u062D\u0637 \u0627\u064A\u062F\u0643 \u0639\u0644\u0649 \u0642\u0644\u0628\u0643
-      \u0648\u0628\u0648\u0633 \u0627\u064A\u062F\u0647\u0627"
-    Choice1IsCorrect: 1
-    Choice1Feedback: "\u0628\u0631\u0651 \u0627\u0644\u0643\u0628\u064A\u0631\u0629
-      \u0648\u0627\u062C\u0628."
-    Choice2AR: "\u0623\u0646\u0627 \u0645\u0633\u062A\u0639\u062C\u0644"
-    Choice2IsCorrect: 0
-    Choice2Feedback: "\u0627\u0644\u0627\u0633\u062A\u0639\u062C\u0627\u0644 \u0642\u0633\u0648\u0629."
-    Choice3AR: "\u0628\u0639\u062F\u064A\u0646"
-    Choice3IsCorrect: 0
-    Choice3Feedback: "\u0627\u0644\u062A\u0623\u062C\u064A\u0644 \u0642\u062F \u064A\u0641\u0648\u062A
-      \u0627\u0644\u0623\u062C\u0631."
-    OfferTextAR: "\u062A\u0639\u0627\u0644 \u0628\u0648\u0633 \u0627\u064A\u062F\u064A
-      \u064A\u0627 \u0648\u0644\u062F\u064A"
-    BatteryDelta: 0
-    StomachDelta: 0
-    EidiaReward: 0
-    ScrapReward: 0
-    ColorHex: '#C71585'
-  - ID: 38
-    HouseLevel: 4
-    SequenceOrder: 8
-    MiniGameAfter: 1
-    EncounterType: 1
-    QTEType: None
-    QTEInputType: _
-    QTECount: 1
-    QTETimeLimit: 3
-    QTEDirection: Up
-    QTEHoldDuration: 2
     Speaker: "\u0627\u0644\u0639\u0627\u0626\u0644\u0629 \u0643\u0644\u0647\u0627"
     QuestionAR: 
     Choice1AR: "\u0627\u062D\u0637 \u0627\u064A\u062F\u064A \u0639\u0644\u0649 \u0642\u0644\u0628\u064A
-      \u0648\u0622\u062E\u0630\u0647\u0627 \u0628\u0634\u0643\u0631"
+      \u0648\u0622\u062E\u0630\u0647\u0627"
     Choice1IsCorrect: 1
     Choice1Feedback: "\u0627\u0644\u0634\u0643\u0631 \u0639\u0644\u0649 \u0627\u0644\u0639\u064A\u062F\u064A\u0629
-      \u0648\u0627\u062C\u0628."
+      \u0648\u0627\u062C\u0628"
     Choice2AR: "\u0645\u0627 \u0628\u0633\u062A\u0627\u0647\u0644 \u0643\u0644 \u0647\u064A\u0643"
     Choice2IsCorrect: 0
     Choice2Feedback: "\u0627\u0644\u062A\u0648\u0627\u0636\u0639 \u0627\u0644\u0632\u0627\u0626\u062F
-      \u0642\u062F \u064A\u0638\u0647\u0631 \u0636\u0639\u0641."
+      \u0642\u062F \u064A\u0638\u0647\u0631 \u0636\u0639\u0641"
     Choice3AR: "\u0627\u0644\u0644\u0647 \u064A\u0628\u0627\u0631\u0643 \u0641\u064A\u0643\u0645"
     Choice3IsCorrect: 0
     Choice3Feedback: "\u0627\u0644\u062F\u0639\u0627\u0621 \u062C\u0645\u064A\u0644
-      \u0628\u0633 \u0645\u0634 \u0643\u0627\u0641\u064A."
+      \u0628\u0633 \u0645\u0634 \u0643\u0627\u0641\u064A"
     OfferTextAR: "\u062A\u0641\u0636\u0644 \u0639\u064A\u062F\u064A\u0629 \u0627\u0644\u0639\u064A\u062F\u060C
       \u062E\u0630\u0647\u0627 \u0645\u0646 \u0642\u0644\u0628\u0646\u0627!"
     BatteryDelta: -10
@@ -7988,6 +7982,36 @@ MonoBehaviour:
     EidiaReward: 100
     ScrapReward: 50
     ColorHex: '#FFD700'
+  - ID: 30
+    HouseLevel: 4
+    SequenceOrder: 8
+    MiniGameAfter: 0
+    EncounterType: 0
+    QTEType: None
+    QTEInputType: _
+    QTECount: 1
+    QTETimeLimit: 3
+    QTEDirection: Up
+    QTEHoldDuration: 2
+    Speaker: "\u062C\u062F\u0629"
+    QuestionAR: 
+    Choice1AR: 
+    Choice1IsCorrect: 0
+    Choice1Feedback: 1
+    Choice2AR: "\u0627\u0644\u063A\u0631\u0628\u0629 \u0639\u0630\u0631 \u0645\u0642\u0628\u0648\u0644"
+    Choice2IsCorrect: 0
+    Choice2Feedback: 0
+    Choice3AR: "\u0627\u0644\u0639\u0627\u0626\u0644\u0629 \u0628\u062A\u0641\u0647\u0645
+      \u0628\u0633 \u0628\u062A\u0632\u0639\u0644"
+    Choice3IsCorrect: 0
+    Choice3Feedback: 0
+    OfferTextAR: "\u0644\u064A\u0634 \u0645\u0627 \u062A\u0632\u0648\u0631\u0646\u0627
+      \u0623\u0643\u062B\u0631\u061F"
+    BatteryDelta: 0
+    StomachDelta: -8
+    EidiaReward: 0
+    ScrapReward: 40
+    ColorHex: 30
 --- !u!1 &1684080649
 GameObject:
   m_ObjectHideFlags: 0

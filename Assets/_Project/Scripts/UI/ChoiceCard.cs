@@ -28,6 +28,13 @@ public class ChoiceCard : MonoBehaviour
             _button.onClick.AddListener(OnCardClicked);
     }
 
+    private void OnEnable()
+    {
+        // Ensure position is restored when re-enabled (for object pooling)
+        if (transform is RectTransform rt)
+            rt.anchoredPosition = _originalAnchoredPosition;
+    }
+
     private void OnDisable()
     {
         StopIdle();

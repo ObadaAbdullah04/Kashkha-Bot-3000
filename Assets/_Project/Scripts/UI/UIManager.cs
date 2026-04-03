@@ -229,16 +229,16 @@ public class UIManager : MonoBehaviour
             return;
         }
 
-        // Cancel any pending idle floating invokes
-        CancelInvoke(nameof(StartIdle0));
-        CancelInvoke(nameof(StartIdle1));
-        CancelInvoke(nameof(StartIdle2));
+        // Ensure encounter panel is visible
+        if (encounterPanel != null)
+            encounterPanel.SetActive(true);
 
         feedbackPanel.SetActive(false);
 
         if (questionText != null)
         {
             questionText.text = data.QuestionAR;
+            questionText.gameObject.SetActive(true);
             AnimateTextFadeIn(questionText.gameObject, questionFadeDuration);
         }
 
@@ -251,6 +251,7 @@ public class UIManager : MonoBehaviour
 
                 string choiceText = GetChoiceText(data, i);
                 choiceTexts[i].text = choiceText;
+                choiceTexts[i].gameObject.SetActive(true);
 
                 choiceCards[i].gameObject.SetActive(true);
                 AnimateTextFadeIn(choiceCards[i].gameObject, 0.3f, i * choiceStaggerDelay);
@@ -335,7 +336,7 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    public void ShowQTEWarning(string qteType)
+    public void ShowQTEWarning(string instructionText)
     {
         if (qteWarningPanel == null || qteWarningText == null)
         {
@@ -343,15 +344,12 @@ public class UIManager : MonoBehaviour
             return;
         }
 
-        string warningText = qteType switch
-        {
-            "CoffeeRefuse" => "هز الجوال بسرعة!",
-            "HandOnHeart" => "حط ايدك على قلبك!",
-            "TugOfWar" => "اسحب مرتين!",
-            _ => "انتبه!"
-        };
+        // Hide any existing QTE warning first to prevent stacking
+        qteWarningPanel.SetActive(false);
 
-        qteWarningText.text = warningText;
+        // Directly use the Arabic instruction text passed from GameManager
+        // (GetQTEInstructionAR already converts input type to Arabic)
+        qteWarningText.text = instructionText;
         qteWarningPanel.SetActive(true);
         qteWarningPanel.transform.DOPunchScale(Vector3.one * 0.1f, 0.5f, 5, 1f);
     }

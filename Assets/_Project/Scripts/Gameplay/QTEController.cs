@@ -168,12 +168,16 @@ public class QTEController : MonoBehaviour
     public void StartQTE(string inputType, int count, float timeLimit, string direction = "", float holdDur = 0f)
     {
         activeInputType = ParseInputType(inputType);
-        
+
+        // Reset input state
+        touchStartPosition = Vector2.zero;
+        _isHolding = false;
+
         // Set parameters from CSV
         inputsRequired = count > 0 ? count : 1;
         timeRemaining = timeLimit > 0 ? timeLimit : defaultTimeLimit;
         currentHoldDuration = holdDur > 0 ? holdDur : this.holdDuration;
-        
+
         // Parse swipe direction
         if (!string.IsNullOrEmpty(direction) && direction != "_")
         {
@@ -290,7 +294,8 @@ public class QTEController : MonoBehaviour
     /// </summary>
     private bool CheckTapInput()
     {
-        if (_inputActions.Device.TouchStart.ReadValue<float>() > 0.5f ||
+        // Use dedicated Tap action
+        if (_inputActions.Device.Tap.ReadValue<float>() > 0.5f ||
             _inputActions.Device.ShakeSkip.ReadValue<float>() > 0.5f) // Spacebar fallback
         {
             _inputOnCooldown = true;
@@ -305,16 +310,29 @@ public class QTEController : MonoBehaviour
     /// </summary>
     private bool CheckSwipeInput()
     {
-        // Touch start - record position
-        if (_inputActions.Device.TouchStart.ReadValue<float>() > 0.5f)
+        // Keyboard fallback for swipe up
+        if (_inputActions.Device.SwipeUp.ReadValue<float>() > 0.5f)
         {
-            touchStartPosition = _inputActions.Device.TouchPosition.ReadValue<Vector2>();
+            _inputOnCooldown = true;
+            _inputCooldownTime = Time.time + globalInputCooldown;
+            return true;
+        }
+
+        // Get touch phase for swipe detection
+        if (Touchscreen.current == null) return false;
+        
+        var touchPhase = Touchscreen.current.primaryTouch.phase.ReadValue();
+        
+        // Touch start - record position
+        if (touchPhase == UnityEngine.InputSystem.TouchPhase.Began)
+        {
+            touchStartPosition = Touchscreen.current.primaryTouch.position.ReadValue();
         }
 
         // Touch end - check direction
-        if (_inputActions.Device.TouchEnd.ReadValue<float>() > 0.5f)
+        if (touchPhase == UnityEngine.InputSystem.TouchPhase.Ended)
         {
-            Vector2 currentPos = _inputActions.Device.TouchPosition.ReadValue<Vector2>();
+            Vector2 currentPos = Touchscreen.current.primaryTouch.position.ReadValue();
             Vector2 delta = currentPos - touchStartPosition;
 
             SwipeDirection detectedDirection = DetectSwipeDirection(delta);
@@ -350,8 +368,11 @@ public class QTEController : MonoBehaviour
     /// </summary>
     private bool CheckHoldInput()
     {
+        // Use dedicated Hold action for press detection
+        bool isHoldingInput = _inputActions.Device.Hold.ReadValue<float>() > 0.5f;
+        
         // Start hold
-        if (_inputActions.Device.TouchStart.ReadValue<float>() > 0.5f && !_isHolding)
+        if (isHoldingInput && !_isHolding)
         {
             _holdStartTime = Time.time;
             _isHolding = true;
@@ -366,7 +387,7 @@ public class QTEController : MonoBehaviour
             if (holdTime >= currentHoldDuration)
             {
                 // Wait for release
-                if (_inputActions.Device.TouchEnd.ReadValue<float>() > 0.5f)
+                if (!isHoldingInput)
                 {
                     _isHolding = false;
                     return true; // Success
@@ -375,7 +396,7 @@ public class QTEController : MonoBehaviour
         }
 
         // Released too early
-        if (_isHolding && _inputActions.Device.TouchEnd.ReadValue<float>() > 0.5f)
+        if (_isHolding && !isHoldingInput)
         {
             _isHolding = false;
             return false; // Fail
@@ -407,6 +428,7 @@ public class QTEController : MonoBehaviour
         inputsCompleted = 0;
         inputsRequired = 1;
         _isHolding = false;
+        touchStartPosition = Vector2.zero; // Reset for next QTE
 
         Debug.Log($"[QTE] Result: {(success ? "Success" : "Failed")}");
         OnQTEResolved?.Invoke(success);

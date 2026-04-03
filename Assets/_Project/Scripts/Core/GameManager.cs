@@ -76,6 +76,10 @@ public class GameManager : MonoBehaviour
     public bool IsHouse4Active => isHouse4Active;
     public int CurrentRunSeed => currentRunSeed;
 
+    // Cached Random instance for shuffle reproducibility and GC optimization
+    private System.Random _cachedRng;
+    private int _cachedRngSeed;
+
     #endregion
 
     #region Encounter Loop
@@ -148,10 +152,14 @@ public class GameManager : MonoBehaviour
         isProcessingChoice = false;
         accumulatedEidia = 0;
         accumulatedScrap = 0;
-        
+
         // NEW: Generate run seed for shuffle reproducibility
         currentRunSeed = UnityEngine.Random.Range(int.MinValue, int.MaxValue);
         Debug.Log($"[GameManager] Run Seed: {currentRunSeed}");
+
+        // Ensure FloatingTextManager is enabled for run feedback
+        if (FloatingTextManager.Instance != null)
+            FloatingTextManager.Instance.gameObject.SetActive(true);
 
         // Apply outfit bonuses before resetting meters
         if (TimerController.Instance != null)
@@ -214,13 +222,18 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        // SHUFFLE: Fisher-Yates algorithm with run seed
-        System.Random rng = new System.Random(currentRunSeed);
+        // SHUFFLE: Fisher-Yates algorithm with run seed (cached Random for GC optimization)
+        if (_cachedRng == null || _cachedRngSeed != currentRunSeed)
+        {
+            _cachedRng = new System.Random(currentRunSeed);
+            _cachedRngSeed = currentRunSeed;
+        }
+
         int n = houseEncounters.Count;
         while (n > 1)
         {
             n--;
-            int k = rng.Next(n + 1);
+            int k = _cachedRng.Next(n + 1);
             var temp = houseEncounters[k];
             houseEncounters[k] = houseEncounters[n];
             houseEncounters[n] = temp;
@@ -381,7 +394,10 @@ public class GameManager : MonoBehaviour
         });
 
         // Handle Hospitality Offer logic
-        if (currentEncounter.EncounterType == EncounterType.HospitalityOffer)
+        bool isHospitality = currentEncounter.EncounterType == EncounterType.HospitalityOffer;
+        bool hasQTE = !string.IsNullOrEmpty(currentEncounter.QTEType) && currentEncounter.QTEType != "None";
+
+        if (isHospitality)
         {
             // For Hospitality Offers: Check if player chose to accept (Choice 1 = correct = accepting politely)
             if (isCorrect && choiceIndex == 0)
@@ -399,6 +415,12 @@ public class GameManager : MonoBehaviour
                     MeterManager.Instance.ModifyStomach(currentEncounter.StomachDelta);
                 }
             }
+            // NOTE: For Hospitality offers WITH QTE, encounterIndex is incremented by HandleQTEResult
+            // For Hospitality offers WITHOUT QTE, we need to increment here
+            if (!hasQTE)
+            {
+                encounterIndex++;
+            }
         }
         else
         {
@@ -408,12 +430,15 @@ public class GameManager : MonoBehaviour
                 MeterManager.Instance.ModifyBattery(currentEncounter.BatteryDelta);
                 MeterManager.Instance.ModifyStomach(currentEncounter.StomachDelta);
             }
+            
+            // Trivia encounters always increment here (no QTE involvement)
+            encounterIndex++;
         }
 
         // Award Eidia based on encounter type and choice
         // Hospitality Offer: Eidia handled by HandleOfferAccepted (with multipliers)
         // Trivia: Always award based on choice correctness
-        if (currentEncounter.EncounterType != EncounterType.HospitalityOffer || !isCorrect)
+        if (!isHospitality || !isCorrect)
         {
             // Not a hospitality offer, OR player refused the offer - award base Eidia
             accumulatedEidia += currentEncounter.EidiaReward;
@@ -429,7 +454,12 @@ public class GameManager : MonoBehaviour
             // Don't end run yet - player continues house, then chooses at Crossroads
         }
 
-        encounterIndex++;
+        // Only increment index for non-Hospitality encounters
+        // Hospitality encounters increment in HandleQTEResult to avoid double increment
+        if (!isHospitality)
+        {
+            encounterIndex++;
+        }
     }
 
     /// <summary>
@@ -482,16 +512,20 @@ public class GameManager : MonoBehaviour
 
     private void StartQTESequence(string qteType)
     {
+        // Safety: Hide any existing QTE warning before starting new one
+        if (UIManager.Instance != null)
+            UIManager.Instance.HideQTEWarning();
+
         isQTEActive = true;
         ChangeState(GameState.QTE);
-        
+
         // Get QTE parameters from current encounter
         string inputType = currentEncounter.QTEInputType;
         int count = currentEncounter.QTECount;
         float timeLimit = currentEncounter.QTETimeLimit;
         string direction = currentEncounter.QTEDirection;
         float holdDuration = currentEncounter.QTEHoldDuration;
-        
+
         // Fallback to legacy QTEType mapping if QTEInputType is empty
         if (string.IsNullOrEmpty(inputType) || inputType == "_")
         {
@@ -503,18 +537,19 @@ public class GameManager : MonoBehaviour
                 "tugofwar" => "Swipe",
                 _ => "Shake"
             };
-            
+
             // Set defaults for legacy encounters
             if (count == 0) count = inputType == "Shake" ? 1 : (inputType == "Swipe" ? 2 : 1);
             if (timeLimit == 0) timeLimit = 3f;
             if (string.IsNullOrEmpty(direction) || direction == "_") direction = "Up";
             if (holdDuration == 0) holdDuration = 2f;
         }
-        
+
         // Get Arabic instruction based on QTE input type
         string instructionAR = GetQTEInstructionAR(inputType);
-        
-        UIManager.Instance.ShowQTEWarning(instructionAR);
+
+        if (UIManager.Instance != null)
+            UIManager.Instance.ShowQTEWarning(instructionAR);
 
         if (QTEController.Instance != null)
             QTEController.Instance.StartQTE(inputType, count, timeLimit, direction, holdDuration);
@@ -580,10 +615,13 @@ public class GameManager : MonoBehaviour
             if (MiniGameManager.Instance != null)
             {
                 MiniGameManager.Instance.StartCatchGame(currentHouseLevel);
-                return;
+                return; // Mini-game will handle index increment via OnMiniGameComplete → StartNextHouse
             }
         }
 
+        // Increment index and load next encounter
+        // NOTE: Only Hospitality QTEs reach here (Trivia QTEs don't exist in current design)
+        // Hospitality QTEs didn't increment in ProcessChoice, so we increment here
         encounterIndex++;
         LoadNextEncounter();
     }

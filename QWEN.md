@@ -101,7 +101,7 @@ Physical traditions simulated via inputs:
 
 Dialogue and Encounter data parsed from **CSV files** at runtime. All pacing controlled via spreadsheet - **NO HARDCODING**.
 
-#### CSV Columns (23 Total)
+#### CSV Columns (28 Total)
 
 | Column | Description | Example Values |
 |--------|-------------|----------------|
@@ -111,6 +111,11 @@ Dialogue and Encounter data parsed from **CSV files** at runtime. All pacing con
 | `EncounterType` | Type of encounter | `Trivia`, `HospitalityOffer` |
 | `MiniGameAfter` | Trigger mini-game after this encounter? | `true`, `false` |
 | `QTEType` | Physical gesture required | `None`, `CoffeeShake`, `HandOnHeart`, `TugOfWar` |
+| `QTEInputType` | Input method | `Shake`, `Tap`, `Swipe`, `Hold` |
+| `QTECount` | Number of inputs required | `1`, `2`, `3` |
+| `QTETimeLimit` | Time to complete QTE | `2`, `3`, `4` |
+| `QTEDirection` | Swipe direction (if applicable) | `Up`, `Down`, `Left`, `Right`, `_` |
+| `QTEHoldDuration` | Hold duration in seconds | `1`, `1.5`, `2` |
 | `Speaker` | Character name | `خالة أم محمد` |
 | `QuestionAR` | Arabic question/offer text | Arabic string |
 | `OfferTextAR` | Hospitality offer display text | Arabic string |
@@ -165,7 +170,7 @@ Dialogue and Encounter data parsed from **CSV files** at runtime. All pacing con
 - **NO HARDCODING** - all values tunable
 
 #### QTEController.cs
-- Multi-input QTE support (shake, tap, swipe)
+- Multi-input QTE support (shake, tap, swipe, hold)
 - Per-QTE-type configuration
 - House 4 modifiers (time ×0.5, +1 input, higher thresholds)
 - **NO HARDCODING** - all values tunable
@@ -200,19 +205,23 @@ Kashkha-Bot-3000/
 │   │   ├── Art/                       ← Sprites, UI Elements, Materials
 │   │   ├── Audio/                     ← Voice, SFX, Music
 │   │   ├── Controls/                  ← Input System assets (DeviceControls.inputactions)
-│   │   ├── Data/                      ← CSV Files (Encounters.csv), Parsed Data Containers
+│   │   ├── Data/                      ← CSV Files (Encounters.csv, Outfits.csv)
+│   │   ├── Editor/                    ← Custom editor scripts
 │   │   ├── Fonts/                     ← RTLTMP Font Assets
 │   │   ├── Prefabs/
 │   │   │   ├── MiniGames/             ← CatchGame_Canvas, Eidia_Pickup, Maamoul_Obstacle
 │   │   │   ├── UI/                    ← FeedbackCard, EncounterChoice, CrossroadsPanel
 │   │   │   └── Pooled Objects/        ← Object pool prefabs
+│   │   ├── Resources/                 ← Runtime-loadable assets
 │   │   ├── Scenes/
 │   │   │   └── Core_Scene.unity       ← Main game scene
-│   │   └── Scripts/
-│   │       ├── Core/                  ← GameManager, UIManager, DataManager, etc.
-│   │       ├── Data/                  ← EncounterData, SaveData
-│   │       ├── Gameplay/              ← MeterManager, QTEController, TimerController, CatchMiniGame
-│   │       └── UI/                    ← UIManager, ChoiceCard, FloatingText
+│   │   ├── Scripts/
+│   │   │   ├── Core/                  ← GameManager, UIManager, DataManager, etc.
+│   │   │   ├── Data/                  ← EncounterData, SaveData
+│   │   │   ├── Gameplay/              ← MeterManager, QTEController, TimerController, CatchMiniGame
+│   │   │   └── UI/                    ← UIManager, ChoiceCard, FloatingText
+│   │   ├── Settings/                  ← URP and project settings
+│   │   └── ARCHITECTURE.md            ← Comprehensive architecture documentation
 │   ├── Plugins/
 │   │   └── Demigiant/                 ← DOTween plugin
 │   ├── Resources/                     ← Runtime-loadable assets (DOTweenSettings)

@@ -123,7 +123,7 @@ public partial class @DeviceControls: IInputActionCollection2, IDisposable
                     ""name"": ""TouchPosition"",
                     ""type"": ""Value"",
                     ""id"": ""3ee17998-9133-4175-8904-1f639f0b25f3"",
-                    ""expectedControlType"": """",
+                    ""expectedControlType"": ""Vector2"",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": true
@@ -147,15 +147,6 @@ public partial class @DeviceControls: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": false
                 },
                 {
-                    ""name"": ""SwipeAny"",
-                    ""type"": ""Button"",
-                    ""id"": ""5526be92-3ae9-4528-aa8b-a34fab4d3674"",
-                    ""expectedControlType"": """",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
                     ""name"": ""SkipQTE"",
                     ""type"": ""Button"",
                     ""id"": ""f6f048b7-a569-4cb4-8d61-2b242e0d333e"",
@@ -172,6 +163,33 @@ public partial class @DeviceControls: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""Draw"",
+                    ""type"": ""Button"",
+                    ""id"": ""a1b2c3d4-e5f6-7890-abcd-ef1234567890"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Tap"",
+                    ""type"": ""Button"",
+                    ""id"": ""b2c3d4e5-f6a7-8901-bcde-f12345678901"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Hold"",
+                    ""type"": ""Button"",
+                    ""id"": ""c3d4e5f6-a7b8-9012-cdef-123456789012"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -189,7 +207,7 @@ public partial class @DeviceControls: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""90f00136-67be-4b4c-b16e-9052c10fdafc"",
-                    ""path"": ""<Touchscreen>/Press"",
+                    ""path"": ""<Touchscreen>/primaryTouch/press"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
@@ -200,9 +218,9 @@ public partial class @DeviceControls: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""f1997909-7652-4ba7-bc43-00e05cea333c"",
-                    ""path"": ""<Touchscreen>/Press"",
+                    ""path"": ""<Touchscreen>/primaryTouch/press"",
                     ""interactions"": """",
-                    ""processors"": """",
+                    ""processors"": ""Invert"",
                     ""groups"": """",
                     ""action"": ""TouchEnd"",
                     ""isComposite"": false,
@@ -211,7 +229,7 @@ public partial class @DeviceControls: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""8fadb1aa-2355-4502-b083-b1b5508df81f"",
-                    ""path"": ""<Touchscreen>/position"",
+                    ""path"": ""<Touchscreen>/primaryTouch/position"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
@@ -238,17 +256,6 @@ public partial class @DeviceControls: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""SwipeUp"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""670e8016-4d5d-4c9a-bb89-0ebe3c11c376"",
-                    ""path"": ""<Keyboard>/t"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""SwipeAny"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
@@ -295,6 +302,105 @@ public partial class @DeviceControls: IInputActionCollection2, IDisposable
                     ""action"": ""MoveHorizontal"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""e4f5a6b7-c8d9-0123-4567-89abcdef0123"",
+                    ""path"": ""<Touchscreen>/primaryTouch/press"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Draw"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""f5a6b7c8-d9e0-1234-5678-9abcdef01234"",
+                    ""path"": ""<Mouse>/leftButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Draw"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""a6b7c8d9-e0f1-2345-6789-abcdef012345"",
+                    ""path"": ""<Keyboard>/space"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Draw"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""b7c8d9e0-f1a2-3456-789a-bcdef0123456"",
+                    ""path"": ""<Touchscreen>/primaryTouch/press"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Tap"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""c8d9e0f1-a2b3-4567-89ab-cdef01234567"",
+                    ""path"": ""<Mouse>/leftButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Tap"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""d9e0f1a2-b3c4-5678-9abc-def012345678"",
+                    ""path"": ""<Keyboard>/space"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Tap"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""e0f1a2b3-c4d5-6789-abcd-ef0123456789"",
+                    ""path"": ""<Touchscreen>/primaryTouch/press"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Hold"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""f1a2b3c4-d5e6-789a-bcde-f01234567890"",
+                    ""path"": ""<Mouse>/leftButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Hold"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""a2b3c4d5-e6f7-89ab-cdef-012345678901"",
+                    ""path"": ""<Keyboard>/space"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Hold"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -309,9 +415,11 @@ public partial class @DeviceControls: IInputActionCollection2, IDisposable
         m_Device_TouchPosition = m_Device.FindAction("TouchPosition", throwIfNotFound: true);
         m_Device_ShakeSkip = m_Device.FindAction("ShakeSkip", throwIfNotFound: true);
         m_Device_SwipeUp = m_Device.FindAction("SwipeUp", throwIfNotFound: true);
-        m_Device_SwipeAny = m_Device.FindAction("SwipeAny", throwIfNotFound: true);
         m_Device_SkipQTE = m_Device.FindAction("SkipQTE", throwIfNotFound: true);
         m_Device_MoveHorizontal = m_Device.FindAction("MoveHorizontal", throwIfNotFound: true);
+        m_Device_Draw = m_Device.FindAction("Draw", throwIfNotFound: true);
+        m_Device_Tap = m_Device.FindAction("Tap", throwIfNotFound: true);
+        m_Device_Hold = m_Device.FindAction("Hold", throwIfNotFound: true);
     }
 
     ~@DeviceControls()
@@ -398,9 +506,11 @@ public partial class @DeviceControls: IInputActionCollection2, IDisposable
     private readonly InputAction m_Device_TouchPosition;
     private readonly InputAction m_Device_ShakeSkip;
     private readonly InputAction m_Device_SwipeUp;
-    private readonly InputAction m_Device_SwipeAny;
     private readonly InputAction m_Device_SkipQTE;
     private readonly InputAction m_Device_MoveHorizontal;
+    private readonly InputAction m_Device_Draw;
+    private readonly InputAction m_Device_Tap;
+    private readonly InputAction m_Device_Hold;
     /// <summary>
     /// Provides access to input actions defined in input action map "Device".
     /// </summary>
@@ -437,10 +547,6 @@ public partial class @DeviceControls: IInputActionCollection2, IDisposable
         /// </summary>
         public InputAction @SwipeUp => m_Wrapper.m_Device_SwipeUp;
         /// <summary>
-        /// Provides access to the underlying input action "Device/SwipeAny".
-        /// </summary>
-        public InputAction @SwipeAny => m_Wrapper.m_Device_SwipeAny;
-        /// <summary>
         /// Provides access to the underlying input action "Device/SkipQTE".
         /// </summary>
         public InputAction @SkipQTE => m_Wrapper.m_Device_SkipQTE;
@@ -448,6 +554,18 @@ public partial class @DeviceControls: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "Device/MoveHorizontal".
         /// </summary>
         public InputAction @MoveHorizontal => m_Wrapper.m_Device_MoveHorizontal;
+        /// <summary>
+        /// Provides access to the underlying input action "Device/Draw".
+        /// </summary>
+        public InputAction @Draw => m_Wrapper.m_Device_Draw;
+        /// <summary>
+        /// Provides access to the underlying input action "Device/Tap".
+        /// </summary>
+        public InputAction @Tap => m_Wrapper.m_Device_Tap;
+        /// <summary>
+        /// Provides access to the underlying input action "Device/Hold".
+        /// </summary>
+        public InputAction @Hold => m_Wrapper.m_Device_Hold;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -492,15 +610,21 @@ public partial class @DeviceControls: IInputActionCollection2, IDisposable
             @SwipeUp.started += instance.OnSwipeUp;
             @SwipeUp.performed += instance.OnSwipeUp;
             @SwipeUp.canceled += instance.OnSwipeUp;
-            @SwipeAny.started += instance.OnSwipeAny;
-            @SwipeAny.performed += instance.OnSwipeAny;
-            @SwipeAny.canceled += instance.OnSwipeAny;
             @SkipQTE.started += instance.OnSkipQTE;
             @SkipQTE.performed += instance.OnSkipQTE;
             @SkipQTE.canceled += instance.OnSkipQTE;
             @MoveHorizontal.started += instance.OnMoveHorizontal;
             @MoveHorizontal.performed += instance.OnMoveHorizontal;
             @MoveHorizontal.canceled += instance.OnMoveHorizontal;
+            @Draw.started += instance.OnDraw;
+            @Draw.performed += instance.OnDraw;
+            @Draw.canceled += instance.OnDraw;
+            @Tap.started += instance.OnTap;
+            @Tap.performed += instance.OnTap;
+            @Tap.canceled += instance.OnTap;
+            @Hold.started += instance.OnHold;
+            @Hold.performed += instance.OnHold;
+            @Hold.canceled += instance.OnHold;
         }
 
         /// <summary>
@@ -530,15 +654,21 @@ public partial class @DeviceControls: IInputActionCollection2, IDisposable
             @SwipeUp.started -= instance.OnSwipeUp;
             @SwipeUp.performed -= instance.OnSwipeUp;
             @SwipeUp.canceled -= instance.OnSwipeUp;
-            @SwipeAny.started -= instance.OnSwipeAny;
-            @SwipeAny.performed -= instance.OnSwipeAny;
-            @SwipeAny.canceled -= instance.OnSwipeAny;
             @SkipQTE.started -= instance.OnSkipQTE;
             @SkipQTE.performed -= instance.OnSkipQTE;
             @SkipQTE.canceled -= instance.OnSkipQTE;
             @MoveHorizontal.started -= instance.OnMoveHorizontal;
             @MoveHorizontal.performed -= instance.OnMoveHorizontal;
             @MoveHorizontal.canceled -= instance.OnMoveHorizontal;
+            @Draw.started -= instance.OnDraw;
+            @Draw.performed -= instance.OnDraw;
+            @Draw.canceled -= instance.OnDraw;
+            @Tap.started -= instance.OnTap;
+            @Tap.performed -= instance.OnTap;
+            @Tap.canceled -= instance.OnTap;
+            @Hold.started -= instance.OnHold;
+            @Hold.performed -= instance.OnHold;
+            @Hold.canceled -= instance.OnHold;
         }
 
         /// <summary>
@@ -622,13 +752,6 @@ public partial class @DeviceControls: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnSwipeUp(InputAction.CallbackContext context);
         /// <summary>
-        /// Method invoked when associated input action "SwipeAny" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
-        /// </summary>
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnSwipeAny(InputAction.CallbackContext context);
-        /// <summary>
         /// Method invoked when associated input action "SkipQTE" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
         /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
@@ -642,5 +765,26 @@ public partial class @DeviceControls: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnMoveHorizontal(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Draw" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnDraw(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Tap" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnTap(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Hold" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnHold(InputAction.CallbackContext context);
     }
 }

@@ -71,18 +71,19 @@ public class TimerController : MonoBehaviour
     {
         if (!isTimerRunning) return;
 
-        timeRemaining -= Time.deltaTime;
+        // Use unscaled time so timer continues during pause (timeScale = 0)
+        timeRemaining -= Time.unscaledDeltaTime;
 
         int currentSecond = Mathf.CeilToInt(timeRemaining);
-        
+
         // Check panic mode threshold
         bool shouldPanic = currentSecond <= panicThreshold && currentSecond > 0;
-        
+
         if (shouldPanic && !_inPanicMode)
         {
             _inPanicMode = true;
             OnPanicModeChanged?.Invoke(true);
-            
+
             if (UIManager.Instance != null)
                 UIManager.Instance.SetPanicMode(true);
         }
@@ -90,19 +91,19 @@ public class TimerController : MonoBehaviour
         {
             _inPanicMode = false;
             OnPanicModeChanged?.Invoke(false);
-            
+
             if (UIManager.Instance != null)
                 UIManager.Instance.SetPanicMode(false);
         }
 
-        // Pulse chromatic aberration during panic
+        // Pulse chromatic aberration during panic (use unscaled time)
         if (_inPanicMode)
         {
-            if (Time.time - _lastPulseTime >= pulseCooldown)
+            if (Time.unscaledTime - _lastPulseTime >= pulseCooldown)
             {
                 if (URPPostProcessing.Instance != null)
                     URPPostProcessing.Instance.PulseChromaticAberration();
-                _lastPulseTime = Time.time;
+                _lastPulseTime = Time.unscaledTime;
             }
         }
 
