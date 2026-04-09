@@ -17,10 +17,13 @@ public class CameraShakeManager : MonoBehaviour
     [SerializeField] private float wrongAnswerStrength = 0.25f;
     [SerializeField] private float gameOverStrength = 0.80f;
     [SerializeField] private float explosionStrength = 1.10f;
-    [SerializeField] private float qteFailStrength = 0.15f;
 
     [Header("Fallback")]
     [SerializeField] private Camera targetCamera;
+
+    [Header("Debug")]
+    [Tooltip("Enable debug logging (disable in production)")]
+    [SerializeField] private bool debugLogging = false;
 
     private Tween _shakeTween;
     private Vector3 _originalCameraPos;
@@ -41,9 +44,28 @@ public class CameraShakeManager : MonoBehaviour
 
         if (targetCamera == null)
             targetCamera = Camera.main;
-        
+
         if (targetCamera != null)
             _originalCameraPos = targetCamera.transform.position;
+
+        // Validate references
+        ValidateReferences();
+    }
+
+    /// <summary>
+    /// Validates that all required references are assigned.
+    /// </summary>
+    private void ValidateReferences()
+    {
+        if (impulseSource == null)
+        {
+            Debug.LogWarning("[CameraShakeManager] CinemachineImpulseSource not assigned! Will use DOTween fallback.");
+        }
+
+        if (targetCamera == null)
+        {
+            Debug.LogError("[CameraShakeManager] Target camera not assigned!");
+        }
     }
 
     private void OnEnable()
@@ -62,22 +84,26 @@ public class CameraShakeManager : MonoBehaviour
     [Button("Test Explosion")]
     public void ShakeMaamoulExplosion() => Shake(explosionStrength, 1.2f);
 
-    [Button("Test QTE Fail")]
-    public void ShakeQTEFail() => Shake(qteFailStrength, 0.3f);
-
     private void Shake(float strength, float duration)
     {
+        if (debugLogging)
+            Debug.Log($"[CameraShake] Shake called: strength={strength}, duration={duration}s");
+
         if (impulseSource != null)
         {
             impulseSource.m_ImpulseDefinition.m_ImpulseDuration = duration;
             impulseSource.GenerateImpulse(strength);
-            Debug.Log($"[CameraShake] Impulse: {strength}, {duration}s");
+            if (debugLogging)
+                Debug.Log($"[CameraShake] ✓ Impulse fired: {strength}, {duration}s");
             return;
         }
 
+        if (debugLogging)
+            Debug.LogWarning("[CameraShakeManager] No CinemachineImpulseSource, using DOTween fallback");
+
         if (targetCamera == null)
         {
-            Debug.LogWarning("[CameraShake] No camera!");
+            Debug.LogError("[CameraShake] No camera assigned!");
             return;
         }
 
@@ -89,6 +115,7 @@ public class CameraShakeManager : MonoBehaviour
             .SetUpdate(true)
             .OnComplete(() => targetCamera.transform.position = _originalCameraPos);
 
-        Debug.Log($"[CameraShake] DOTween fallback");
+        if (debugLogging)
+            Debug.Log($"[CameraShake] ✓ DOTween fallback started");
     }
 }

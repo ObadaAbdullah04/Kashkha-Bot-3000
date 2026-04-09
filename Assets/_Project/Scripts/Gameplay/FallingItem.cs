@@ -14,11 +14,11 @@ public class FallingItem : MonoBehaviour
 {
     [Header("Item Type")]
     [Tooltip("True = Eidia (good, catch it). False = Ma'amoul (bad, avoid it)")]
-    public bool isEidia = true;
+    [SerializeField] private bool isEidia = true;
 
     [Header("Movement")]
     [Tooltip("How fast this item falls (world units per second)")]
-    public float fallSpeed = 8f;
+    [SerializeField] private float fallSpeed = 8f;
 
     [Header("References")]
     [Tooltip("Cached BoxCollider2D for performance")]
@@ -26,7 +26,6 @@ public class FallingItem : MonoBehaviour
 
     private bool _isCaught = false;
     private float _bottomY = -10f;
-    // private bool _hasBottomBound = false;
 
     private void Awake()
     {
@@ -39,7 +38,6 @@ public class FallingItem : MonoBehaviour
         if (Camera.main != null)
         {
             _bottomY = Camera.main.ViewportToWorldPoint(new Vector3(0, -0.1f, 0)).y;
-            // _hasBottomBound = true;
         }
     }
 

@@ -40,23 +40,7 @@ public class URPPostProcessing : MonoBehaviour
         }
     }
 
-    private void OnEnable()
-    {
-        TimerController.OnPanicModeChanged += HandlePanicMode;
-    }
-
-    private void OnDisable()
-    {
-        TimerController.OnPanicModeChanged -= HandlePanicMode;
-    }
-
     private void Start() => Initialize();
-
-    private void HandlePanicMode(bool isPanic)
-    {
-        if (isPanic) EnablePanicMode();
-        else DisablePanicMode();
-    }
 
     private void Initialize()
     {

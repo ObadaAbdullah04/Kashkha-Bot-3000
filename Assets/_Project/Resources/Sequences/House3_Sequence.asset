@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bd4d624f0efdc9242b4178af86fc4ce1, type: 3}
+  m_Name: House3_Sequence
+  m_EditorClassIdentifier: 
+  HouseLevel: 3
+  Sequence:
+  - Type: 0
+    ElementID: Q21
+    DesignerNote: 
+  - Type: 1
+    ElementID: QTE_Shake_Cup
+    DesignerNote: 
+  - Type: 0
+    ElementID: Q23
+    DesignerNote: 
+  - Type: 2
+    ElementID: Cutscene_Respect_Elder
+    DesignerNote: 
+  - Type: 0
+    ElementID: Q25
+    DesignerNote: 
+  - Type: 1
+    ElementID: QTE_Swipe_Food
+    DesignerNote: 
+  - Type: 0
+    ElementID: Q27
+    DesignerNote: 
+  - Type: 2
+    ElementID: Cutscene_Family_Gather
+    DesignerNote: 
+  - Type: 0
+    ElementID: Q29
+    DesignerNote: 
+  - Type: 1
+    ElementID: QTE_Hold_Respect
+    DesignerNote: 
+  - Type: 0
+    ElementID: Q22
+    DesignerNote: 

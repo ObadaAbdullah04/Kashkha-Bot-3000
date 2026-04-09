@@ -23,9 +23,11 @@
 
 ### The Pitch
 
-The player is a broke Jordanian developer who builds an AI robot to endure family Eid visits in their place. The player acts as the robot's "social intelligence module," picking dialogue options and performing quick-time events (QTEs) to collect **Eidia** (Eid money) and survive forced hospitality.
+The player is a broke Jordanian developer who builds an AI robot to endure family Eid visits in their place. The player acts as the robot's "social intelligence module," picking dialogue options via swipe cards to collect **Eidia** (Eid money) and survive forced hospitality.
 
 **Cultural Trojan Horse:** Every wrong answer teaches real Jordanian etiquette via a feedback card.
+
+**Key Mechanic:** Swipe cards with **randomized correctness** - players don't know which option is correct until after swiping, making each encounter unpredictable and replayable.
 
 ### Key Technologies
 
@@ -68,28 +70,15 @@ A **4-House sequence** with escalating difficulty and a push-your-luck climax:
 
 | Meter | Behavior | Failure State |
 |-------|----------|---------------|
-| **Social Battery** | Drains on rude answers, QTE failures, hospitality acceptance | Reaches 0% = **Social Shutdown** (Game Over) |
-| **Stomach Meter** | Fills when accepting hospitality offers (scaled by strike count) | Reaches 100% = **Ma'amoul Explosion** (Game Over) |
+| **Social Battery** | Drains on rude answers, wrong swipes, hospitality acceptance | Reaches 0% = **Social Shutdown** (Game Over) |
+| **Stomach Meter** | Fills when accepting hospitality offers | Reaches 100% = **Ma'amoul Explosion** (Game Over) |
 
-#### The "Three-Strike" Hospitality System
-Inside each house, the game tracks how many times the player **accepts** food/drink offers:
-
-| Strike | Narrative | Eidia | Stomach | Battery |
-|--------|-----------|-------|---------|---------|
-| **1st (Polite)** | Accepting gracefully | ✅ Full Reward | +Normal (×1.0) | -5 (minimum drain) |
-| **2nd (Pushing It)** | Accepting but visibly struggling | ✅ Full Reward | +1.5× Normal | -10 |
-| **3rd (Exhausted)** | Completely overwhelmed | ❌ No Reward | +3.0× Normal | -25 |
-
-**Strike counter resets at the start of each new house.**
+**Simplified System:** Meters are straightforward - no complex strike multipliers. Correct answers drain less battery and earn more rewards. Incorrect answers drain more battery and earn less.
 
 #### Panic Timer
-A shrinking bar (**8s → 6s → 4s** depending on house) forcing quick dialogue choices. When timer reaches panic threshold (3s), URP chromatic aberration pulses.
+Each swipe card has its own per-card timer (default 8s). When timer reaches panic threshold (3s), text turns red and chromatic aberration pulses.
 
-#### Cultural QTEs
-Physical traditions simulated via inputs:
-- **Accelerometer shake** → Coffee refusal (threshold: 15, House 4: 22.5)
-- **Swipe up** → Hand-on-Heart greeting (time limit: 2s, House 4: 1s + extra taps)
-- **Swipe away twice** → Polite Tug-of-War (swipes: 2, House 4: 3)
+**Note:** Timer system simplified - each card manages its own timer independently. No global timer conflicts.
 
 #### Meta-Progression
 **"Tech Scrap"** is the persistent currency awarded after runs (even on death). Used in the **"Wardrobe"** menu to buy permanent outfits that act as stat modifiers:
@@ -101,32 +90,31 @@ Physical traditions simulated via inputs:
 
 Dialogue and Encounter data parsed from **CSV files** at runtime. All pacing controlled via spreadsheet - **NO HARDCODING**.
 
-#### CSV Columns (28 Total)
+#### CSV Columns - New Simplified Structure (41-53 columns depending on card count)
 
-| Column | Description | Example Values |
-|--------|-------------|----------------|
-| `ID` | Unique encounter identifier | `H1_T1_MarriageQuestion` |
+| Column Range | Description | Example Values |
+|--------------|-------------|----------------|
+| `ID` | Unique encounter identifier | `1`, `2`, `3` |
 | `HouseLevel` | Difficulty tier (1-4) | `1`, `2`, `3`, `4` |
-| `SequenceOrder` | Order within house (flexible gauntlet) | `1`, `2`, `3`, `4`, `5` |
-| `EncounterType` | Type of encounter | `Trivia`, `HospitalityOffer` |
-| `MiniGameAfter` | Trigger mini-game after this encounter? | `true`, `false` |
-| `QTEType` | Physical gesture required | `None`, `CoffeeShake`, `HandOnHeart`, `TugOfWar` |
-| `QTEInputType` | Input method | `Shake`, `Tap`, `Swipe`, `Hold` |
-| `QTECount` | Number of inputs required | `1`, `2`, `3` |
-| `QTETimeLimit` | Time to complete QTE | `2`, `3`, `4` |
-| `QTEDirection` | Swipe direction (if applicable) | `Up`, `Down`, `Left`, `Right`, `_` |
-| `QTEHoldDuration` | Hold duration in seconds | `1`, `1.5`, `2` |
+| `SequenceOrder` | Order within house | `1`, `2`, `3` |
 | `Speaker` | Character name | `خالة أم محمد` |
-| `QuestionAR` | Arabic question/offer text | Arabic string |
-| `OfferTextAR` | Hospitality offer display text | Arabic string |
-| `Choice1AR` / `Choice2AR` / `Choice3AR` | Arabic choice texts | Arabic strings |
-| `Choice1IsCorrect` / `Choice2IsCorrect` / `Choice3IsCorrect` | Boolean correctness flags | `1` or `0` |
-| `Choice1Feedback` / `Choice2Feedback` / `Choice3Feedback` | Arabic educational feedback | Arabic strings |
-| `BatteryDelta` | Social battery change (always applies) | `-5`, `-15`, `-25` |
-| `StomachDelta` | Stomach meter change (Hospitality only) | `0`, `+15`, `+25` |
-| `EidiaReward` | Money earned | `0-30` |
-| `ScrapReward` | Meta-currency earned | `5-25` |
-| `ColorHex` | Floating text color | `#FFD700` |
+| `CardCount` | Number of swipe cards (2-3) | `2`, `3` |
+| **Per Card (12 columns each)** | | |
+| `Cn_Question` | Arabic question/situation text | Arabic string |
+| `Cn_OptionR` | Right swipe option text | Arabic string |
+| `Cn_OptionL` | Left swipe option text | Arabic string |
+| `Cn_IsRightCorrect` | Which side is correct (randomized at load) | `1` or `0` |
+| `Cn_CorrectFB` | Feedback on correct answer | Arabic string |
+| `Cn_IncorrectFB` | Feedback on incorrect answer | Arabic string |
+| `Cn_CorrectBat` | Battery change on correct | `-5`, `-10` |
+| `Cn_IncorrectBat` | Battery change on incorrect | `-15`, `-25` |
+| `Cn_CorrectEid` | Eidia reward on correct | `10`, `15` |
+| `Cn_IncorrectEid` | Eidia reward on incorrect | `5`, `8` |
+| `Cn_CorrectScr` | Scrap reward on correct | `3`, `5` |
+| `Cn_IncorrectScr` | Scrap reward on incorrect | `2`, `3` |
+| `ColorHex` | UI accent color | `#FFD700` |
+
+**Key Change:** Correctness is **randomized at CSV load time** (50/50 chance), so players can't memorize "right = correct" - each playthrough feels different!
 
 ---
 
@@ -139,41 +127,36 @@ Dialogue and Encounter data parsed from **CSV files** at runtime. All pacing con
 | Pattern | Usage |
 |---------|-------|
 | **Singleton Managers** | `GameManager`, `UIManager`, `DataManager`, `MeterManager`, `AudioManager`, `SaveManager` |
-| **State Machine** | Enum-based (`GameState { Wardrobe, Encounter, QTE, InterHouseMiniGame, Crossroads, House4Boss, GameOver, Win }`) |
-| **Events** | Delta-based events for meters (`OnBatteryModified`, `OnStomachModified`, `OnOfferAccepted`) |
+| **State Machine** | Enum-based (`GameState { Wardrobe, HouseHub, Encounter, InterHouseMiniGame, GameOver, Win }`) |
+| **Events** | Delta-based events for meters (`OnBatteryModified`, `OnStomachModified`) |
 | **Persistence** | JSON serialization for Tech Scrap and Eidia tracking |
 
 ### Core Systems
 
 #### GameManager.cs
 - State machine orchestration
-- 4-House progression with flexible sequencing
-- Crossroads decision logic (`EvaluateCrossroads()`, `ChooseEscape()`, `ChooseRiskHouse4()`)
-- House 4 Boss Mode activation
-- Hospitality strike listener (`HandleOfferAccepted()`)
+- 4-House progression with House Hub navigation
+- Wardrobe mid-run visit with return-to-hub support
+- Mini-game slot assignment system
+- **Simplified:** Removed all QTE logic, crossroads, House 4 boss state
 
 #### MeterManager.cs
+- **Simplified:** Removed three-strike hospitality system
 - Battery/Stomach tracking with clamping [0, 100]
-- **Three-Strike Hospitality counter** (resets per house)
-- Multiplier application via events
-- House 4 boss mode flag and multipliers
+- Direct modify methods (no multipliers)
+- House 4 insane mode multipliers (optional)
 
 #### UIManager.cs
-- Encounter display (3-choice cards)
-- **CrossroadsPanel** (Escape/Risk buttons)
-- Feedback animations (DOTween)
-- Panic mode visual effects
+- **Simplified:** Removed all ChoiceCard dead code
+- Wardrobe panel with return-to-hub button support
+- House Hub panel management
+- Swipe encounter panel
 
-#### TimerController.cs
-- Per-house timer durations (exposed to Inspector)
-- Panic mode threshold and pulse effects
-- **NO HARDCODING** - all values tunable
-
-#### QTEController.cs
-- Multi-input QTE support (shake, tap, swipe, hold)
-- Per-QTE-type configuration
-- House 4 modifiers (time ×0.5, +1 input, higher thresholds)
-- **NO HARDCODING** - all values tunable
+#### SwipeEncounterManager.cs
+- Per-card timer system (independent, no conflicts)
+- Card stack management
+- Randomized correctness resolution
+- Feedback display
 
 ### Performance & Optimization
 
@@ -205,21 +188,21 @@ Kashkha-Bot-3000/
 │   │   ├── Art/                       ← Sprites, UI Elements, Materials
 │   │   ├── Audio/                     ← Voice, SFX, Music
 │   │   ├── Controls/                  ← Input System assets (DeviceControls.inputactions)
-│   │   ├── Data/                      ← CSV Files (Encounters.csv, Outfits.csv)
+│   │   ├── Data/                      ← CSV Files (SampleEncounters.csv, Outfits.csv)
 │   │   ├── Editor/                    ← Custom editor scripts
 │   │   ├── Fonts/                     ← RTLTMP Font Assets
 │   │   ├── Prefabs/
 │   │   │   ├── MiniGames/             ← CatchGame_Canvas, Eidia_Pickup, Maamoul_Obstacle
-│   │   │   ├── UI/                    ← FeedbackCard, EncounterChoice, CrossroadsPanel
+│   │   │   ├── UI/                    ← SwipeCard, FeedbackCard, HouseHubPanel
 │   │   │   └── Pooled Objects/        ← Object pool prefabs
 │   │   ├── Resources/                 ← Runtime-loadable assets
 │   │   ├── Scenes/
 │   │   │   └── Core_Scene.unity       ← Main game scene
 │   │   ├── Scripts/
 │   │   │   ├── Core/                  ← GameManager, UIManager, DataManager, etc.
-│   │   │   ├── Data/                  ← EncounterData, SaveData
-│   │   │   ├── Gameplay/              ← MeterManager, QTEController, TimerController, CatchMiniGame
-│   │   │   └── UI/                    ← UIManager, ChoiceCard, FloatingText
+│   │   │   ├── Data/                  ← EncounterData, SwipeCardData, SaveData
+│   │   │   ├── Gameplay/              ← MeterManager, SwipeEncounterManager, MiniGameManager
+│   │   │   └── UI/                    ← UIManager, SwipeCard, FloatingText
 │   │   ├── Settings/                  ← URP and project settings
 │   │   └── ARCHITECTURE.md            ← Comprehensive architecture documentation
 │   ├── Plugins/
@@ -286,10 +269,10 @@ Scripts are organized into four main categories under `Assets/_Project/Scripts/`
 
 | Folder | Responsibility |
 |--------|----------------|
-| **Core/** | Central systems: `GameManager`, `UIManager`, `DataManager`, `AudioManager`, `CameraShakeManager`, `SaveManager`, `HapticFeedback`, `URPPostProcessing` |
-| **Data/** | Data models: `EncounterData`, `SaveData` |
-| **Gameplay/** | Game mechanics: `MeterManager`, `QTEController`, `TimerController`, `CatchMiniGame`, `FallingItem`, `HospitalityStrike` |
-| **UI/** | UI components: `UIManager`, `ChoiceCard`, `FloatingText`, `FloatingTextManager` |
+| **Core/** | Central systems: `GameManager`, `UIManager`, `DataManager`, `AudioManager`, `CameraShakeManager`, `SaveManager`, `HouseHubManager`, `MiniGameManager` |
+| **Data/** | Data models: `EncounterData`, `SwipeCardData`, `SaveData`, `OutfitData` |
+| **Gameplay/** | Game mechanics: `MeterManager`, `SwipeEncounterManager`, `CatchMiniGame`, `PathDrawingGame`, `MiniGameType` |
+| **UI/** | UI components: `UIManager`, `SwipeCard`, `FloatingText`, `FloatingTextManager`, `OutfitSlot` |
 
 ### Coding Standards
 
@@ -359,164 +342,266 @@ The project includes VS Code configuration (`.vscode/`) with:
 ## Notes
 
 - **Robust Data:** CSV parsing uses Regex to safely handle Arabic punctuation and quoted strings.
-- **Physical QTEs:** Real accelerometer shake and swipe gesture detection implemented for mobile.
+- **Randomized Correctness:** Swipe cards randomly assign correct answer to left or right (50/50) at CSV load time - players can't memorize patterns!
+- **Simplified Meters:** No three-strike hospitality system - just direct battery/stomach modifications.
+- **Per-Card Timers:** Each swipe card has its own independent timer - no global timer conflicts.
 - **Anti-Spam:** UI selection lock prevents double-clicking during encounter transitions.
 - **Persistence:** High scores and meta-currency are saved to `persistentDataPath/save_data.json`.
 - **All Arabic text** uses RTLTMPro for proper rendering.
 - **Main scene** `Core_Scene.unity` is the entry point for the game.
-- **Mini-Game:** World Space 2D Physics approach with Time Attack mode (10-15s per house)
+- **Mini-Games:** Manually assigned per slot in MiniGameManager inspector (Slot 1, 2, 3).
 - **Input System:** DeviceControls.inputactions with MoveHorizontal action (Left/Right Arrow, A/D, Touch Screen Halves)
 - **Player Basket:** Spawned at runtime via prefab, uses Rigidbody2D (Kinematic) + BoxCollider2D (Is Trigger)
 - **Item Prefabs:** Eidia_Pickup and Maamoul_Obstacle with FallingItem component for self-contained collision
-- **Three-Strike Hospitality:** Per-house tracking, resets at StartHouse(), multipliers applied via event
-- **Crossroads Decision:** After House 3, player chooses Escape (Win) or Risk House 4 (Boss Mode)
-- **House 4 Boss Mode:** Fast timers (×0.5), extra QTE inputs (+1), higher shake thresholds (×1.5), double stomach/battery penalties
+- **House 4 Insane Mode:** Optional fast mode with double stomach/battery penalties
 - **NO HARDCODING:** All timers, thresholds, and multipliers exposed to Inspector via [SerializeField]
+- **Wardrobe Mid-Run:** Players can visit wardrobe and return to hub without losing progress
+- **House Hub:** Sequential navigation with mini-game nodes between houses
+- **Transitions:** DOTween fade animations with Arabic text overlays between houses
+- **Screen Flash:** Full-screen color flashes for correct/wrong answer feedback
 
 ---
 
-## Recent Changes (Phase 5 Complete)
+## Phase 6 Refactoring Summary
 
-### Phase 5: Enhanced Gameplay & Replayability ✅
+### What Was Removed:
+- ❌ All QTE systems (QTEController, QTEEncounterManager, QTEType, etc.)
+- ❌ TimerController (converted to per-card timers in SwipeEncounterManager)
+- ❌ Three-strike hospitality system (simplified to direct modifications)
+- ❌ Timeline integration systems (TimelineEncounterPlayer, CustomSignalReceiver)
+- ❌ Crossroads decision logic (simplified game flow)
+- ❌ House 4 Boss state (kept as optional insane mode)
+- ❌ All ChoiceCard references (replaced by swipe cards)
+- ❌ MiniGameAfter column from CSV (mini-games assigned in inspector)
 
-#### 5A: Input-Based QTE System (MVP - 4 Types)
-| Feature | Implementation | Inspector Tunable |
-|---------|---------------|-------------------|
-| **Shake QTE** | Accelerometer detection (threshold: 15) | `shakeThreshold`, `shakeDuration`, `shakeCount` |
-| **Tap QTE** | Touch/spacebar tap detection | `tapTimeWindow`, `tapCount` |
-| **Swipe QTE** | 8-directional swipe detection | `swipeTimeLimit`, `swipeDistance`, `QTEDirection` |
-| **Hold QTE** | Hold-and-release timing | `holdDuration`, `holdReleaseWindow` |
+### What Was Added:
+- ✅ **Randomized Correctness:** Swipe cards randomly assign correct answers
+- ✅ **Option Display:** Cards show left/right option texts (not just accept/reject)
+- ✅ **Mini-Game Assignment:** Inspector-based slot assignment (no CSV dependency)
+- ✅ **Wardrobe Return:** Mid-run wardrobe visits preserve all progress
+- ✅ **House Hub Navigation:** Visual node-based progression system
+- ✅ **Per-Card Timers:** Independent timers eliminate conflicts
+- ✅ **Simplified MeterManager:** Clean, direct modification system
+- ✅ **SampleEncounters.csv:** Test data with new structure
 
-**New Files:**
-- `QTEInputType.cs` - Enum: `Shake`, `Tap`, `Swipe`, `Hold`
-- `SwipeDirection.cs` - Enum: `Up`, `Down`, `Left`, `Right`
-- `EncounterData.cs` - 5 new fields: `QTEInputType`, `QTECount`, `QTETimeLimit`, `QTEDirection`, `QTEHoldDuration`
-- `DataManager.cs` - 28-column CSV parsing with backward compatibility
+### New CSV Structure:
+- **41-53 columns** (depending on card count: 2 or 3)
+- **12 columns per card:** Question, OptionR, OptionL, IsRightCorrect, CorrectFB, IncorrectFB, CorrectBat, IncorrectBat, CorrectEid, IncorrectEid, CorrectScr, IncorrectScr
+- **Randomized at load:** IsRightCorrect is overridden by 50/50 randomization
 
-**CSV Format (28 columns):**
-```csv
-ID,HouseLevel,SequenceOrder,EncounterType,MiniGameAfter,QTEType,QTEInputType,QTECount,QTETimeLimit,QTEDirection,QTEHoldDuration,Speaker,...
-3,1,3,HospitalityOffer,false,CoffeeRefuse,Shake,3,3,_,0,عمو أبو أحمد,...
+### Updated GameState Enum:
+```csharp
+public enum GameState
+{
+    Wardrobe,           // Pre-run or mid-run visit
+    HouseHub,           // Between houses: Navigate to next house
+    Encounter,          // Swipe card encounter
+    InterHouseMiniGame, // Between houses (1→2, 2→3, 3→4)
+    GameOver,
+    Win
+}
 ```
 
-**House 4 Boss Modifiers:**
-- Time: ×0.5
-- Inputs: +1 extra
-- Shake threshold: ×1.5
-- Hold duration: ×1.5
+### Files Deleted:
+1. QTEEncounterManager.cs
+2. QTEEncounterData.cs
+3. TimelineEncounterPlayer.cs
+4. CustomSignalReceiver.cs
+5. QTEController.cs
+6. QTEType.cs
+7. TimerController.cs
 
-#### 5B: Encounter Shuffling System
-| Feature | Implementation |
-|---------|---------------|
-| **Algorithm** | Fisher-Yates shuffle with run seed |
-| **Reproducibility** | Same seed = same order (daily challenge ready) |
-| **Per-House Limits** | House 1: 5, House 2: 6, House 3: 7, House 4: 8 (all) |
-| **Backward Compatible** | Works with 23-col and 28-col CSV |
-
-**Code Location:** `GameManager.cs` → `LoadNextEncounter()`, `GetEncountersPerHouse()`
-
-#### 5C: Path-Drawing Maze Mini-Game
-| Feature | Implementation | Inspector Field |
-|---------|---------------|-----------------|
-| **Line Drawing** | Touch/mouse input with LineRenderer | `lineWidth`, `lineColor` |
-| **Collision Detection** | OverlapCircleAll along line segments | `collisionCheckInterval` |
-| **Battery System** | 4 hits maximum (❤️ display) | `maxHits` |
-| **Cooldown** | 1-second freeze after collision | `collisionCooldown` |
-| **Line Rejection** | Clear entire line on hit | Auto (no field) |
-| **Visual Markers** | Green circle (start), Red circle (end) | `startPoint`, `endPoint` |
-| **Spawn Patterns** | 5 predictable patterns | `spawnPattern` enum |
-
-**New Files:**
-- `PathDrawingGame.cs` - Main mini-game logic
-- `Obstacle.cs` - Auto-collider setup, time penalty
-- `ObstacleSpawnPattern.cs` - Enum: `Diagonal`, `ZigZag`, `Cluster`, `Spread`, `Custom`
-
-**Spawn Patterns:**
-| Pattern | Description | Difficulty |
-|---------|-------------|------------|
-| **Diagonal** | Alternating left/right across path | Medium |
-| **ZigZag** | Sine wave pattern | Hard |
-| **Cluster** | Middle bottleneck (40% of path) | Strategic |
-| **Spread** | Even distribution | Fair |
-| **Custom** | Manual positioning (editor) | Designer choice |
-
-**Gameplay Flow:**
-1. Click GREEN circle to start drawing
-2. Draw path to RED circle (goal)
-3. Avoid PURPLE obstacles
-4. Hit obstacle → Line clears + 1s cooldown + lose 1 heart
-5. After cooldown → Must return to GREEN circle
-6. Lose 4 hearts OR time = 0 → Game Over
-
-**Integration:** `MiniGameManager.cs` → `StartPathDrawingGame()`, difficulty scaling per house
-
-### Phase 4: Polish & Juice (Complete)
-
-#### Floating Text System (NEW)
-1. **FloatingTextManager.cs** - Object pooling manager with 20+ pooled objects
-2. **FloatingText.cs** - Individual text prefab with CanvasGroup alpha fading
-3. **Event Integration** - Auto-spawns on meter changes and mini-game rewards
-4. **Performance** - Zero runtime allocations, DOTween recycling enabled
-
-#### Wardrobe Meta-Progression (NEW)
-1. **WardrobeManager.cs** - Outfit purchase, equip, and stat application
-2. **OutfitData.cs** - Data structure for outfit definitions
-3. **Outfits.csv** - 3 launch outfits (Battery, Stomach, Timer bonuses)
-4. **OutfitSlot.cs** - UI slot component with purchase/equip logic
-5. **UIManager.cs** - Wardrobe panel integration with refresh system
-6. **SaveData.cs** - Extended to track owned outfits and equipped state
-
-### Phase 3: Core Architecture (Complete)
-
-#### Core Architecture Updates
-1. **GameState enum** - Added `Wardrobe`, `Crossroads`, `House4Boss`
-2. **HospitalityStrike enum** - New enum for three-strike system
-3. **MeterManager.cs** - Strike counter, multipliers, House 4 mode, `OnOfferAccepted` event
-4. **GameManager.cs** - Full 4-house flow, Crossroads logic, strike-based reward system
-5. **UIManager.cs** - CrossroadsPanel with Escape/Risk buttons, Wardrobe panel support
-6. **TimerController.cs** - Per-house durations, panic mode settings, outfit bonus integration
-7. **QTEController.cs** - Per-QTE-type config, House 4 modifiers (all inspector-tunable)
-8. **MiniGameManager.cs** - Added `OnMiniGameEnded` event for floating text
-9. **CatchMiniGame.cs** - Passes rewards to MiniGameManager for UI feedback
-
-### System Features
-
-#### Three-Strike Hospitality Logic
-| Strike | Narrative | Eidia | Stomach | Battery |
-|--------|-----------|-------|---------|---------|
-| **1st (Polite)** | Accepting gracefully | ✅ Full Reward | +Normal (×1.0) | -5 |
-| **2nd (Pushing)** | Accepting but struggling | ✅ Full Reward | +1.5× Normal | -10 |
-| **3rd (Exhausted)** | Completely overwhelmed | ❌ NO REWARD | +3.0× Normal | -25 |
-
-#### Outfit Stat Bonuses
-| Outfit | Cost | Bonus | Arabic Name |
-|--------|------|-------|-------------|
-| **Extended Battery** | 50 Scrap | Starting battery +10% | بطارية موسعة |
-| **Titanium Stomach** | 75 Scrap | Stomach fill rate -10% | معدة تيتانيوم |
-| **Panic Timer Chip** | 100 Scrap | Timer duration +1s | رقاقة التريث |
-
-#### Floating Text Colors
-| Type | Gain Color | Loss Color |
-|------|------------|------------|
-| **Battery** | Cyan (0.2, 0.8, 1) | Red (1, 0.3, 0.3) |
-| **Stomach** | Red (bad) | Cyan (good) |
-| **Eidia** | Gold (1, 0.84, 0) | N/A |
-| **Scrap** | Bronze (0.8, 0.6, 0.4) | N/A |
-
-### Inspector Tunables (No Hardcoding)
-- Timer durations per house (8s/7s/6s/4s)
-- QTE thresholds, time limits, input counts (Shake, Tap, Swipe, Hold)
-- Panic mode threshold and pulse cooldown
-- Hospitality strike multipliers (Eidia, Stomach, Battery)
-- House 4 boss mode modifiers (time ×0.5, inputs +1, thresholds ×1.5)
-- Floating text pool size, offsets, colors, animation durations
-- Outfit stat values and costs (via CSV)
-- **NEW:** Encounter shuffle limits per house (5/6/7/8)
-- **NEW:** Path-Drawing settings (maxHits, collisionCooldown, spawnPattern)
-- **NEW:** Path-Drawing collision check interval, line width, goal distance
+### Files Modified:
+- SwipeCardData.cs - Complete restructure with randomized correctness
+- SwipeCard.cs - Updated UI fields for option display
+- SwipeEncounterManager.cs - Uses IsRightCorrect for reward resolution
+- MeterManager.cs - Simplified (removed strike system)
+- DataManager.cs - New CSV parser (12 cols per card)
+- EncounterData.cs - Removed MiniGameAfter field
+- GameManager.cs - Removed QTE/crossroads logic, added wardrobe return
+- UIManager.cs - Removed dead ChoiceCard code
+- HouseHubManager.cs - Added mini-game slot assignment support
+- MiniGameManager.cs - Added manual slot assignment system
 
 ---
 
-**Last Updated:** Phase 5 - Enhanced Gameplay & Replayability Complete
+## Phase 8 Refactoring Summary
+
+### What Was Removed:
+- ❌ Encounter-based structure (replaced with question pools)
+- ❌ SequenceOrder column from CSV (no longer needed)
+- ❌ Fixed encounter count per house (replaced with dynamic pool picking)
+- ❌ Single-wave encounters (now multi-wave)
+
+### What Was Added:
+- ✅ **Question Pools:** CSV contains 10 questions per house pool, shuffled and picked at runtime
+- ✅ **Wave System:** Questions split into waves (Wave 1 → Intermission → Wave 2 → ...)
+- ✅ **Streak Combos:** Simple dynamic bonuses (+3 for 2-streak, +5 for 3-streak, +8 for 4+)
+- ✅ **Inspector Controls:** Configurable questions-to-pick & waves per house
+- ✅ **Intermission Hook:** Placeholder for future QTE/scene between waves
+- ✅ **BaseEid Field:** Base reward before streak bonus (simpler reward calculation)
+- ✅ **WaveNumber Field:** Assigns questions to specific waves
+
+### New CSV Structure:
+- **14 columns per question:** ID, HouseLevel, Speaker, CardName, Question, OptionCorrect, OptionWrong, CorrectSide, CorrectFB, IncorrectFB, CorrectBat, IncorrectBat, BaseEid, WaveNumber
+- **Pool-driven:** 10 questions per house in CSV, inspector decides how many to pick
+- **Wave assignments:** Questions tagged with WaveNumber (1, 2, 3, etc.)
+
+### Inspector Configuration (GameManager):
+```csharp
+house1QuestionsToPick = 6, house1Waves = 2    // Pick 6 from 10, split into 2 waves
+house2QuestionsToPick = 8, house2Waves = 2    // Pick 8 from 10, split into 2 waves
+house3QuestionsToPick = 9, house3Waves = 3    // Pick 9 from 10, split into 3 waves
+house4QuestionsToPick = 10, house4Waves = 2   // Pick 10 from 10, split into 2 waves
+```
+
+### Files Modified:
+- **SwipeCardData.cs** — Added WaveNumber, BaseEid; removed CorrectEidiaReward/IncorrectEidiaReward
+- **DataManager.cs** — Parse into pools by HouseLevel, shuffle support, GetShuffledQuestionsForHouse()
+- **SwipeEncounterManager.cs** — Wave system, streak tracking, intermission hook, PlayWaveIntermission()
+- **GameManager.cs** — Inspector controls for questions/waves per house, wave splitting logic
+- **SampleEncounters.csv** — 40 questions total (10 per house), wave assignments, culturally validated
+
+### Wave Flow Example (House 1):
+```
+[Enter House 1]
+→ Load pool of 10 questions (HouseLevel = 1)
+→ Shuffle & pick 6 questions
+→ Split into 2 waves (3 questions each)
+
+=== WAVE 1 ===
+Question 1: "تفضلي معمول مع الشاي!" (Random from pick)
+→ Timer: 8s → Swipe → Green/Red flash + Floating text
+Question 2: "ليش ما تزورينا أكثر؟" (Random from pick)
+→ Timer: 8s → Swipe → Green/Red flash + Floating text
+Question 3: "شو صار بالدراسة؟" (Random from pick)
+→ Timer: 8s → Swipe → ✅ Correct! Streak: 3 → Bonus: +5 Eidia
+
+[INTERMISSION: Placeholder for future QTE/scene]
+
+=== WAVE 2 ===
+Question 4: "العيد إيد؟" (Random from pick)
+→ Timer: 8s → Swipe → Green/Red flash + Floating text
+Question 5: "بدك شاي؟" (Random from pick)
+→ Timer: 8s → Swipe → ✅ Correct! Streak: 2
+Question 6: "كيف حالك؟" (Random from pick)
+→ Timer: 8s → Swipe → ❌ Wrong! Streak reset
+
+[HOUSE 1 COMPLETE!]
+Total Eidia: 48 (Base: 43 + Streak Bonus: 5)
+```
+
+### Streak Combo System:
+| Streak | Bonus Eidia | Description |
+|--------|-------------|-------------|
+| 1 | +0 | First correct answer (no bonus yet) |
+| 2 | +3 | Two consecutive correct answers |
+| 3 | +5 | Three consecutive correct answers |
+| 4+ | +8 | Four or more consecutive correct answers |
+
+**Note:** Streak resets on wrong answer or timeout!
+
+---
+
+---
+
+## Recent Changes (Phase 8 Refactoring Complete)
+
+### What Was Removed:
+- ❌ Scrap currency from swipe cards (moved to mini-games only)
+- ❌ Stomach meter from swipe cards (moved to QTEs later)
+- ❌ ColorHex column from CSV (unnecessary)
+- ❌ Randomized correctness (now explicit in CSV via CorrectSide)
+- ❌ 12-column card structure (simplified to 10 columns)
+
+### What Was Added:
+- ✅ **Card Name Field:** Displayed as title above question (e.g., "خال كريم")
+- ✅ **Explicit Correct Answers:** CSV defines CorrectSide (1=Right, 0=Left) - no randomization
+- ✅ **Neutral Drag Tint:** Blue/gray tint during swipe (NO green/red spoilers!)
+- ✅ **Result Feedback Flash:** Green flash for correct, Red flash for incorrect AFTER swipe
+- ✅ **DOTween Effects:** Elastic entrance animation, smooth drag tilt, fly-off on swipe
+- ✅ **Floating Text:** Eidia rewards spawn floating text automatically
+- ✅ **Variable Card Count:** Support 1-20 cards per encounter (CSV-driven)
+- ✅ **Validated Jordanian Questions:** Culturally accurate Q&A with proper context
+
+### New CSV Structure:
+- **10 columns per card** (down from 12):
+  - Name, Question, OptionCorrect, OptionWrong, CorrectSide, CorrectFB, IncorrectFB, CorrectBat, IncorrectBat, CorrectEid, IncorrectEid
+- **Total columns:** 5 (header) + (10 × CardCount)
+  - 4 cards = 45 columns
+  - 5 cards = 55 columns
+  - 10 cards = 105 columns
+- **No ColorHex, Scrap, or Stomach fields**
+
+### Updated Swipe Flow:
+1. Card shows with **name + question + two options** (player sees BOTH)
+2. Player drags card → **Neutral blue/gray tint** (no spoilers!)
+3. Player drops card → **Green/Red flash** based on correctness
+4. **Feedback text** appears with explanation
+5. **Floating text** spawns for Eidia reward
+6. Next card shows → Repeat
+
+### Files Modified:
+- **SwipeCardData.cs** — Added CardName, removed scrap/stomach, renamed option fields
+- **DataManager.cs** — New CSV parser (10 cols/card), removed randomization
+- **SwipeCard.cs** — Added DOTween effects, neutral drag tint, result feedback flash
+- **SwipeEncounterManager.cs** — Removed randomization, added floating text, updated event signature
+- **GameManager.cs** — Removed scrap references, simplified card processing
+- **SaveManager.cs** — Updated AddRunRewards signature (eidia only)
+- **SampleEncounters.csv** — Complete rewrite with validated Jordanian questions (5 encounters, 5 cards each)
+
+### DOTween Card Effects:
+| Effect | Timing | DOTween Code |
+|--------|--------|--------------|
+| **Entrance Pop** | Card shows | `DOScale(Vector3.zero → Vector3.one, 0.5s).SetEase(Ease.OutBack)` |
+| **Drag Tilt** | During drag | `DORotate(0, 0, ±25°)` based on x-delta |
+| **Neutral Tint** | During drag | `DOColor(Color.blue, 0.2s)` gradient (no spoilers!) |
+| **Result Flash** | After drop | `DOColor(green/red, 0.2s) → DOColor(white, 0.4s)` |
+| **Fly Away** | Swipe complete | `DOLocalMove(off-screen, 0.4s).SetEase(Ease.OutBack)` |
+| **Snap Back** | Swipe cancelled | `DOLocalMove(center, 0.3s).SetEase(Ease.OutBack)` |
+
+### Cultural Validation:
+All questions now follow Jordanian etiquette:
+- ✅ Accepting hospitality (coffee, food) = **Correct**
+- ✅ Respecting elders = **Correct**
+- ✅ Polite excuses = **Better than direct rejection**
+- ✅ Family bonds = **Highly valued**
+- ✅ Traditional customs = **Properly represented**
+
+---
+
+---
+
+## Recent Changes (Phase 8 Refactoring Complete)
+
+### Phase 8 REFACTORED: Wave-Based Question Pool System with Streak Combos
+
+#### Summary
+- **Question Pools:** 10 questions per house in CSV, shuffled and picked at runtime
+- **Wave System:** Questions split into waves with intermission hooks between them
+- **Streak Combos:** Simple dynamic bonuses for consecutive correct answers
+- **Inspector Controls:** Configure questions-to-pick & waves per house independently
+
+#### Key Features
+| Feature | Description |
+|---------|-------------|
+| **Pool & Pick** | CSV has 10 questions per house, runtime picks N and shuffles |
+| **Multi-Wave** | Questions split into waves (Wave 1 → Intermission → Wave 2) |
+| **Streak Bonus** | +3 for 2-streak, +5 for 3-streak, +8 for 4+ consecutive correct |
+| **Intermission Hook** | Placeholder for future QTE/scene between waves |
+| **Configurable** | Inspector controls for pick count & waves per house |
+
+#### Updated Architecture
+```
+Wardrobe → House Hub → House 1 → Wave 1 → Intermission → Wave 2 → House Hub → House 2
+                            ↓                        ↓
+                      Shuffle & Pick           Streak Bonus
+```
+
+**Key Insight:** Questions are now pooled and shuffled per house, split into waves with intermissions - giving you full control over pacing and future QTE/scene integration!
+
+---
+
+**Last Updated:** Phase 8 Refactoring Complete - Wave-Based Question Pools with Streak Combos
 **Maintained By:** Core Development Team
-**Status:** ✅ Complete Vertical Slice - Ready for Android Build / Content Expansion / Visual Polish
+**Status:** ✅ Solid Foundation - Ready for QTE/Scene Integration & Content Expansion

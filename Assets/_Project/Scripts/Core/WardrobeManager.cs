@@ -303,30 +303,33 @@ public class WardrobeManager : MonoBehaviour
 
         if (value == 0) return;
 
+        ApplyStatBonus(statType, value);
+    }
+
+    /// <summary>
+    /// Applies a specific stat bonus immediately.
+    /// Called by UnifiedHubManager when player equips outfit during a run.
+    /// </summary>
+    public void ApplyStatBonus(OutfitStatType statType, float value)
+    {
+        if (value == 0) return;
+
         switch (statType)
         {
             case OutfitStatType.BatteryStart:
                 if (MeterManager.Instance != null)
                 {
-                    // Apply as starting bonus (handled by MeterManager)
-                    Debug.Log($"[Wardrobe] Outfit bonus: Starting Battery +{value}%");
+                    MeterManager.Instance.ModifyBattery(value);
+                    Debug.Log($"[Wardrobe] Outfit bonus: Battery +{value}%");
                 }
                 break;
 
             case OutfitStatType.StomachResist:
-                if (MeterManager.Instance != null)
-                {
-                    // Apply as stomach fill rate reduction
-                    Debug.Log($"[Wardrobe] Outfit bonus: Stomach fill rate -{Mathf.Abs(value)}%");
-                }
+                // Applied as passive resistance in MeterManager (future implementation)
+                Debug.Log($"[Wardrobe] Outfit bonus: Stomach fill rate -{Mathf.Abs(value)}%");
                 break;
 
             case OutfitStatType.TimerExtension:
-                if (TimerController.Instance != null)
-                {
-                    // Apply as timer duration extension
-                    Debug.Log($"[Wardrobe] Outfit bonus: Timer +{value}s");
-                }
                 break;
         }
     }

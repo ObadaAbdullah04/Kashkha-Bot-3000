@@ -589,7 +589,7 @@ public class PathDrawingGame : MonoBehaviour
 
             if (GameManager.Instance != null)
             {
-                GameManager.Instance.OnMiniGameComplete(eidiaReward, scrapReward);
+                GameManager.Instance.OnMiniGameComplete(eidiaReward);
             }
         }
         else
@@ -601,7 +601,7 @@ public class PathDrawingGame : MonoBehaviour
             // Partial rewards (consolation)
             if (GameManager.Instance != null)
             {
-                GameManager.Instance.OnMiniGameComplete(0, 1);
+                GameManager.Instance.OnMiniGameComplete(0);
             }
         }
 

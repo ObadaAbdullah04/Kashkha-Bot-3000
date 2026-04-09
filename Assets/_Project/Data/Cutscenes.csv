@@ -1,0 +1,13 @@
+ID,HouseLevel,CutsceneType,Text,Duration,AnimationType
+Cutscene_FinishCoffee,1,TextReveal,"شربت القهوة وخلصت! ☕",3,FadeIn
+Cutscene_Aunt_Smile,1,CharacterReaction,"خالة أم محمد ابتسمت! 😊",2,Bounce
+Cutscene_Enter_House,1,CameraPan,"دخلت بيت خالة أم محمد 🏠",3,Slide
+Cutscene_Uncle_Nod,2,TextReveal,"عمو أبو أحمد هز برأسه 👍",2,FadeIn
+Cutscene_Coffee_Pour,2,CharacterReaction,"عمو أبو أحمد صبّ القهوة ☕",3,Typewriter
+Cutscene_Respect_Elder,3,Dialogue,"خالة نادية: الأدب أهم شي! 🙏",4,Slide
+Cutscene_Family_Gather,3,ReactionShot,"العيلة كلها اجتمعت! 👨‍👩‍👧‍👦",3,Bounce
+Cutscene_Boss_Intro,4,CameraPan,"الجنون: جاهز للتحدي؟! 💀",4,Pulse
+Cutscene_Boss_Win,4,CharacterReaction,"الجنون: أحسنت! قوي! 💪",3,Bounce
+Cutscene_Boss_Fail,4,ReactionShot,"الجنون: ضعيف! حاول مرة ثانية! 😈",3,Pulse
+Cutscene_Celebration,1,TextReveal,"أحسنت! خلصت البيت! 🎉",3,FadeIn
+Cutscene_Timeout,2,TextReveal,"خلص الوقت! ⏰",2,Pulse

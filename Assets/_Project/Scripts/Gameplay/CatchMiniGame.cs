@@ -47,10 +47,7 @@ public class CatchMiniGame : MonoBehaviour
 
     [Header("Movement Settings")]
     [Tooltip("Player basket horizontal movement speed (world units per second)")]
-    public float moveSpeed = 8f;
-
-    [Tooltip("How fast items fall (world units per second)")]
-    public float fallSpeed = 8f;
+    [SerializeField] private float moveSpeed = 8f;
 
     [Header("Input")]
     [Tooltip("Input Action for horizontal movement (assign MoveHorizontal from DeviceControls)")]
@@ -58,15 +55,15 @@ public class CatchMiniGame : MonoBehaviour
 
     [Header("Spawner Settings")]
     [Tooltip("Time between item spawns (lower = more items)")]
-    public float spawnInterval = 0.8f;
+    [SerializeField] private float spawnInterval = 0.8f;
 
     [Tooltip("Chance to spawn Eidia (good item) vs Ma'amoul (bad item)")]
     [Range(0f, 1f)]
-    public float eidiaSpawnChance = 0.75f;
+    [SerializeField] private float eidiaSpawnChance = 0.75f;
 
     [Header("World Space References")]
     [Tooltip("Player basket prefab to instantiate at runtime (standard 2D sprite, NOT UI)")]
-    public GameObject playerBasketPrefab;
+    [SerializeField] private GameObject playerBasketPrefab;
 
     [Tooltip("Y position for player basket in world space")]
     [SerializeField] private float _playerY = -3f;
@@ -79,6 +76,18 @@ public class CatchMiniGame : MonoBehaviour
 
     [Tooltip("Falling item prefab (Ma'amoul - standard 2D sprite)")]
     [SerializeField] private GameObject fallingBadItemPrefab;
+
+    [Header("Feedback Settings")]
+    [SerializeField] private Vector3 catchPunchScale = new Vector3(0.2f, 0.2f, 1f);
+    [SerializeField] private float catchPunchDuration = 0.3f;
+    [SerializeField] private float avoidShakeDuration = 0.3f;
+    [SerializeField] private float avoidShakeStrength = 0.3f;
+    [SerializeField] private int avoidShakeVibrato = 22;
+    [SerializeField] private float avoidShakeRandomness = 90f;
+
+    [Header("Reward Balancing")]
+    [Tooltip("Scrap earned per score point (e.g., 0.5 = 1 scrap per 2 points)")]
+    [SerializeField] private float scrapPerPoint = 0.5f;
 
     // World space references (set at runtime)
     private Transform playerBasket;
@@ -447,7 +456,7 @@ public class CatchMiniGame : MonoBehaviour
             // Visual feedback - punch effect
             if (playerBasket != null)
             {
-                playerBasket.DOPunchScale(new Vector3(0.2f, 0.2f, 1f), 0.3f).SetUpdate(true);
+                playerBasket.DOPunchScale(catchPunchScale, catchPunchDuration).SetUpdate(true);
             }
 
             // Play catch sound
@@ -468,7 +477,7 @@ public class CatchMiniGame : MonoBehaviour
             // Visual feedback - shake effect
             if (playerBasket != null)
             {
-                playerBasket.DOShakeScale(0.3f, 0.3f, 22, 90).SetUpdate(true);
+                playerBasket.DOShakeScale(avoidShakeDuration, avoidShakeStrength, avoidShakeVibrato, avoidShakeRandomness).SetUpdate(true);
             }
 
             // Play avoid sound
@@ -493,19 +502,16 @@ public class CatchMiniGame : MonoBehaviour
 #endif
 
         // Closing the Economic Loop (Phase 3)
-        // Balancing: 1 Eidia per score, 1 Scrap per 2 score (min 1 if score > 0)
-        int scrapReward = _score > 0 ? Mathf.Max(1, _score / 2) : 0;
+        // Balancing: 1 Eidia per score
+        int scrapReward = _score > 0 ? Mathf.Max(1, Mathf.FloorToInt(_score * scrapPerPoint)) : 0;
 
         if (GameManager.Instance != null)
         {
-            GameManager.Instance.OnMiniGameComplete(_score, scrapReward);
+            GameManager.Instance.OnMiniGameComplete(_score);
         }
 
         if (MiniGameManager.Instance != null)
             MiniGameManager.Instance.EndMiniGame(_score, scrapReward);
-
-        // Note: OnMiniGameComplete will call StartNextHouse() internally
-        // Don't call StartNextHouse() here to avoid double-calling
 
         Destroy(gameObject);
     }

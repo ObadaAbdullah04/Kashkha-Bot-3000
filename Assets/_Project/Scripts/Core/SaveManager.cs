@@ -31,15 +31,14 @@ public class SaveManager : MonoBehaviour
         }
     }
 
-    public void AddRunRewards(int scrap, int eidia)
+    public void AddRunRewards(int eidia)
     {
-        currentSaveData.TotalScrap += scrap;
         currentSaveData.TotalEidia += eidia;
         if (eidia > currentSaveData.HighScore)
             currentSaveData.HighScore = eidia;
 
         SaveGame();
-        Debug.Log($"[Save] Saved! Scrap: {currentSaveData.TotalScrap}, Eidia: {currentSaveData.TotalEidia}");
+        Debug.Log($"[Save] Saved! Eidia: {currentSaveData.TotalEidia}");
     }
 
     [Button("💾 Save")]

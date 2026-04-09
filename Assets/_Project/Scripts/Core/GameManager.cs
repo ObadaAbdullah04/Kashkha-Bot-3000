@@ -1,12 +1,18 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using DG.Tweening;
 using NaughtyAttributes;
 
 /// <summary>
-/// Core game state machine and encounter loop manager.
-/// Handles the 4-House Gauntlet flow including Crossroads decision and House 4 Boss Mode.
+/// PHASE 6 (FINAL): Core game state machine for swipe-card encounters.
+/// Flow: Wardrobe → Unified Hub → Houses (Swipe Cards) → Mini-Game → Win/Game Over
+/// 
+/// UNIFIED HUB ARCHITECTURE:
+/// - Single panel with 3 tabs: Houses, Wardrobe, Upgrades
+/// - No mid-run wardrobe visits (wardrobe is just a tab in the hub)
+/// - Clean state machine: Hub appears after each house/mini-game
 /// </summary>
 public class GameManager : MonoBehaviour
 {
@@ -33,74 +39,41 @@ public class GameManager : MonoBehaviour
 
     #endregion
 
-    #region Inspector Fields - Tunable Values
+    #region Inspector Fields
 
-    [Header("3-House Progression")]
-    [Tooltip("Eidia threshold to unlock Crossroads (Win condition)")]
+    [Header("Win Condition")]
+    [Tooltip("Eidia needed to win")]
     [SerializeField] private int eidiaToWin = 100;
 
-    [Header("House 4 Boss Mode")]
-    [Tooltip("If true, House 4 is optional (Crossroads choice). If false, always play House 4.")]
-    [SerializeField] private bool house4IsOptional = true;
+    [Header("House Transition Texts")]
+    [SerializeField] private string house1TransitionText = "السفر إلى بيت خالة أم محمد...";
+    [SerializeField] private string house2TransitionText = "الذهاب إلى بيت عمو أبو أحمد...";
+    [SerializeField] private string house3TransitionText = "زيارة بيت جدو الحاج...";
+    [SerializeField] private string house4TransitionText = "⚠️ دخول بيت الجنون...";
+    [SerializeField] private string defaultTransitionText = "السفر...";
 
     #endregion
 
-    #region Game State
+    #region State
 
-    [Header("Game State")]
     [SerializeField] private GameState currentState = GameState.Wardrobe;
+    [SerializeField] private int currentHouseLevel = 1;
+    [SerializeField] private bool isHouse4Active = false;
+    [SerializeField] private int currentRunSeed = 0;
+    [SerializeField] private bool[] completedHouses = new bool[5];
+    [SerializeField] private bool house4Unlocked = false;
+    [SerializeField] private int accumulatedEidia = 0;
+    [SerializeField] private int encounterStreakBonus = 0; // Streak bonus from current encounter
 
     public static Action<GameState> OnStateChanged;
     public static Action OnRunStarted;
     public GameState CurrentState => currentState;
-
-    #endregion
-
-    #region 4-House Progression
-
-    [Header("Run Progression")]
-    [SerializeField] private int currentHouseLevel = 1;
-    [SerializeField] private int encounterIndex = 0;
-    [SerializeField] private bool isHouse4Active = false;
-    [SerializeField] private int currentRunSeed = 0;
-
-    [Header("Encounter Limits Per House")]
-    [Tooltip("Number of encounters to load in House 1")]
-    [SerializeField] private int encountersPerHouse1 = 5;
-    [Tooltip("Number of encounters to load in House 2")]
-    [SerializeField] private int encountersPerHouse2 = 6;
-    [Tooltip("Number of encounters to load in House 3")]
-    [SerializeField] private int encountersPerHouse3 = 7;
-
     public int CurrentHouseLevel => currentHouseLevel;
     public bool IsHouse4Active => isHouse4Active;
     public int CurrentRunSeed => currentRunSeed;
-
-    // Cached Random instance for shuffle reproducibility and GC optimization
-    private System.Random _cachedRng;
-    private int _cachedRngSeed;
-
-    #endregion
-
-    #region Encounter Loop
-
-    [Header("Encounter Loop")]
-    [SerializeField] private EncounterData currentEncounter;
-    public EncounterData CurrentEncounter => currentEncounter;
-    [SerializeField] private bool isQTEActive = false;
-    [SerializeField] private bool isProcessingChoice = false;
-
-    #endregion
-
-    #region Run Stats
-
-    [Header("Run Stats")]
-    [SerializeField] private int accumulatedEidia = 0;
-    [SerializeField] private int accumulatedScrap = 0;
-
     public int AccumulatedEidia => accumulatedEidia;
-    public int AccumulatedScrap => accumulatedScrap;
     public int EidiaToWin => eidiaToWin;
+    public int EncounterStreakBonus => encounterStreakBonus;
 
     #endregion
 
@@ -108,20 +81,28 @@ public class GameManager : MonoBehaviour
 
     private void OnEnable()
     {
-        QTEController.OnQTEResolved += HandleQTEResult;
+        SwipeEncounterManager.OnCardProcessed += HandleCardProcessed;
+        UnifiedHubManager.OnStartNextHouse += EnterHouse;
+        UnifiedHubManager.OnStartMiniGame += HandleMiniGameSelected;
+        UnifiedHubManager.OnPlayAgain += HandlePlayAgain;
+        UnifiedHubManager.OnOutfitEquipped += HandleOutfitEquipped;
+        TransitionPlayer.OnTransitionComplete += OnTransitionFinished;
         MeterManager.OnBatteryDrained += HandleBatteryDrained;
         MeterManager.OnStomachFull += HandleStomachFull;
-        TimerController.OnTimeRanOut += HandleTimeRanOut;
-        MeterManager.OnOfferAccepted += HandleOfferAccepted;
+        HouseFlowController.OnHouseCompleted += HandleHouseFlowCompleted;
     }
 
     private void OnDisable()
     {
-        QTEController.OnQTEResolved -= HandleQTEResult;
+        SwipeEncounterManager.OnCardProcessed -= HandleCardProcessed;
+        UnifiedHubManager.OnStartNextHouse -= EnterHouse;
+        UnifiedHubManager.OnStartMiniGame -= HandleMiniGameSelected;
+        UnifiedHubManager.OnPlayAgain -= HandlePlayAgain;
+        UnifiedHubManager.OnOutfitEquipped -= HandleOutfitEquipped;
+        TransitionPlayer.OnTransitionComplete -= OnTransitionFinished;
         MeterManager.OnBatteryDrained -= HandleBatteryDrained;
         MeterManager.OnStomachFull -= HandleStomachFull;
-        TimerController.OnTimeRanOut -= HandleTimeRanOut;
-        MeterManager.OnOfferAccepted -= HandleOfferAccepted;
+        HouseFlowController.OnHouseCompleted -= HandleHouseFlowCompleted;
     }
 
     #endregion
@@ -130,9 +111,9 @@ public class GameManager : MonoBehaviour
 
     public void ChangeState(GameState newState)
     {
-        GameState previousState = currentState;
+        GameState previous = currentState;
         currentState = newState;
-        Debug.Log($"[GameManager] State: {previousState} → {currentState}");
+        Debug.Log($"[GameManager] State: {previous} → {currentState}");
         OnStateChanged?.Invoke(currentState);
     }
 
@@ -140,217 +121,331 @@ public class GameManager : MonoBehaviour
 
     #region Run Lifecycle
 
-    /// <summary>
-    /// Starts a new run from House 1. Called from Wardrobe UI.
-    /// </summary>
     public void StartRun()
     {
         currentHouseLevel = 1;
-        encounterIndex = 0;
         isHouse4Active = false;
-        isQTEActive = false;
-        isProcessingChoice = false;
         accumulatedEidia = 0;
-        accumulatedScrap = 0;
-
-        // NEW: Generate run seed for shuffle reproducibility
+        encounterStreakBonus = 0;
+        completedHouses = new bool[5];
+        house4Unlocked = false;
         currentRunSeed = UnityEngine.Random.Range(int.MinValue, int.MaxValue);
+
         Debug.Log($"[GameManager] Run Seed: {currentRunSeed}");
 
-        // Ensure FloatingTextManager is enabled for run feedback
-        if (FloatingTextManager.Instance != null)
-            FloatingTextManager.Instance.gameObject.SetActive(true);
+        FloatingTextManager.Instance?.gameObject.SetActive(true);
+        MeterManager.Instance?.ResetMeters();
 
-        // Apply outfit bonuses before resetting meters
-        if (TimerController.Instance != null)
-            TimerController.Instance.ApplyOutfitBonus();
-
-        if (MeterManager.Instance != null)
-            MeterManager.Instance.ResetMeters();
+        // Apply equipped outfit stats at run start
+        if (WardrobeManager.Instance != null)
+            WardrobeManager.Instance.ApplyOutfitBonuses();
 
         OnRunStarted?.Invoke();
-        ChangeState(GameState.Encounter);
-        StartHouse(1);
-    }
-
-    /// <summary>
-    /// Initializes a new house. Resets strike counter and loads first encounter.
-    /// </summary>
-    public void StartHouse(int houseLevel)
-    {
-        currentHouseLevel = houseLevel;
-        encounterIndex = 0;
-
-        if (MeterManager.Instance != null)
-            MeterManager.Instance.ResetHouseCounters();
-
-        Debug.Log($"[GameManager] Starting House {currentHouseLevel}!");
-
-        // Small delay before first encounter
-        DOTween.Sequence()
-            .AppendInterval(1f)
-            .OnComplete(() =>
-            {
-                ChangeState(GameState.Encounter);
-                LoadNextEncounter();
-            });
+        
+        // Show unified hub (Houses tab) to start the run
+        ShowUnifiedHub();
     }
 
     #endregion
 
-    #region Encounter Loop
+    #region House Management
 
-    private void LoadNextEncounter()
-    {
-        isProcessingChoice = false;
-
-        if (DataManager.Instance == null || DataManager.Instance.allEncounters.Count == 0)
-        {
-            Debug.LogError("[GameManager] No encounters available!");
-            return;
-        }
-
-        // Get encounters for current house (SHUFFLE - no ordering)
-        var houseEncounters = DataManager.Instance.allEncounters
-            .Where(e => e.HouseLevel == currentHouseLevel)
-            .ToList();
-
-        if (houseEncounters.Count == 0)
-        {
-            Debug.LogError($"[GameManager] No encounters for House {currentHouseLevel}!");
-            EndHouse();
-            return;
-        }
-
-        // SHUFFLE: Fisher-Yates algorithm with run seed (cached Random for GC optimization)
-        if (_cachedRng == null || _cachedRngSeed != currentRunSeed)
-        {
-            _cachedRng = new System.Random(currentRunSeed);
-            _cachedRngSeed = currentRunSeed;
-        }
-
-        int n = houseEncounters.Count;
-        while (n > 1)
-        {
-            n--;
-            int k = _cachedRng.Next(n + 1);
-            var temp = houseEncounters[k];
-            houseEncounters[k] = houseEncounters[n];
-            houseEncounters[n] = temp;
-        }
-        
-        // TAKE: Only load X encounters per house (configurable)
-        int encountersToLoad = GetEncountersPerHouse(currentHouseLevel);
-        var selectedEncounters = houseEncounters.Take(encountersToLoad).ToList();
-
-        // Check if we've completed all selected encounters
-        if (encounterIndex >= selectedEncounters.Count)
-        {
-            EndHouse();
-            return;
-        }
-
-        // Load encounter
-        currentEncounter = selectedEncounters[encounterIndex];
-
-        Debug.Log($"[GameManager] House {currentHouseLevel} | Encounter {encounterIndex + 1}/{selectedEncounters.Count}: {currentEncounter.QuestionAR} (Type: {currentEncounter.EncounterType}, Seed: {currentRunSeed})");
-
-        // Branch based on encounter type
-        if (currentEncounter.EncounterType == EncounterType.HospitalityOffer)
-        {
-            StartHospitalityOffer();
-        }
-        else
-        {
-            StartTriviaEncounter();
-        }
-    }
-
-    private void StartTriviaEncounter()
-    {
-        // Display 3-choice trivia question
-        UIManager.Instance.DisplayEncounter(currentEncounter);
-        
-        if (TimerController.Instance != null)
-            TimerController.Instance.StartTimer(currentHouseLevel);
-        
-        ChangeState(GameState.Encounter);
-    }
-
-    private void StartHospitalityOffer()
-    {
-        // Display hospitality offer (food/drink pressure)
-        UIManager.Instance.DisplayEncounter(currentEncounter);
-
-        // Check if this offer has a QTE
-        if (!string.IsNullOrEmpty(currentEncounter.QTEType) && currentEncounter.QTEType != "None")
-        {
-            StartQTESequence(currentEncounter.QTEType);
-        }
-        else
-        {
-            // No QTE: Just display choices and start timer
-            if (TimerController.Instance != null)
-                TimerController.Instance.StartTimer(currentHouseLevel);
-        }
-
-        ChangeState(GameState.Encounter);
-    }
-    
     /// <summary>
-    /// Gets the number of encounters to load for the current house.
-    /// House 1/2/3 use inspector fields, House 4 loads all 8.
+    /// PHASE 9.6: Starts a house using self-driving coroutine flow.
+    /// Loads the house sequence and hands control to HouseFlowController.
     /// </summary>
-    private int GetEncountersPerHouse(int houseLevel)
+    public void StartHouse(int houseLevel)
+    {
+        currentHouseLevel = houseLevel;
+        encounterStreakBonus = 0;
+        MeterManager.Instance?.ResetHouseCounters();
+
+        Debug.Log($"[GameManager] Starting House {currentHouseLevel}!");
+
+        if (TransitionPlayer.Instance != null)
+        {
+            string text = GetHouseTransitionText(houseLevel);
+            TransitionPlayer.Instance.PlayTransition(text, () =>
+            {
+                ChangeState(GameState.Encounter);
+                StartHouseFlowController(houseLevel);
+            });
+        }
+        else
+        {
+            ChangeState(GameState.Encounter);
+            StartHouseFlowController(houseLevel);
+        }
+    }
+
+    /// <summary>
+    /// PHASE 9.6: Starts the self-driving house flow coroutine.
+    /// No Timeline needed — HouseFlowController drives itself.
+    /// </summary>
+    private void StartHouseFlowController(int houseLevel)
+    {
+        if (HouseFlowController.Instance == null)
+        {
+            Debug.LogError("[GameManager] HouseFlowController not available! Cannot start house.");
+            EndHouse();
+            return;
+        }
+
+        HouseSequenceData sequence = GetHouseSequenceForLevel(houseLevel);
+
+        if (sequence == null || sequence.Sequence == null || sequence.Sequence.Count == 0)
+        {
+            Debug.LogError($"[GameManager] No sequence data for House {houseLevel}!");
+            EndHouse();
+            return;
+        }
+
+        // Start the self-driving coroutine
+        StartCoroutine(HouseFlowController.Instance.PlayHouseSequence(houseLevel, sequence));
+    }
+
+    /// <summary>
+    /// PHASE 9.6: Gets the HouseSequenceData for a house level.
+    /// Loads from Resources folder (Sequences/House{level}_Sequence.asset).
+    /// Falls back to auto-generated test sequence if not found.
+    /// </summary>
+    private HouseSequenceData GetHouseSequenceForLevel(int houseLevel)
+    {
+        // Resources.Load searches relative to any Resources/ folder
+        string path = $"Sequences/House{houseLevel}_Sequence";
+        HouseSequenceData sequence = Resources.Load<HouseSequenceData>(path);
+
+        if (sequence == null)
+        {
+            Debug.LogWarning($"[GameManager] HouseSequenceData not found at '{path}'. Generating test sequence.");
+            sequence = ScriptableObject.CreateInstance<HouseSequenceData>();
+            sequence.name = $"House{houseLevel}_Test";
+            sequence.HouseLevel = houseLevel;
+            sequence.Sequence = CreateTestSequence(houseLevel);
+        }
+
+        return sequence;
+    }
+
+    /// <summary>
+    /// PHASE 9.6: Creates a test sequence from CSV question pool.
+    /// Used as fallback when HouseSequenceData assets aren't available.
+    /// </summary>
+    private List<SequenceElement> CreateTestSequence(int houseLevel)
+    {
+        var elements = new List<SequenceElement>();
+
+        var questions = DataManager.Instance?.GetQuestionsForHouse(houseLevel);
+        if (questions != null && questions.Count > 0)
+        {
+            // Pick first 4 questions as a simple test
+            for (int i = 0; i < Mathf.Min(4, questions.Count); i++)
+            {
+                elements.Add(new SequenceElement(ElementType.Question, questions[i].ID));
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"[GameManager] No questions in CSV for House {houseLevel}!");
+            // Add a dummy element so the sequence isn't empty
+            elements.Add(new SequenceElement(ElementType.Question, "Q1"));
+        }
+
+        return elements;
+    }
+
+    private string GetHouseTransitionText(int houseLevel)
     {
         return houseLevel switch
         {
-            1 => encountersPerHouse1,
-            2 => encountersPerHouse2,
-            3 => encountersPerHouse3,
-            4 => 8, // House 4: All encounters (boss mode)
-            _ => 5
+            1 => house1TransitionText,
+            2 => house2TransitionText,
+            3 => house3TransitionText,
+            4 => house4TransitionText,
+            _ => defaultTransitionText
         };
     }
 
     #endregion
 
-    #region Choice Processing & Hospitality Strike System
+    #region Swipe Card Processing
 
-    public void ProcessChoice(int choiceIndex)
+    private void HandleCardProcessed(float batteryDelta, int eidia, bool wasCorrect)
     {
-        if (isQTEActive || isProcessingChoice)
+        accumulatedEidia += eidia;
+
+        PlayFeedbackEffects(wasCorrect);
+
+        Debug.Log($"[GameManager] Card: {(wasCorrect ? "CORRECT" : "INCORRECT")} | +{eidia} Eidia");
+    }
+
+    /// <summary>
+    /// PHASE 9: Called when HouseFlowController completes a house.
+    /// </summary>
+    private void HandleHouseFlowCompleted(int houseLevel)
+    {
+        Debug.Log($"[GameManager] House {houseLevel} flow completed via Timeline!");
+        
+        // Get streak bonus if applicable
+        if (SwipeEncounterManager.Instance != null)
         {
-            Debug.LogWarning("[GameManager] Cannot process choice - QTE active or already processing!");
+            encounterStreakBonus = SwipeEncounterManager.Instance.GetStreakBonus();
+            if (encounterStreakBonus > 0)
+            {
+                accumulatedEidia += encounterStreakBonus;
+                Debug.Log($"[GameManager] Streak bonus: +{encounterStreakBonus} Eidia!");
+            }
+        }
+
+        // House complete - move to next
+        EndHouse();
+    }
+
+    #endregion
+
+    #region House Completion
+
+    private void EndHouse()
+    {
+        if (currentHouseLevel >= 1 && currentHouseLevel <= 4)
+            completedHouses[currentHouseLevel] = true;
+
+        if (isHouse4Active)
+        {
+            Debug.Log("[GameManager] House 4 cleared! INSANE MODE COMPLETE!");
+            WinGame(isHouse4Clear: true);
             return;
         }
 
-        if (currentState != GameState.Encounter && currentState != GameState.House4Boss)
+        Debug.Log($"[GameManager] House {currentHouseLevel} complete! Going to Hub...");
+
+        // Mark this house as complete in the Unified Hub
+        UnifiedHubManager.Instance?.MarkHouseComplete(currentHouseLevel);
+
+        // Show hub for next action
+        ShowUnifiedHub();
+    }
+
+    public void OnMiniGameComplete(int eidiaEarned)
+    {
+        accumulatedEidia += eidiaEarned;
+        Debug.Log($"[GameManager] Mini-game: +{eidiaEarned} Eidia");
+        ShowUnifiedHub();
+    }
+
+    #endregion
+
+    #region Unified Hub Flow
+
+    /// <summary>
+    /// Shows the unified hub panel and updates game state.
+    /// Called after each house/mini-game completion.
+    /// </summary>
+    private void ShowUnifiedHub()
+    {
+        ChangeState(GameState.HouseHub);
+        int next = currentHouseLevel + 1;
+
+        if (currentHouseLevel >= 3)
+            house4Unlocked = true;
+
+        UnifiedHubManager.Instance?.InitializeHub(next, completedHouses, house4Unlocked);
+        UIManager.Instance?.ShowUnifiedHub();
+
+        Debug.Log($"[GameManager] Unified Hub. Next: {next}, House 4: {house4Unlocked}");
+    }
+
+    private void EnterHouse(int houseLevel)
+    {
+        if (houseLevel > currentHouseLevel + 1 && !completedHouses[houseLevel - 1])
         {
-            Debug.LogWarning($"[GameManager] Cannot process choice - wrong state: {currentState}");
+            Debug.LogWarning($"[GameManager] Cannot enter House {houseLevel} - previous not complete!");
             return;
         }
 
-        isProcessingChoice = true;
+        UIManager.Instance?.HideUnifiedHub();
+        StartHouse(houseLevel);
+    }
 
-        if (currentEncounter == null)
+    private void HandleMiniGameSelected(int miniGameIndex)
+    {
+        Debug.Log($"[GameManager] Mini-game {miniGameIndex + 1} selected from Hub.");
+        
+        UIManager.Instance?.HideUnifiedHub();
+        ChangeState(GameState.InterHouseMiniGame);
+        
+        // Start the assigned mini-game
+        MiniGameManager.Instance?.StartAssignedMiniGame(miniGameIndex);
+    }
+
+    private void HandlePlayAgain()
+    {
+        Debug.Log("[GameManager] Play Again!");
+        SaveManager.Instance?.AddRunRewards(accumulatedEidia);
+        UIManager.Instance?.HideUnifiedHub();
+        StartRun();
+    }
+
+    private void HandleOutfitEquipped(int outfitID)
+    {
+        Debug.Log($"[GameManager] Outfit equipped (ID: {outfitID}). Applying stats...");
+        
+        // Apply the outfit's stat bonus immediately
+        if (WardrobeManager.Instance != null)
+            WardrobeManager.Instance.ApplyOutfitBonuses();
+    }
+
+    private void OnTransitionFinished()
+    {
+#if UNITY_EDITOR
+        Debug.Log("[GameManager] Transition finished.");
+#endif
+    }
+
+    #endregion
+
+    #region Game Over / Win
+
+    private void HandleBatteryDrained() => HandleGameOver("Battery");
+    private void HandleStomachFull() => HandleGameOver("Stomach");
+
+    private void HandleGameOver(string reason)
+    {
+        string msg = reason switch
         {
-            Debug.LogWarning("[GameManager] No current encounter!");
-            isProcessingChoice = false;
-            return;
-        }
+            "Battery" => "Game Over: Social Shutdown",
+            "Stomach" => "Game Over: Ma'amoul Explosion",
+            _ => "Game Over!"
+        };
 
-        if (TimerController.Instance != null)
-            TimerController.Instance.StopTimer();
+        Debug.Log($"[GameManager] {msg}");
+        SaveRewardsAndGameOver(reason);
+    }
 
-        bool isCorrect = GetChoiceCorrectness(choiceIndex);
-        string feedback = GetChoiceFeedback(choiceIndex);
+    public void WinGame(bool isHouse4Clear = false)
+    {
+        string msg = isHouse4Clear
+            ? "INSANE MODE CLEAR! You survived House 4!"
+            : "You survived Eid! Congratulations!";
 
-        Debug.Log($"[GameManager] Choice {choiceIndex}: isCorrect={isCorrect}");
+        Debug.Log($"[GameManager] {msg}");
+        SaveManager.Instance?.AddRunRewards(accumulatedEidia);
+        ChangeState(GameState.Win);
+    }
 
-        UIManager.Instance.PlayCardAnimation(choiceIndex, isCorrect);
+    private void SaveRewardsAndGameOver(string reason)
+    {
+        SaveManager.Instance?.AddRunRewards(accumulatedEidia);
+        PlayGameOverEffects(reason);
+        ChangeState(GameState.GameOver);
+    }
 
-        // Screen Flash Effect (Phase 4 Juice)
+    #endregion
+
+    #region Helpers
+
+    private void PlayFeedbackEffects(bool isCorrect, bool includeCameraShake = true)
+    {
         if (ScreenFlash.Instance != null)
         {
             if (isCorrect) ScreenFlash.Instance.FlashCorrect();
@@ -363,534 +458,56 @@ public class GameManager : MonoBehaviour
             else
             {
                 AudioManager.Instance.PlayWrongAnswer();
-                CameraShakeManager.Instance?.ShakeWrongAnswer();
+                if (includeCameraShake) CameraShakeManager.Instance?.ShakeWrongAnswer();
             }
         }
-        else if (!isCorrect)
+        else if (!isCorrect && includeCameraShake)
         {
             CameraShakeManager.Instance?.ShakeWrongAnswer();
         }
-
-        UIManager.Instance.ShowFeedback(feedback, isCorrect, () =>
-        {
-            isProcessingChoice = false;
-
-            // Check if mini-game should trigger after this encounter
-            if (currentEncounter.MiniGameAfter && !isHouse4Active)
-            {
-                Debug.Log($"[GameManager] MiniGameAfter flag set! Starting mini-game after encounter {currentEncounter.ID}");
-                if (MiniGameManager.Instance != null)
-                {
-                    MiniGameManager.Instance.StartCatchGame(currentHouseLevel);
-                    return; // Don't increment index yet, mini-game will handle it
-                }
-                else
-                {
-                    Debug.LogWarning("[GameManager] MiniGameManager not found! Skipping mini-game.");
-                }
-            }
-
-            LoadNextEncounter();
-        });
-
-        // Handle Hospitality Offer logic
-        bool isHospitality = currentEncounter.EncounterType == EncounterType.HospitalityOffer;
-        bool hasQTE = !string.IsNullOrEmpty(currentEncounter.QTEType) && currentEncounter.QTEType != "None";
-
-        if (isHospitality)
-        {
-            // For Hospitality Offers: Check if player chose to accept (Choice 1 = correct = accepting politely)
-            if (isCorrect && choiceIndex == 0)
-            {
-                // Player accepted the offer - trigger strike system
-                if (MeterManager.Instance != null)
-                    MeterManager.Instance.RegisterAcceptedOffer();
-            }
-            else
-            {
-                // Player refused/deflected - just apply base deltas from CSV
-                if (MeterManager.Instance != null)
-                {
-                    MeterManager.Instance.ModifyBattery(currentEncounter.BatteryDelta);
-                    MeterManager.Instance.ModifyStomach(currentEncounter.StomachDelta);
-                }
-            }
-            // NOTE: For Hospitality offers WITH QTE, encounterIndex is incremented by HandleQTEResult
-            // For Hospitality offers WITHOUT QTE, we need to increment here
-            if (!hasQTE)
-            {
-                encounterIndex++;
-            }
-        }
-        else
-        {
-            // Trivia encounter - apply base deltas
-            if (MeterManager.Instance != null)
-            {
-                MeterManager.Instance.ModifyBattery(currentEncounter.BatteryDelta);
-                MeterManager.Instance.ModifyStomach(currentEncounter.StomachDelta);
-            }
-            
-            // Trivia encounters always increment here (no QTE involvement)
-            encounterIndex++;
-        }
-
-        // Award Eidia based on encounter type and choice
-        // Hospitality Offer: Eidia handled by HandleOfferAccepted (with multipliers)
-        // Trivia: Always award based on choice correctness
-        if (!isHospitality || !isCorrect)
-        {
-            // Not a hospitality offer, OR player refused the offer - award base Eidia
-            accumulatedEidia += currentEncounter.EidiaReward;
-            accumulatedScrap += currentEncounter.ScrapReward;
-            Debug.Log($"[GameManager] +{currentEncounter.EidiaReward} Eidia, +{currentEncounter.ScrapReward} Scrap. Total Eidia: {accumulatedEidia}");
-        }
-        // Note: If HospitalityOffer + isCorrect, HandleOfferAccepted will add Eidia with multipliers
-
-        // Check for win condition (only in normal houses, not House 4)
-        if (accumulatedEidia >= eidiaToWin && !isHouse4Active && house4IsOptional)
-        {
-            Debug.Log("[GameManager] 100 Eidia threshold reached! Crossroads unlocked.");
-            // Don't end run yet - player continues house, then chooses at Crossroads
-        }
-
-        // Only increment index for non-Hospitality encounters
-        // Hospitality encounters increment in HandleQTEResult to avoid double increment
-        if (!isHospitality)
-        {
-            encounterIndex++;
-        }
     }
 
-    /// <summary>
-    /// Called by MeterManager when player accepts a hospitality offer.
-    /// Applies strike-based multipliers to Eidia, Stomach, and Battery.
-    /// </summary>
-    private void HandleOfferAccepted(HospitalityStrike strike)
+    private void PlayGameOverEffects(string reason)
     {
-        if (currentEncounter == null) return;
-
-        // Get multipliers from MeterManager
-        float eidiaMult = MeterManager.Instance.GetEidiaMultiplier(strike);
-        float stomachMult = MeterManager.Instance.GetStomachMultiplier(strike);
-        float batteryDrain = MeterManager.Instance.GetBatteryDrain(strike);
-
-        // Apply stomach multiplier
-        if (currentEncounter.StomachDelta > 0 && stomachMult > 0)
-        {
-            float adjustedStomach = currentEncounter.StomachDelta * stomachMult;
-            MeterManager.Instance.ModifyStomach(adjustedStomach);
-            Debug.Log($"[GameManager] Hospitality Strike {strike}: Stomach +{adjustedStomach:F0} (base: {currentEncounter.StomachDelta}, mult: {stomachMult})");
-        }
-
-        // Apply battery drain
-        if (batteryDrain > 0)
-        {
-            MeterManager.Instance.ModifyBattery(-batteryDrain);
-            Debug.Log($"[GameManager] Hospitality Strike {strike}: Battery -{batteryDrain:F0}");
-        }
-
-        // Apply Eidia multiplier (1st/2nd strike = full reward, 3rd strike = no reward)
-        if (eidiaMult > 0 && currentEncounter.EidiaReward > 0)
-        {
-            int adjustedEidia = Mathf.RoundToInt(currentEncounter.EidiaReward * eidiaMult);
-            accumulatedEidia += adjustedEidia;
-            accumulatedScrap += currentEncounter.ScrapReward; // Scrap always awarded
-            Debug.Log($"[GameManager] Hospitality Strike {strike}: Eidia +{adjustedEidia} (base: {currentEncounter.EidiaReward}, mult: {eidiaMult}), +{currentEncounter.ScrapReward} Scrap");
-        }
-        else
-        {
-            // 3rd strike - no Eidia but still get scrap
-            accumulatedScrap += currentEncounter.ScrapReward;
-            Debug.Log($"[GameManager] Hospitality Strike Third: NO EIDIA (exhausted!), +{currentEncounter.ScrapReward} Scrap");
-        }
-    }
-
-    #endregion
-
-    #region QTE Handling
-
-    private void StartQTESequence(string qteType)
-    {
-        // Safety: Hide any existing QTE warning before starting new one
-        if (UIManager.Instance != null)
-            UIManager.Instance.HideQTEWarning();
-
-        isQTEActive = true;
-        ChangeState(GameState.QTE);
-
-        // Get QTE parameters from current encounter
-        string inputType = currentEncounter.QTEInputType;
-        int count = currentEncounter.QTECount;
-        float timeLimit = currentEncounter.QTETimeLimit;
-        string direction = currentEncounter.QTEDirection;
-        float holdDuration = currentEncounter.QTEHoldDuration;
-
-        // Fallback to legacy QTEType mapping if QTEInputType is empty
-        if (string.IsNullOrEmpty(inputType) || inputType == "_")
-        {
-            // Map legacy types to new input types
-            inputType = qteType.ToLower() switch
-            {
-                "coffeerefuse" => "Shake",
-                "handonheart" => "Tap",
-                "tugofwar" => "Swipe",
-                _ => "Shake"
-            };
-
-            // Set defaults for legacy encounters
-            if (count == 0) count = inputType == "Shake" ? 1 : (inputType == "Swipe" ? 2 : 1);
-            if (timeLimit == 0) timeLimit = 3f;
-            if (string.IsNullOrEmpty(direction) || direction == "_") direction = "Up";
-            if (holdDuration == 0) holdDuration = 2f;
-        }
-
-        // Get Arabic instruction based on QTE input type
-        string instructionAR = GetQTEInstructionAR(inputType);
-
-        if (UIManager.Instance != null)
-            UIManager.Instance.ShowQTEWarning(instructionAR);
-
-        if (QTEController.Instance != null)
-            QTEController.Instance.StartQTE(inputType, count, timeLimit, direction, holdDuration);
-    }
-    
-    /// <summary>
-    /// Gets Arabic instruction text for QTE warning based on input type.
-    /// </summary>
-    private string GetQTEInstructionAR(string inputType)
-    {
-        return inputType.ToLower() switch
-        {
-            "shake" => "هز الجوال",
-            "tap" => "اضغط بسرعة",
-            "swipe" => "اسحب للأعلى",
-            "hold" => "اضغط واستمر",
-            _ => "انتبه!"
-        };
-    }
-
-    private void HandleQTEResult(bool success)
-    {
-        isQTEActive = false;
-        UIManager.Instance.HideQTEWarning();
-
-        // QTE Success = avoided eating (0 Stomach), small battery drain
-        // QTE Failure = forced to eat (+Stomach), more battery drain
-        if (success)
-        {
-            // Success: Avoided the food, minimal penalty
-            if (MeterManager.Instance != null)
-                MeterManager.Instance.ModifyBattery(-5f); // Small drain for physical effort
-            Debug.Log("[GameManager] QTE Success! Avoided food, -5 Battery");
-
-            if (HapticFeedback.Instance != null)
-                HapticFeedback.Instance.LightTap();
-        }
-        else
-        {
-            // Failure: Forced to eat the offered food
-            if (MeterManager.Instance != null)
-            {
-                MeterManager.Instance.ModifyBattery(-10f); // More drain for awkwardness
-                MeterManager.Instance.ModifyStomach(currentEncounter.StomachDelta); // Fill stomach
-            }
-            Debug.LogWarning($"[GameManager] QTE Failed! Forced to eat, -10 Battery, +{currentEncounter.StomachDelta} Stomach");
-
-            UIManager.Instance.ShakeQTEFail();
-
-            if (HapticFeedback.Instance != null)
-                HapticFeedback.Instance.HeavyVibration();
-        }
-
-        // Check if game over triggered from QTE
-        if (currentState == GameState.GameOver)
-            return;
-
-        // Continue to next encounter after QTE resolves
-        // Check if mini-game should trigger after this encounter
-        if (currentEncounter.MiniGameAfter && !isHouse4Active)
-        {
-            Debug.Log($"[GameManager] MiniGameAfter flag set! Starting mini-game after QTE");
-            if (MiniGameManager.Instance != null)
-            {
-                MiniGameManager.Instance.StartCatchGame(currentHouseLevel);
-                return; // Mini-game will handle index increment via OnMiniGameComplete → StartNextHouse
-            }
-        }
-
-        // Increment index and load next encounter
-        // NOTE: Only Hospitality QTEs reach here (Trivia QTEs don't exist in current design)
-        // Hospitality QTEs didn't increment in ProcessChoice, so we increment here
-        encounterIndex++;
-        LoadNextEncounter();
-    }
-
-    #endregion
-
-    #region House Completion & Mini-Game
-
-    /// <summary>
-    /// Called when all encounters in a house are complete.
-    /// Triggers mini-game or Crossroads evaluation.
-    /// </summary>
-    private void EndHouse()
-    {
-        if (isHouse4Active)
-        {
-            // House 4 complete = instant win
-            Debug.Log("[GameManager] House 4 cleared! INSANE MODE COMPLETE!");
-            WinGame(isHouse4Clear: true);
-            return;
-        }
-
-        if (currentHouseLevel >= 3)
-        {
-            // After House 3, evaluate Crossroads
-            Debug.Log("[GameManager] House 3 complete! Evaluating Crossroads...");
-            EvaluateCrossroads();
-            return;
-        }
-
-        // Houses 1 or 2: Start mini-game
-        Debug.Log($"[GameManager] House {currentHouseLevel} complete! Starting mini-game...");
-        if (MiniGameManager.Instance != null)
-        {
-            MiniGameManager.Instance.StartCatchGame(currentHouseLevel);
-        }
-        else
-        {
-            Debug.LogWarning("[GameManager] MiniGameManager not found! Skipping mini-game.");
-            StartNextHouse();
-        }
-    }
-
-    /// <summary>
-    /// Called by MiniGameManager when the catch mini-game ends.
-    /// Increments house level and resumes encounters.
-    /// </summary>
-    public void OnMiniGameComplete(int eidiaEarned, int scrapEarned)
-    {
-        accumulatedEidia += eidiaEarned;
-        accumulatedScrap += scrapEarned;
-
-        Debug.Log($"[GameManager] Mini-game rewards: +{eidiaEarned} Eidia, +{scrapEarned} Scrap. Total Eidia: {accumulatedEidia}");
-
-        StartNextHouse();
-    }
-
-    /// <summary>
-    /// Increments house level and starts next house.
-    /// </summary>
-    public void StartNextHouse()
-    {
-        currentHouseLevel++;
-        StartHouse(currentHouseLevel);
-    }
-
-    #endregion
-
-    #region Crossroads Decision
-
-    /// <summary>
-    /// Shows Crossroads UI panel with Escape/Risk choice.
-    /// Called after House 3 completion.
-    /// </summary>
-    public void EvaluateCrossroads()
-    {
-        ChangeState(GameState.Crossroads);
-        
-        Debug.Log($"[GameManager] CROSSROADS! Current Eidia: {accumulatedEidia}/{eidiaToWin}");
-        
-        // Show Crossroads UI panel
-        if (UIManager.Instance != null)
-            UIManager.Instance.ShowCrossroadsPanel(accumulatedEidia >= eidiaToWin);
-    }
-
-    /// <summary>
-    /// Player chooses to escape with current Eidia (Win).
-    /// </summary>
-    public void ChooseEscape()
-    {
-        Debug.Log("[GameManager] Player chose ESCAPE! Banking Eidia...");
-        WinGame(isHouse4Clear: false);
-    }
-
-    /// <summary>
-    /// Player chooses to risk House 4 (Boss Mode).
-    /// Immediately enters House 4 with current battery/stomach state.
-    /// </summary>
-    public void ChooseRiskHouse4()
-    {
-        Debug.Log("[GameManager] Player chose RISK HOUSE 4! Insane mode activated...");
-        
-        isHouse4Active = true;
-        
-        if (MeterManager.Instance != null)
-            MeterManager.Instance.EnableHouse4Mode();
-        
-        StartHouse4();
-    }
-
-    #endregion
-
-    #region House 4 Boss Mode
-
-    /// <summary>
-    /// Starts House 4 Boss Mode with custom encounter list.
-    /// </summary>
-    private void StartHouse4()
-    {
-        ChangeState(GameState.House4Boss);
-        
-        Debug.Log("[GameManager] HOUSE 4 BOSS MODE STARTED! Fast timers, double penalties!");
-        
-        DOTween.Sequence()
-            .AppendInterval(1.5f)
-            .OnComplete(() =>
-            {
-                encounterIndex = 0;
-                LoadNextEncounter();
-            });
-    }
-
-    #endregion
-
-    #region Game Over / Win
-
-    private void HandleBatteryDrained() => HandleGameOver("Battery");
-    private void HandleStomachFull() => HandleGameOver("Stomach");
-
-    private void HandleTimeRanOut()
-    {
-        if (currentState != GameState.Encounter && currentState != GameState.House4Boss) return;
-        if (isProcessingChoice) return;
-
-        Debug.Log("[GameManager] Time ran out for encounter!");
-
-        // Treat as wrong answer (penalty)
-        if (MeterManager.Instance != null)
-            MeterManager.Instance.ModifyBattery(-15f);
-
-        CameraShakeManager.Instance?.ShakeWrongAnswer();
-
-        UIManager.Instance.ShowFeedback("تأخرت كثير! نقصت البطارية", false, () =>
-        {
-            LoadNextEncounter();
-        });
-    }
-
-    private void HandleGameOver(string reason)
-    {
-        if (TimerController.Instance != null)
-            TimerController.Instance.StopTimer();
-
-        UIManager.Instance.HideQTEWarning();
-        isQTEActive = false;
-
-        string message = reason switch
-        {
-            "Battery" => "Game Over: Social Shutdown",
-            "Stomach" => "Game Over: Ma'amoul Explosion",
-            _ => "Game Over!"
-        };
-
-        Debug.Log($"[GameManager] {message}");
-
-        if (SaveManager.Instance != null)
-            SaveManager.Instance.AddRunRewards(accumulatedScrap, accumulatedEidia);
-
         if (reason == "Stomach")
         {
-            UIManager.Instance.ShakeMaamoulExplosion();
-
-            if (HapticFeedback.Instance != null)
-                HapticFeedback.Instance.ExplosionVibration();
+            UIManager.Instance?.ShakeMaamoulExplosion();
+            HapticFeedback.Instance?.ExplosionVibration();
         }
         else
         {
-            UIManager.Instance.ShakeSocialShutdown();
-
-            if (HapticFeedback.Instance != null)
-                HapticFeedback.Instance.HeavyVibration();
+            UIManager.Instance?.ShakeSocialShutdown();
+            HapticFeedback.Instance?.HeavyVibration();
         }
 
-        if (URPPostProcessing.Instance != null)
-            URPPostProcessing.Instance.EnableGameOverEffect();
-
-        ChangeState(GameState.GameOver);
-    }
-
-    /// <summary>
-    /// Triggers Win state. isHouse4Clear = true if player cleared House 4 (bonus).
-    /// </summary>
-    public void WinGame(bool isHouse4Clear = false)
-    {
-        if (TimerController.Instance != null)
-            TimerController.Instance.StopTimer();
-
-        string winMessage = isHouse4Clear 
-            ? "INSANE MODE CLEAR! You survived House 4!" 
-            : "You survived Eid! Congratulations!";
-
-        Debug.Log($"[GameManager] {winMessage}");
-
-        if (SaveManager.Instance != null)
-            SaveManager.Instance.AddRunRewards(accumulatedScrap, accumulatedEidia);
-
-        ChangeState(GameState.Win);
+        URPPostProcessing.Instance?.EnableGameOverEffect();
     }
 
     #endregion
 
-    #region Helper Methods
+    #region Test Buttons
 
-    private bool GetChoiceCorrectness(int choiceIndex)
-    {
-        return choiceIndex switch
-        {
-            0 => currentEncounter.Choice1IsCorrect,
-            1 => currentEncounter.Choice2IsCorrect,
-            2 => currentEncounter.Choice3IsCorrect,
-            _ => false
-        };
-    }
-
-    private string GetChoiceFeedback(int choiceIndex)
-    {
-        return choiceIndex switch
-        {
-            0 => currentEncounter.Choice1Feedback,
-            1 => currentEncounter.Choice2Feedback,
-            2 => currentEncounter.Choice3Feedback,
-            _ => ""
-        };
-    }
-
-    #endregion
-
-    #region Inspector Test Buttons
-
-    [Button("▶ Start New Run")]
+    [Button("▶ Start Run")]
     private void TestStartRun() => StartRun();
 
-    [Button("⚠ Trigger Battery Game Over")]
-    private void TestBatteryGameOver() => HandleGameOver("Battery");
+    [Button("⚠ Battery Game Over")]
+    private void TestBatteryGO() => HandleGameOver("Battery");
 
-    [Button("⚠ Trigger Stomach Game Over")]
-    private void TestStomachGameOver() => HandleGameOver("Stomach");
+    [Button("⚠ Stomach Game Over")]
+    private void TestStomachGO() => HandleGameOver("Stomach");
 
-    [Button("✓ Trigger Win")]
+    [Button("✓ Win")]
     private void TestWin() => WinGame();
 
     [Button("☠️ Start House 4")]
-    private void TestHouse4() => StartHouse4();
-
-    [Button("🔄 Evaluate Crossroads")]
-    private void TestCrossroads() => EvaluateCrossroads();
-
-    [Button("→ Force Next House")]
-    private void TestNextHouse() => StartNextHouse();
+    private void TestHouse4()
+    {
+        isHouse4Active = true;
+        MeterManager.Instance?.EnableHouse4Mode();
+        currentHouseLevel = 4;
+        ChangeState(GameState.Encounter);
+        StartHouseFlowController(4);
+    }
 
     #endregion
 }

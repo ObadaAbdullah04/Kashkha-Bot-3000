@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Bash(del *)",
-      "Bash(rmdir *)"
+      "Bash(rmdir *)",
+      "Bash(findstr *)",
+      "Bash(mkdir *)",
+      "Bash(dir *)"
     ]
   },
   "$version": 3

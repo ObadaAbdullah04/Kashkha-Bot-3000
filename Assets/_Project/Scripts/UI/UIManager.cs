@@ -32,11 +32,6 @@ public class UIManager : MonoBehaviour
 
     #region Inspector Fields
 
-    [Header("Encounter UI")]
-    [SerializeField] private RTLTextMeshPro questionText;
-    [SerializeField] private RTLTextMeshPro[] choiceTexts;
-    [SerializeField] private ChoiceCard[] choiceCards;
-
     [Header("Feedback UI")]
     [SerializeField] private RTLTextMeshPro feedbackText;
     [SerializeField] private GameObject feedbackPanel;
@@ -53,30 +48,42 @@ public class UIManager : MonoBehaviour
     [SerializeField] private GameObject encounterPanel;
     [SerializeField] private GameObject gameOverPanel;
     [SerializeField] private GameObject winPanel;
-    [SerializeField] private GameObject wardrobePanel;
 
-    [Header("Wardrobe UI")]
-    [SerializeField] private RTLTextMeshPro scrapCounterText;
-    [SerializeField] private OutfitSlot[] outfitSlots;
-    [SerializeField] private Button startRunButton;
-    
-    [Header("Crossroads UI (NEW)")]
-    [SerializeField] private GameObject crossroadsPanel;
-    [SerializeField] private RTLTextMeshPro crossroadsTitleText;
-    [SerializeField] private RTLTextMeshPro crossroadsStatusText;
-    [SerializeField] private Button escapeButton;
-    [SerializeField] private Button riskButton;
+    [Header("Unified Hub Panel (PHASE 10)")]
+    [Tooltip("Single unified hub panel with 3 tabs: Houses, Wardrobe, Upgrades")]
+    [SerializeField] private GameObject unifiedHubPanel;
 
-    [Header("Screen Shake")]
+    [Header("Swipe Encounter UI (PHASE 6)")]
+    [SerializeField] private GameObject swipeEncounterPanel;
+
+    [Header("Screen Shake Settings")]
     [SerializeField] private RectTransform mainPanel;
+    [SerializeField] private float socialShutdownShakeDuration = 0.70f;
+    [SerializeField] private Vector2 socialShutdownShakeAmplitude = new Vector2(40f, 22f);
+    [SerializeField] private int socialShutdownShakeVibrato = 30;
+    [SerializeField] private float socialShutdownShakeRandomness = 90f;
+
+    [SerializeField] private float maamoulExplosionShakeDuration = 0.90f;
+    [SerializeField] private Vector2 maamoulExplosionShakeAmplitude = new Vector2(55f, 30f);
+    [SerializeField] private int maamoulExplosionShakeVibrato = 35;
+    [SerializeField] private float maamoulExplosionShakeRandomness = 180f;
 
     [Header("Feedback Colors")]
     [SerializeField] private Color correctFeedbackColor = new Color(0.2f, 0.8f, 0.2f, 1f);
     [SerializeField] private Color wrongFeedbackColor = new Color(0.9f, 0.2f, 0.2f, 1f);
 
     [Header("Animation Settings")]
-    [SerializeField] private float questionFadeDuration = 0.3f;
-    [SerializeField] private float choiceStaggerDelay = 0.1f;
+    [SerializeField] private float feedbackFadeInDuration = 0.22f;
+    [SerializeField] private float feedbackDisplayDuration = 1.9f;
+    [SerializeField] private float feedbackFadeOutDuration = 0.22f;
+
+    [Header("QTE Warning Animation")]
+    [SerializeField] private Vector3 qteWarningPunchAmount = Vector3.one * 0.1f;
+    [SerializeField] private float qteWarningDuration = 0.5f;
+    [SerializeField] private int qteWarningVibrato = 5;
+    [SerializeField] private float qteWarningElasticity = 1f;
+
+    [Header("Card Idle Animation")]
 
     #endregion
 
@@ -98,38 +105,12 @@ public class UIManager : MonoBehaviour
                 _feedbackCanvasGroup = feedbackPanel.AddComponent<CanvasGroup>();
         }
 
-        // Initialize Crossroads UI buttons
-        if (crossroadsPanel != null)
-        {
-            crossroadsPanel.SetActive(false);
-
-            if (escapeButton != null)
-                escapeButton.onClick.AddListener(() => GameManager.Instance.ChooseEscape());
-
-            if (riskButton != null)
-                riskButton.onClick.AddListener(() => GameManager.Instance.ChooseRiskHouse4());
-        }
-
-        // Initialize Wardrobe UI
-        if (wardrobePanel != null)
-        {
-            wardrobePanel.SetActive(false);
-
-            if (startRunButton != null)
-                startRunButton.onClick.AddListener(() =>
-                {
-                    if (GameManager.Instance != null)
-                        GameManager.Instance.StartRun();
-                });
-        }
-
-        // Don't call InitializeUI() here - it hides all panels
-        // Instead, handle initial state directly
+        // Handle initial state
         HandleInitialState();
     }
 
     /// <summary>
-    /// Handles the initial game state on startup (Wardrobe).
+    /// Handles the initial game state on startup.
     /// </summary>
     private void HandleInitialState()
     {
@@ -140,10 +121,10 @@ public class UIManager : MonoBehaviour
             GameState initialState = GameManager.Instance.CurrentState;
             Debug.Log($"[UIManager] Initial state: {initialState}");
 
-            if (initialState == GameState.Wardrobe)
+            // Show unified hub for Wardrobe or HouseHub states
+            if (initialState == GameState.Wardrobe || initialState == GameState.HouseHub)
             {
-                wardrobePanel.SetActive(true);
-                RefreshWardrobeUI();
+                ShowUnifiedHub();
             }
         }
     }
@@ -153,9 +134,6 @@ public class UIManager : MonoBehaviour
         GameManager.OnStateChanged += HandleStateChanged;
         GameManager.OnRunStarted += HandleRunStarted;
         MeterManager.OnMetersChanged += HandleMetersChanged;
-        WardrobeManager.OnScrapChanged += HandleWardrobeUpdated;
-        WardrobeManager.OnOutfitPurchased += HandleWardrobeUpdated;
-        WardrobeManager.OnOutfitEquipped += HandleWardrobeUpdated;
     }
 
     private void OnDisable()
@@ -163,24 +141,12 @@ public class UIManager : MonoBehaviour
         GameManager.OnStateChanged -= HandleStateChanged;
         GameManager.OnRunStarted -= HandleRunStarted;
         MeterManager.OnMetersChanged -= HandleMetersChanged;
-        WardrobeManager.OnScrapChanged -= HandleWardrobeUpdated;
-        WardrobeManager.OnOutfitPurchased -= HandleWardrobeUpdated;
-        WardrobeManager.OnOutfitEquipped -= HandleWardrobeUpdated;
 
         // Kill all active tweens to prevent memory leaks
         _feedbackSequence?.Kill();
 
         if (mainPanel != null)
             mainPanel.DOKill();
-
-        if (qteWarningPanel != null)
-            qteWarningPanel.transform.DOKill();
-
-        foreach (var card in choiceCards)
-        {
-            if (card != null)
-                card.KillTweens();
-        }
     }
 
     private void HandleRunStarted()
@@ -221,53 +187,6 @@ public class UIManager : MonoBehaviour
 
     #region Public Display Methods
 
-    public void DisplayEncounter(EncounterData data)
-    {
-        if (data == null)
-        {
-            Debug.LogError("[UIManager] Cannot display null EncounterData!");
-            return;
-        }
-
-        // Ensure encounter panel is visible
-        if (encounterPanel != null)
-            encounterPanel.SetActive(true);
-
-        feedbackPanel.SetActive(false);
-
-        if (questionText != null)
-        {
-            questionText.text = data.QuestionAR;
-            questionText.gameObject.SetActive(true);
-            AnimateTextFadeIn(questionText.gameObject, questionFadeDuration);
-        }
-
-        for (int i = 0; i < choiceTexts.Length; i++)
-        {
-            if (i < 3 && choiceTexts[i] != null && choiceCards[i] != null)
-            {
-                choiceCards[i].ResetInstant();
-                choiceCards[i].SetLogicIndex(i); // FIX: Set the logic index for correct button mapping
-
-                string choiceText = GetChoiceText(data, i);
-                choiceTexts[i].text = choiceText;
-                choiceTexts[i].gameObject.SetActive(true);
-
-                choiceCards[i].gameObject.SetActive(true);
-                AnimateTextFadeIn(choiceCards[i].gameObject, 0.3f, i * choiceStaggerDelay);
-            }
-        }
-
-        // Start idle floating after cards are visible
-        Invoke(nameof(StartIdle0), 0.5f);
-        Invoke(nameof(StartIdle1), 0.65f);
-        Invoke(nameof(StartIdle2), 0.8f);
-    }
-
-    private void StartIdle0() => choiceCards[0]?.SetIdleFloating(true);
-    private void StartIdle1() => choiceCards[1]?.SetIdleFloating(true);
-    private void StartIdle2() => choiceCards[2]?.SetIdleFloating(true);
-
     public void ShowFeedback(string text, bool isCorrect, Action onComplete)
     {
         if (feedbackPanel == null)
@@ -276,17 +195,9 @@ public class UIManager : MonoBehaviour
             return;
         }
 
-        if (_feedbackCanvasGroup == null)
-        {
-            _feedbackCanvasGroup = feedbackPanel.GetComponent<CanvasGroup>();
-            if (_feedbackCanvasGroup == null)
-                _feedbackCanvasGroup = feedbackPanel.AddComponent<CanvasGroup>();
-        }
+        EnsureFeedbackComponents();
 
         Image feedbackImage = feedbackPanel.GetComponent<Image>();
-        if (feedbackImage == null)
-            feedbackImage = feedbackPanel.AddComponent<Image>();
-
         if (feedbackText != null)
             feedbackText.text = text;
 
@@ -301,15 +212,15 @@ public class UIManager : MonoBehaviour
         feedbackImage.color = new Color(targetColor.r, targetColor.g, targetColor.b, 0f);
 
         _feedbackSequence = DOTween.Sequence()
-            .Append(_feedbackCanvasGroup.DOFade(1f, 0.22f).SetUpdate(true))
+            .Append(_feedbackCanvasGroup.DOFade(1f, feedbackFadeInDuration).SetUpdate(true))
             .Join(DOTween.To(
                 () => feedbackImage.color,
                 x => feedbackImage.color = x,
                 targetColor,
-                0.22f
+                feedbackFadeInDuration
             ).SetUpdate(true))
-            .AppendInterval(1.9f)
-            .Append(_feedbackCanvasGroup.DOFade(0f, 0.22f).SetUpdate(true))
+            .AppendInterval(feedbackDisplayDuration)
+            .Append(_feedbackCanvasGroup.DOFade(0f, feedbackFadeOutDuration).SetUpdate(true))
             .OnComplete(() =>
             {
                 feedbackPanel.SetActive(false);
@@ -325,17 +236,6 @@ public class UIManager : MonoBehaviour
         ShowFeedback(text, true, onComplete);
     }
 
-    public void PlayCardAnimation(int index, bool isCorrect)
-    {
-        if (choiceCards.Length > index && choiceCards[index] != null)
-        {
-            if (isCorrect)
-                choiceCards[index].AnimateCorrect();
-            else
-                choiceCards[index].AnimateWrong();
-        }
-    }
-
     public void ShowQTEWarning(string instructionText)
     {
         if (qteWarningPanel == null || qteWarningText == null)
@@ -347,11 +247,9 @@ public class UIManager : MonoBehaviour
         // Hide any existing QTE warning first to prevent stacking
         qteWarningPanel.SetActive(false);
 
-        // Directly use the Arabic instruction text passed from GameManager
-        // (GetQTEInstructionAR already converts input type to Arabic)
         qteWarningText.text = instructionText;
         qteWarningPanel.SetActive(true);
-        qteWarningPanel.transform.DOPunchScale(Vector3.one * 0.1f, 0.5f, 5, 1f);
+        qteWarningPanel.transform.DOPunchScale(qteWarningPunchAmount, qteWarningDuration, qteWarningVibrato, qteWarningElasticity);
     }
 
     public void HideQTEWarning()
@@ -371,62 +269,46 @@ public class UIManager : MonoBehaviour
 
     public void ShakeSocialShutdown()
     {
-        // Impact both UI and Camera
-        if (mainPanel != null)
-        {
-            mainPanel.DOKill();
-            mainPanel.DOShakeAnchorPos(0.70f, new Vector2(40f, 22f), 30, 90, true).SetUpdate(true);
-        }
-
+        ShakePanel(socialShutdownShakeDuration, socialShutdownShakeAmplitude, socialShutdownShakeVibrato, socialShutdownShakeRandomness);
         CameraShakeManager.Instance?.ShakeSocialShutdown();
     }
 
     public void ShakeMaamoulExplosion()
     {
-        // Impact both UI and Camera
-        if (mainPanel != null)
-        {
-            mainPanel.DOKill();
-            mainPanel.DOShakeAnchorPos(0.90f, new Vector2(55f, 30f), 35, 180, true).SetUpdate(true);
-        }
-
+        ShakePanel(maamoulExplosionShakeDuration, maamoulExplosionShakeAmplitude, maamoulExplosionShakeVibrato, maamoulExplosionShakeRandomness);
         CameraShakeManager.Instance?.ShakeMaamoulExplosion();
-    }
-
-    public void ShakeQTEFail()
-    {
-        // Impact both UI and Camera
-        if (mainPanel != null)
-        {
-            mainPanel.DOKill();
-            mainPanel.DOShakeAnchorPos(0.35f, new Vector2(12f, 6f), 15, 80, true).SetUpdate(true);
-        }
-
-        CameraShakeManager.Instance?.ShakeQTEFail();
-    }
-
-    public void SetPanicMode(bool active)
-    {
-        foreach (var card in choiceCards)
-        {
-            if (card != null)
-                card.SetIdleFloating(!active);
-        }
     }
 
     #endregion
 
     #region Private Helper Methods
 
-    private string GetChoiceText(EncounterData data, int index)
+    /// <summary>
+    /// Shakes the main panel with specified parameters.
+    /// </summary>
+    private void ShakePanel(float duration, Vector2 amplitude, int vibrato, float randomness)
     {
-        return index switch
+        if (mainPanel != null)
         {
-            0 => data.Choice1AR,
-            1 => data.Choice2AR,
-            2 => data.Choice3AR,
-            _ => ""
-        };
+            mainPanel.DOKill();
+            mainPanel.DOShakeAnchorPos(duration, amplitude, vibrato, randomness, true).SetUpdate(true);
+        }
+    }
+
+    /// <summary>
+    /// Ensures feedback panel has required components (CanvasGroup, Image).
+    /// </summary>
+    private void EnsureFeedbackComponents()
+    {
+        if (_feedbackCanvasGroup == null)
+        {
+            _feedbackCanvasGroup = feedbackPanel.GetComponent<CanvasGroup>();
+            if (_feedbackCanvasGroup == null)
+                _feedbackCanvasGroup = feedbackPanel.AddComponent<CanvasGroup>();
+        }
+
+        if (feedbackPanel.GetComponent<Image>() == null)
+            feedbackPanel.AddComponent<Image>();
     }
 
     private void AnimateTextFadeIn(GameObject uiObject, float duration, float delay = 0f)
@@ -445,123 +327,71 @@ public class UIManager : MonoBehaviour
         winPanel.SetActive(false);
         feedbackPanel.SetActive(false);
         qteWarningPanel.SetActive(false);
-        crossroadsPanel.SetActive(false);
-        wardrobePanel.SetActive(false);
+        unifiedHubPanel.SetActive(false);
+        swipeEncounterPanel.SetActive(false);
     }
 
     #endregion
 
-    #region Crossroads UI (NEW)
+    #region PHASE 6: Swipe Encounter UI
 
     /// <summary>
-    /// Shows the Crossroads decision panel after House 3.
-    /// Player can choose to Escape (Win) or Risk House 4.
+    /// PHASE 6: Shows the swipe encounter panel and starts the card sequence.
     /// </summary>
-    /// <param name="canEscape">If true, player has enough Eidia to escape/win</param>
-    public void ShowCrossroadsPanel(bool canEscape)
+    public void ShowSwipeEncounter(System.Collections.Generic.List<SwipeCardData> cards)
     {
-        if (crossroadsPanel == null)
+        // Hide old encounter panel, show swipe panel
+        if (encounterPanel != null)
+            encounterPanel.SetActive(false);
+
+        if (swipeEncounterPanel != null)
         {
-            Debug.LogError("[UIManager] CrossroadsPanel not assigned in Inspector!");
-            return;
+            swipeEncounterPanel.SetActive(true);
         }
 
-        crossroadsPanel.SetActive(true);
+#if UNITY_EDITOR
+        Debug.Log($"[UIManager] Showing swipe encounter with {cards.Count} cards.");
+#endif
+    }
 
-        if (crossroadsTitleText != null)
-            crossroadsTitleText.text = canEscape ? "المفترق!" : "طريق المسدود";
-
-        if (crossroadsStatusText != null)
-        {
-            crossroadsStatusText.text = canEscape
-                ? $"جمعت {GameManager.Instance.AccumulatedEidia} دينار!\nاهرب الآن أو خاطِر ببيت رابع؟"
-                : "ما جمعتش كفاية من العيديا...\nلازم تكمل لبيت رابع!";
-        }
-
-        // Enable/disable buttons based on canEscape
-        if (escapeButton != null)
-            escapeButton.interactable = canEscape;
-
-        if (riskButton != null)
-            riskButton.interactable = true;
+    /// <summary>
+    /// PHASE 6: Hides the swipe encounter panel.
+    /// </summary>
+    public void HideSwipeEncounter()
+    {
+        if (swipeEncounterPanel != null)
+            swipeEncounterPanel.SetActive(false);
     }
 
     #endregion
 
-    #region Wardrobe UI
+    #region PHASE 10: Unified Hub UI
 
     /// <summary>
-    /// Refreshes all Wardrobe UI elements (called on scrap change, purchase, equip).
+    /// PHASE 10: Shows the unified hub panel.
+    /// UnifiedHubManager controls tab switching and UI updates.
     /// </summary>
-    private void RefreshWardrobeUI()
+    public void ShowUnifiedHub()
     {
-        if (WardrobeManager.Instance == null)
+        HideAllPanels();
+
+        if (unifiedHubPanel != null)
         {
-            Debug.LogWarning("[UIManager] WardrobeManager not available!");
-            return;
+            unifiedHubPanel.SetActive(true);
         }
 
-        // Validate references
-        if (wardrobePanel == null)
-        {
-            Debug.LogError("[UIManager] wardrobePanel is NULL! Assign it in Inspector.");
-            return;
-        }
-
-        if (scrapCounterText == null)
-        {
-            Debug.LogError("[UIManager] scrapCounterText is NULL! Assign it in Inspector.");
-        }
-
-        if (outfitSlots == null || outfitSlots.Length == 0)
-        {
-            Debug.LogError("[UIManager] outfitSlots array is NULL or EMPTY! Assign at least 1 slot in Inspector.");
-        }
-
-        // Read values directly (sync first to ensure we have latest from save)
-        WardrobeManager.Instance.SyncScrap();
-        int playerScrap = WardrobeManager.Instance.CurrentScrap;
-        int equippedID = WardrobeManager.Instance.EquippedOutfitID;
-
-        Debug.Log($"[UIManager] Refreshing Wardrobe: Scrap={playerScrap}, EquippedID={equippedID}, Outfits loaded={WardrobeManager.Instance.AllOutfits.Count}");
-
-        // Update scrap counter
-        if (scrapCounterText != null)
-            scrapCounterText.text = $"{playerScrap} خردة";
-
-        // Update outfit slots
-        if (outfitSlots != null)
-        {
-            for (int i = 0; i < outfitSlots.Length; i++)
-            {
-                if (i < WardrobeManager.Instance.AllOutfits.Count)
-                {
-                    OutfitData outfit = WardrobeManager.Instance.AllOutfits[i];
-                    outfitSlots[i].gameObject.SetActive(true);
-                    outfitSlots[i].Initialize(outfit, WardrobeManager.Instance.OwnsOutfit(outfit.ID), equippedID == outfit.ID, playerScrap);
-                    Debug.Log($"[UIManager] Slot {i}: {outfit.displayNameAR}, Cost={outfit.scrapCost}, Owned={WardrobeManager.Instance.OwnsOutfit(outfit.ID)}");
-                }
-                else
-                {
-                    outfitSlots[i].gameObject.SetActive(false);
-                }
-            }
-        }
-
-        Debug.Log("[UIManager] Wardrobe UI refreshed.");
+#if UNITY_EDITOR
+        Debug.Log("[UIManager] Unified Hub panel shown.");
+#endif
     }
 
-    private void HandleWardrobeUpdated()
+    /// <summary>
+    /// PHASE 10: Hides the unified hub panel.
+    /// </summary>
+    public void HideUnifiedHub()
     {
-        // Only refresh if wardrobe panel is active (prevents unnecessary updates during runs)
-        // Also check if WardrobeManager is initialized (has outfits loaded)
-        if (wardrobePanel != null && 
-            wardrobePanel.activeSelf && 
-            WardrobeManager.Instance != null && 
-            WardrobeManager.Instance.AllOutfits.Count > 0)
-        {
-            RefreshWardrobeUI();
-        }
+        if (unifiedHubPanel != null)
+            unifiedHubPanel.SetActive(false);
     }
 
     #endregion
@@ -575,24 +405,14 @@ public class UIManager : MonoBehaviour
         switch (newState)
         {
             case GameState.Wardrobe:
-                // Show Wardrobe panel
-                wardrobePanel.SetActive(true);
-                RefreshWardrobeUI();
+            case GameState.HouseHub:
+                // Both shown via unified hub - manager controls display
                 break;
             case GameState.Encounter:
                 encounterPanel.SetActive(true);
                 break;
-            case GameState.QTE:
-                // QTE warning shown separately
-                break;
             case GameState.InterHouseMiniGame:
                 // All panels hidden - mini-game prefab handles its own UI
-                break;
-            case GameState.Crossroads:
-                // CrossroadsPanel shown via ShowCrossroadsPanel()
-                break;
-            case GameState.House4Boss:
-                encounterPanel.SetActive(true);
                 break;
             case GameState.GameOver:
                 gameOverPanel.SetActive(true);
