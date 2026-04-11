@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
+using RTLTMPro;
 using DG.Tweening;
 using NaughtyAttributes;
 
@@ -39,15 +39,18 @@ public class InteractionHUDController : MonoBehaviour
 
     [Tooltip("Icon image for the interaction type")]
     [SerializeField] private Image iconImage;
+    
+    [Tooltip("Icon RectTransform for shake animation (if different from iconImage)")]
+    [SerializeField] private RectTransform iconRectTransform;
 
     [Tooltip("Prompt text (Arabic instruction)")]
-    [SerializeField] private TextMeshProUGUI promptText;
+    [SerializeField] private RTLTextMeshPro promptText;
 
     [Tooltip("Timer progress bar (0-1)")]
     [SerializeField] private Image timerBar;
 
     [Tooltip("Progress counter text (e.g., 'Shakes: 3/5')")]
-    [SerializeField] private TextMeshProUGUI counterText;
+    [SerializeField] private RTLTextMeshPro counterText;
 
     [Tooltip("Icon sprites folder in Resources")]
     [SerializeField] private string iconSpritesPath = "InteractionIcons";
@@ -86,6 +89,13 @@ public class InteractionHUDController : MonoBehaviour
     private bool isActive = false;
     private Sequence entranceTween;
     private Sequence exitTween;
+    
+    // GC optimization: cache last counter value to avoid string allocation
+    private int lastCounterValue = -1;
+    
+    // Icon shake animation
+    private Sequence iconShakeTween;
+    private float lastShakeCount = 0f;
 
     #endregion
 
@@ -125,6 +135,7 @@ public class InteractionHUDController : MonoBehaviour
         // Kill tweens to prevent memory leaks
         entranceTween?.Kill();
         exitTween?.Kill();
+        iconShakeTween?.Kill();
     }
 
     #endregion
@@ -149,6 +160,8 @@ public class InteractionHUDController : MonoBehaviour
         onCompleteCallback = onComplete;
         elapsed = 0f;
         isActive = true;
+        lastCounterValue = -1; // Reset counter cache
+        lastShakeCount = 0f; // Reset shake cache
 
         // Reset input manager state
         InputManager.Instance?.ResetInteractionState();
@@ -243,7 +256,47 @@ public class InteractionHUDController : MonoBehaviour
     private void UpdateProgress()
     {
         float currentValue = GetCurrentValue();
-        UpdateCounterText(currentValue);
+        int currentValueInt = Mathf.FloorToInt(currentValue);
+        
+        // Only update text when integer value changes to avoid GC spikes
+        if (currentValueInt != lastCounterValue)
+        {
+            lastCounterValue = currentValueInt;
+            UpdateCounterText(currentValue);
+        }
+        
+        // Visual struggle: Shake icon based on input momentum
+        UpdateIconStruggle(currentValue);
+    }
+    
+    /// <summary>
+    /// Applies a struggle shake to the interaction icon based on player input momentum.
+    /// </summary>
+    private void UpdateIconStruggle(float currentValue)
+    {
+        // Only apply shake for Shake interaction type
+        if (currentInteraction.InteractionType != InteractionType.Shake) return;
+        if (iconRectTransform == null && iconImage == null) return;
+        
+        // Calculate shake intensity based on rate of input (momentum)
+        float shakeDelta = currentValue - lastShakeCount;
+        lastShakeCount = currentValue;
+        
+        // Only shake when player is actively inputting
+        if (shakeDelta < 0.5f) return; // Minimum input threshold
+        
+        // Calculate intensity (0-1 based on threshold progress)
+        float intensity = Mathf.Clamp01(currentValue / currentInteraction.Threshold);
+        float amplitude = Mathf.Lerp(3f, 12f, intensity); // Scale amplitude with progress
+        float frequency = Mathf.Lerp(15f, 30f, intensity); // Increase frequency with progress
+        
+        // Kill existing shake to prevent stacking
+        iconShakeTween?.Kill();
+        
+        // Apply shake to icon
+        RectTransform targetRect = iconRectTransform ?? iconImage.rectTransform;
+        iconShakeTween = DOTween.Sequence();
+        iconShakeTween.Append(targetRect.DOShakePosition(0.15f, new Vector2(amplitude, amplitude * 0.6f), Mathf.RoundToInt(frequency), 90f, false));
     }
 
     private float GetCurrentValue()
@@ -392,6 +445,9 @@ public class InteractionHUDController : MonoBehaviour
             return;
         }
 
+        // Kill existing tweens on timerBar to prevent stacking/jitter
+        timerBar.DOKill();
+        
         Color targetColor = succeeded ? successColor : failureColor;
         Sequence flashSeq = DOTween.Sequence();
         flashSeq.Append(timerBar.DOColor(targetColor, 0.15f).SetEase(Ease.OutQuad));

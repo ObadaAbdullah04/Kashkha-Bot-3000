@@ -100,6 +100,7 @@ public class SwipeCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
     private int cardIndex;
     private int totalCards;
     private Sequence _feedbackSequence;
+    private bool _hasTriggeredHaptic = false; // Track if haptic already triggered
 
     #endregion
 
@@ -189,6 +190,7 @@ public class SwipeCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
     public void ResetCard()
     {
         isSwiped = false;
+        _hasTriggeredHaptic = false; // Reset haptic flag
         originalPosition = transform.localPosition;
         originalRotation = transform.localRotation;
 
@@ -291,6 +293,13 @@ public class SwipeCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
 
         if (leftOptionText != null)
             leftOptionText.alpha = Mathf.Clamp01(1f - Mathf.Max(0f, -swipeProgress));
+
+        // Haptic feedback when crossing threshold (commitment point)
+        if (!_hasTriggeredHaptic && Mathf.Abs(swipeProgress) >= 0.95f)
+        {
+            _hasTriggeredHaptic = true;
+            HapticFeedback.Instance?.LightTap();
+        }
     }
 
     #endregion

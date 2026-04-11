@@ -21,6 +21,11 @@ public class AudioManager : MonoBehaviour
     [SerializeField] private AudioClip wrongAnswerSfx;
     [SerializeField] private AudioClip gameOverSfx;
     [SerializeField] private AudioClip winSfx;
+    
+    [Header("Panic Timer")]
+    [Tooltip("Ticking clock SFX that plays during panic threshold")]
+    [SerializeField] private AudioClip panicTickSfx;
+    [SerializeField] private AudioSource panicTimerSource;
 
     private void Awake()
     {
@@ -32,9 +37,11 @@ public class AudioManager : MonoBehaviour
 
             if (musicSource == null) musicSource = gameObject.AddComponent<AudioSource>();
             if (sfxSource == null) sfxSource = gameObject.AddComponent<AudioSource>();
+            if (panicTimerSource == null) panicTimerSource = gameObject.AddComponent<AudioSource>();
 
             musicSource.loop = true;
             sfxSource.loop = false;
+            panicTimerSource.loop = false;
         }
         else
         {
@@ -70,5 +77,36 @@ public class AudioManager : MonoBehaviour
             musicSource.Play();
             musicSource.DOFade(1f, 0.5f);
         });
+    }
+    
+    /// <summary>
+    /// Plays a panic tick SFX with dynamic pitch based on time remaining.
+    /// Pitch increases as time runs out (1.0 → 2.0) to create psychological pressure.
+    /// </summary>
+    /// <param name="timeRemaining">Current time remaining on timer</param>
+    /// <param name="panicThreshold">Threshold below which panic ticks start</param>
+    public void PlayPanicTick(float timeRemaining, float panicThreshold)
+    {
+        if (panicTickSfx == null || panicTimerSource == null) return;
+        if (timeRemaining >= panicThreshold) return; // Only play during panic
+        
+        // Calculate pitch: 1.0 at panic threshold → 2.0 at 0 time
+        float panicProgress = 1f - (timeRemaining / panicThreshold); // 0 → 1
+        float pitch = Mathf.Lerp(1.0f, 2.0f, panicProgress);
+        
+        panicTimerSource.pitch = pitch;
+        panicTimerSource.PlayOneShot(panicTickSfx);
+    }
+    
+    /// <summary>
+    /// Stops the panic timer audio source.
+    /// </summary>
+    public void StopPanicTicks()
+    {
+        if (panicTimerSource != null)
+        {
+            panicTimerSource.Stop();
+            panicTimerSource.pitch = 1.0f; // Reset pitch
+        }
     }
 }

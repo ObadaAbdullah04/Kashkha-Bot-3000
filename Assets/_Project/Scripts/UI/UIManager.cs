@@ -41,16 +41,14 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Slider stomachSlider;
 
     [Header("Game State Panels")]
-    [SerializeField] private GameObject encounterPanel;
+    [Tooltip("Swipe encounter panel (PHASE 16+ active swipe UI)")]
+    [SerializeField] private GameObject swipeEncounterPanel;
     [SerializeField] private GameObject gameOverPanel;
     [SerializeField] private GameObject winPanel;
 
     [Header("Unified Hub Panel (PHASE 10)")]
     [Tooltip("Single unified hub panel with 3 tabs: Houses, Wardrobe, Upgrades")]
     [SerializeField] private GameObject unifiedHubPanel;
-
-    [Header("Swipe Encounter UI (PHASE 6)")]
-    [SerializeField] private GameObject swipeEncounterPanel;
 
     [Header("Screen Shake Settings")]
     [SerializeField] private RectTransform mainPanel;
@@ -158,7 +156,7 @@ public class UIManager : MonoBehaviour
     private void InitializeUI()
     {
         HideAllPanels();
-        encounterPanel.SetActive(true);
+        swipeEncounterPanel.SetActive(true);
         feedbackPanel.SetActive(false);
 
         // Set slider max values correctly
@@ -301,44 +299,11 @@ public class UIManager : MonoBehaviour
 
     private void HideAllPanels()
     {
-        encounterPanel.SetActive(false);
         gameOverPanel.SetActive(false);
         winPanel.SetActive(false);
         feedbackPanel.SetActive(false);
         unifiedHubPanel.SetActive(false);
         swipeEncounterPanel.SetActive(false);
-    }
-
-    #endregion
-
-    #region PHASE 6: Swipe Encounter UI
-
-    /// <summary>
-    /// PHASE 6: Shows the swipe encounter panel and starts the card sequence.
-    /// </summary>
-    public void ShowSwipeEncounter(System.Collections.Generic.List<SwipeCardData> cards)
-    {
-        // Hide old encounter panel, show swipe panel
-        if (encounterPanel != null)
-            encounterPanel.SetActive(false);
-
-        if (swipeEncounterPanel != null)
-        {
-            swipeEncounterPanel.SetActive(true);
-        }
-
-#if UNITY_EDITOR
-        Debug.Log($"[UIManager] Showing swipe encounter with {cards.Count} cards.");
-#endif
-    }
-
-    /// <summary>
-    /// PHASE 6: Hides the swipe encounter panel.
-    /// </summary>
-    public void HideSwipeEncounter()
-    {
-        if (swipeEncounterPanel != null)
-            swipeEncounterPanel.SetActive(false);
     }
 
     #endregion
@@ -387,7 +352,7 @@ public class UIManager : MonoBehaviour
                 // Both shown via unified hub - manager controls display
                 break;
             case GameState.Encounter:
-                encounterPanel.SetActive(true);
+                swipeEncounterPanel.SetActive(true);
                 break;
             case GameState.InterHouseMiniGame:
                 // All panels hidden - mini-game prefab handles its own UI

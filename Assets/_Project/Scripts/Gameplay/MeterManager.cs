@@ -141,6 +141,7 @@ public class MeterManager : MonoBehaviour
         if (outfitStomachResist < 0 && modifiedAmount > 0)
         {
             float resistance = Mathf.Abs(outfitStomachResist) / 100f;
+            resistance = Mathf.Clamp(resistance, 0f, 0.99f); // Prevent division inversion
             modifiedAmount *= (1f - resistance);
         }
 
