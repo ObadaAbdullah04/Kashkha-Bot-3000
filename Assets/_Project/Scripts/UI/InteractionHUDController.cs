@@ -311,16 +311,18 @@ public class InteractionHUDController : MonoBehaviour
         isActive = false;
 
         float batteryDelta = currentInteraction.GetBatteryDelta(succeeded);
+        float stomachDelta = currentInteraction.GetStomachDelta(succeeded);
         int eidiaReward = currentInteraction.GetEidReward(succeeded);
 
         if (debugLogging)
-            Debug.Log($"[InteractionHUDController] {(succeeded ? "SUCCESS" : "FAILED")}: {currentInteraction.ID} | Battery:{batteryDelta} | Eid:{eidiaReward}");
+            Debug.Log($"[InteractionHUDController] {(succeeded ? "SUCCESS" : "FAILED")}: {currentInteraction.ID} | Battery:{batteryDelta} | Stomach:{stomachDelta} | Eid:{eidiaReward}");
 
         // Show feedback flash
         FlashResult(succeeded, () =>
         {
-            // Update meters
+            // Update meters (both battery AND stomach)
             MeterManager.Instance?.ModifyBattery(batteryDelta);
+            MeterManager.Instance?.ModifyStomach(stomachDelta);
             SaveManager.Instance?.AddRunRewards(eidiaReward);
 
             // Hide panel

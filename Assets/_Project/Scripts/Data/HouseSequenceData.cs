@@ -75,7 +75,7 @@ public class HouseSequenceData : ScriptableObject
         if (Sequence == null || Sequence.Count == 0)
             return "Empty sequence";
 
-        int questionCount = 0, cutsceneCount = 0, interactionCount = 0;
+        int questionCount = 0, cinematicCount = 0, interactionCount = 0;
         foreach (var element in Sequence)
         {
             if (element != null)
@@ -83,13 +83,13 @@ public class HouseSequenceData : ScriptableObject
                 switch (element.Type)
                 {
                     case ElementType.Question: questionCount++; break;
-                    case ElementType.Cutscene: cutsceneCount++; break;
+                    case ElementType.Cinematic: cinematicCount++; break;
                     case ElementType.Interaction: interactionCount++; break;
                 }
             }
         }
 
-        return $"Total: {Sequence.Count} elements | {questionCount} Questions | {cutsceneCount} Cutscenes | {interactionCount} Interactions";
+        return $"Total: {Sequence.Count} elements | {questionCount} Questions | {cinematicCount} Cinematics | {interactionCount} Interactions";
     }
 }
 
@@ -131,10 +131,11 @@ public class SequenceElement
 /// <summary>
 /// Types of elements that can appear in a house sequence.
 /// PHASE 13: Added Interaction type for standalone gameplay moments (shake, hold, tap, draw).
+/// PHASE 15: Merged Cutscene + Timeline into unified Cinematic type.
 /// </summary>
 public enum ElementType
 {
     Question,       // Triggers SwipeEncounterManager.ShowSingleCard()
-    Cutscene,       // Triggers CutsceneTrigger.PlayCutscene()
+    Cinematic,      // Triggers CinematicController.PlayCinematic() (Timeline or DOTween)
     Interaction     // Triggers InteractionHUDController.RunInteraction()
 }

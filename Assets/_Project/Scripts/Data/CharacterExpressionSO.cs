@@ -8,7 +8,7 @@ using System.Collections.Generic;
 /// USAGE:
 /// 1. Create: Right-click in Project window → Create → Character Expression
 /// 2. Add expressions (Happy, Sad, Angry, Neutral, etc.) with corresponding sprites
-/// 3. Assign to CutsceneTrigger's expression list
+/// 3. Assign to CinematicController's expression list (if using character sprites in cinematics)
 /// 4. Reference by name in CSV or code: "Happy", "Angry", etc.
 /// 
 /// BENEFITS:

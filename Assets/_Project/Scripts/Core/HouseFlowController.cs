@@ -38,8 +38,8 @@ public class HouseFlowController : MonoBehaviour
     [Tooltip("Reference to SwipeEncounterManager for questions")]
     [SerializeField] private SwipeEncounterManager swipeEncounterManager;
 
-    [Tooltip("Reference to CutsceneTrigger for cutscenes")]
-    [SerializeField] private CutsceneTrigger cutsceneTrigger;
+    [Tooltip("Reference to CinematicController for unified cinematics (Timeline or DOTween)")]
+    [SerializeField] private CinematicController cinematicController;
 
     [Tooltip("Reference to InteractionHUDController for interactions")]
     [SerializeField] private InteractionHUDController interactionHUDController;
@@ -162,8 +162,8 @@ public class HouseFlowController : MonoBehaviour
                     questionIndex++;
                     break;
 
-                case ElementType.Cutscene:
-                    yield return PlayCutscene(element.ElementID);
+                case ElementType.Cinematic:
+                    yield return PlayCinematic(element.ElementID);
                     break;
 
                 case ElementType.Interaction:
@@ -230,6 +230,9 @@ public class HouseFlowController : MonoBehaviour
             yield break;
         }
 
+        if (debugLogging)
+            Debug.Log($"[HouseFlowController] === Playing Question: {questionID} ({questionIndex + 1}/{totalQuestions}) ===");
+
         // Show card and wait for completion
         bool cardDone = false;
         swipeEncounterManager.ShowSingleCard(questionData, questionIndex, totalQuestions, (batteryDelta, eidia, wasCorrect) =>
@@ -242,45 +245,58 @@ public class HouseFlowController : MonoBehaviour
 
         // Wait for card to be answered or timeout
         yield return new WaitUntil(() => cardDone);
+
+        if (debugLogging)
+            Debug.Log($"[HouseFlowController] === Question {questionID} Finished ===");
     }
 
     /// <summary>
-    /// Plays a Cutscene element. Shows cutscene animation, waits for duration.
+    /// Plays a Cinematic element. Supports both Unity Timeline and DOTween modes.
+    /// PHASE 15: Unified cinematic system.
+    /// 
+    /// IMPORTANT: Cinematics play EXCLUSIVELY - all other systems (swipe cards, interactions)
+    /// are disabled during cinematic playback to prevent parallel execution.
     /// </summary>
-    private IEnumerator PlayCutscene(string cutsceneID)
+    private IEnumerator PlayCinematic(string cinematicID)
     {
-        CutsceneData cutsceneData = DataManager.Instance?.GetCutsceneByID(cutsceneID);
-        if (cutsceneData == null)
+        if (cinematicController == null)
         {
-            Debug.LogError($"[HouseFlowController] Cutscene not found: {cutsceneID}");
-            OnElementCompleted?.Invoke(ElementType.Cutscene, cutsceneID);
+            Debug.LogError("[HouseFlowController] CinematicController not assigned!");
+            OnElementCompleted?.Invoke(ElementType.Cinematic, cinematicID);
             yield break;
         }
 
-        if (cutsceneTrigger == null)
+        // Get cinematic data from DataManager
+        var cinematicData = DataManager.Instance?.GetCinematicByID(cinematicID);
+        if (cinematicData == null)
         {
-            Debug.LogWarning("[HouseFlowController] CutsceneTrigger not assigned — skipping cutscene.");
-            OnElementCompleted?.Invoke(ElementType.Cutscene, cutsceneID);
+            Debug.LogError($"[HouseFlowController] Cinematic not found: {cinematicID}");
+            OnElementCompleted?.Invoke(ElementType.Cinematic, cinematicID);
             yield break;
         }
 
-        // Play cutscene and wait for completion
-        bool cutsceneDone = false;
-        cutsceneTrigger.PlayCutscene(cutsceneData, (id) =>
+        if (debugLogging)
+            Debug.Log($"[HouseFlowController] === Playing Cinematic: {cinematicID} [EXCLUSIVE MODE] ===");
+
+        // Play cinematic and wait for completion
+        bool cinematicDone = false;
+        cinematicController.PlayCinematic(cinematicData, (id) =>
         {
-            cutsceneDone = true;
+            cinematicDone = true;
             if (debugLogging)
-                Debug.Log($"[HouseFlowController] Cutscene complete: {cutsceneID}");
-            OnElementCompleted?.Invoke(ElementType.Cutscene, cutsceneID);
+                Debug.Log($"[HouseFlowController] Cinematic complete: {cinematicID} | Type: {cinematicData.Type}");
+            OnElementCompleted?.Invoke(ElementType.Cinematic, cinematicID);
         });
 
-        // Wait for cutscene animation to finish
-        yield return new WaitUntil(() => cutsceneDone);
+        // Wait for cinematic to finish - blocks all other gameplay
+        yield return new WaitUntil(() => cinematicDone);
+
+        if (debugLogging)
+            Debug.Log($"[HouseFlowController] === Cinematic {cinematicID} Finished - Resuming House Flow ===");
     }
 
     /// <summary>
     /// Plays an Interaction element. Shows interaction HUD, waits for player input.
-    /// PHASE 13: New interaction type (shake, hold, tap, draw).
     /// </summary>
     private IEnumerator PlayInteraction(string interactionID)
     {
@@ -299,7 +315,9 @@ public class HouseFlowController : MonoBehaviour
             yield break;
         }
 
-        // Show interaction HUD and wait for completion
+        if (debugLogging)
+            Debug.Log($"[HouseFlowController] === Playing Interaction: {interactionID} ===");
+
         bool interactionDone = false;
         interactionHUDController.RunInteraction(interactionData, (succeeded, batteryDelta, eidiaReward) =>
         {
@@ -309,8 +327,10 @@ public class HouseFlowController : MonoBehaviour
             OnElementCompleted?.Invoke(ElementType.Interaction, interactionID);
         });
 
-        // Wait for interaction to be completed or timeout
         yield return new WaitUntil(() => interactionDone);
+
+        if (debugLogging)
+            Debug.Log($"[HouseFlowController] === Interaction {interactionID} Finished ===");
     }
 
     #endregion

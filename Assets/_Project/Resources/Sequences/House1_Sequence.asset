@@ -14,36 +14,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   HouseLevel: 1
   Sequence:
-  - Type: 1
-    ElementID: CS_H1_Welcome
-    DesignerNote: Aunt welcomes you
   - Type: 0
     ElementID: Q1
-    DesignerNote: Hospitality question
+    DesignerNote: 
+  - Type: 1
+    ElementID: House1_Intro
+    DesignerNote: 
   - Type: 0
-    ElementID: Q5
-    DesignerNote: How are you?
+    ElementID: Q2
+    DesignerNote: 
   - Type: 2
     ElementID: SHAKE_Cup_1
-    DesignerNote: Shake the coffee cup
-  - Type: 0
-    ElementID: Q8
-    DesignerNote: Grandma loves you
-  - Type: 0
-    ElementID: Q10
-    DesignerNote: Prayer blessing
+    DesignerNote: 
   - Type: 1
-    ElementID: CS_H1_Aunt_Smile
-    DesignerNote: Aunt smiles
-  - Type: 2
-    ElementID: HOLD_Hand_1
-    DesignerNote: Handshake interaction
-  - Type: 0
-    ElementID: Q3
-    DesignerNote: Studies question
-  - Type: 0
-    ElementID: Q6
-    DesignerNote: Eid greeting
-  - Type: 1
-    ElementID: CS_Celebration
-    DesignerNote: House complete!
+    ElementID: House1_Outro
+    DesignerNote: 

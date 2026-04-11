@@ -4,6 +4,8 @@
 
 This document describes the clean architecture implemented for Kashkha-Bot-3000, following single-responsibility principles and loose coupling.
 
+**Phase 16 Update:** Cinematic System Overhaul - Exclusive Playback, Smart Fallback, House Sequence Fixes
+
 **Phase 10 Update:** Signal Router System - Timeline Prefab Spawning with Gameplay Integration (Questions, QTEs, Activations)
 
 **Phase 8 Update:** Wave-Based Question Pool System with Streak Combos, Simplified Meters
@@ -20,8 +22,8 @@ This document describes the clean architecture implemented for Kashkha-Bot-3000,
 ┌─────────────────────────────────────────────────────────────────┐
 │                         GameManager                              │
 │  • State Machine (Wardrobe → HouseHub → Encounter → MiniGame)   │
-│  • 4-House Progression with Sequential Navigation               │
-│  • Question Pool Loading & Wave Splitting                       │
+│  • 4-House Progression with House Flow Controller               │
+│  • House Sequence Loading (Questions, Cinematics, Interactions) │
 │  • Outfit Bonus Application                                     │
 └──────────────┬──────────────────────────────────┬───────────────┘
                │                                  │
@@ -37,30 +39,30 @@ This document describes the clean architecture implemented for Kashkha-Bot-3000,
              │                                     │
              ▼                                     ▼
 ┌──────────────────────────┐          ┌──────────────────────────┐
-│  FloatingTextManager     │          │   IntermissionDirector   │
-│  • Object Pool (20+)     │          │  • (House,Wave)→Prefab   │
-│  • CanvasGroup Alpha     │          │  • Spawns Timeline       │
-│  • RTL Arabic support    │          │  • Waits for Completion  │
-│  • Auto-spawn on events  │          │  • Fallback Delay        │
-└──────────────────────────┘          └────────────┬─────────────┘
-                                                   │
-                                                   ▼
-                                    ┌──────────────────────────┐
-                                    │ IntermissionSignalRouter │
-                                    │  • OnShowQuestion()      │
-                                    │  • OnPauseForQTE()       │
-                                    │  • OnActivate()          │
-                                    │  • OnDeactivate()        │
-                                    │  • Pause/Resume Timeline │
-                                    └────────┬─────────────────┘
-                                             │
-                          ┌──────────────────┼──────────────────┐
-                          ▼                  ▼                  ▼
-                ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
-                │SwipeEncounter│  │ QTEInputCtrl │  │ GameObjects  │
-                │  Manager     │  │  Controller  │  │  (NPCs, UI)  │
-                │ShowSingleCard│  │  TriggerQTE  │  │  SetActive   │
-                └──────────────┘  └──────────────┘  └──────────────┘
+│  FloatingTextManager     │          │   HouseFlowController    │
+│  • Object Pool (20+)     │          │  • Phase 16: Self-driving│
+│  • CanvasGroup Alpha     │          │    coroutine sequence    │
+│  • RTL Arabic support    │          │  • Plays elements ONE    │
+│  • Auto-spawn on events  │          │    at a time, WAITS      │
+└──────────────────────────┘          │  • Question/Cinematic/   │
+                                       │    Interaction elements  │
+                                       └────────┬─────────────────┘
+                                                │
+                          ┌─────────────────────┼─────────────────────┐
+                          ▼                     ▼                     ▼
+                ┌──────────────┐    ┌──────────────────┐    ┌──────────────────┐
+                │SwipeEncounter│    │ CinematicController│   │ InteractionHUD   │
+                │  Manager     │    │ • Timeline/DOTween │   │  Controller      │
+                │ShowSingleCard│    │ • Smart Fallback   │   │ RunInteraction   │
+                └──────────────┘    │ • UI Hide/Restore  │   │                  │
+                                    └─────────┬──────────┘    └──────────────────┘
+                                              │
+                                    ┌─────────▼──────────┐
+                                    │   UI Management     │
+                                    │ • Hide gameplay UI  │
+                                    │ • Show cinematic UI │
+                                    │ • Auto-restore after│
+                                    └─────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────┐
 │               Navigation & Transitions                           │
@@ -111,25 +113,24 @@ This document describes the clean architecture implemented for Kashkha-Bot-3000,
 
 | Script | Responsibility | Key Methods |
 |--------|----------------|-------------|
-| `GameManager.cs` | 4-House state machine, question pools, wave splitting | `StartRun()`, `StartHouse()`, `StartSwipeEncounter()`, `EndHouse()` |
+| `GameManager.cs` | 4-House state machine, run lifecycle | `StartRun()`, `StartHouse()`, `EndHouse()`, `OnMiniGameComplete()` |
 | `GameState.cs` | State enumeration | `Wardrobe`, `HouseHub`, `Encounter`, `InterHouseMiniGame`, `GameOver`, `Win` |
-| `DataManager.cs` | Robust Regex CSV parsing, question pools | `ParseCSV()`, `GetShuffledQuestionsForHouse()` |
+| `HouseFlowController.cs` | **Phase 16:** Self-driving house sequence player | `PlayHouseSequence()`, `PlayQuestion()`, `PlayCinematic()`, `PlayInteraction()` |
+| `CinematicController.cs` | **Phase 16:** Unified cinematic playback (Timeline + DOTween) | `PlayCinematic()`, `CancelActiveCinematic()`, smart fallback, UI management |
+| `DataManager.cs` | CSV parsing, data pooling, cinematic registry | `ParseQuestionsCSV()`, `GetQuestionByID()`, `GetCinematicByID()`, `GetInteractionByID()` |
 | `SaveManager.cs` | Persistent JSON serialization | `SaveGame()`, `LoadGame()`, `AddRunRewards()` |
 | `AudioManager.cs` | Event-driven music/SFX | `PlayMusic()`, `PlaySFX()`, `HandleStateChanged()` |
-| `HouseHubManager.cs` | House navigation hub UI | `InitializeHub()`, `MarkHouseComplete()`, `OnHouseSelected` event |
 | `TransitionPlayer.cs` | House-to-house transition animations | `PlayTransition()`, `SkipTransition()`, `OnTransitionComplete` event |
-| `IntermissionDirector.cs` | **Phase 10:** Timeline prefab spawning | `PlayIntermission()`, `ForceSkipIntermission()`, `(House,Wave)→Prefab` map |
-| `IntermissionSignalRouter.cs` | **Phase 10:** Signal-to-gameplay routing | `OnShowQuestion()`, `OnPauseForQTE()`, `OnActivate()`, `OnDeactivate()` |
 
 ### Gameplay Layer
 
 | Script | Responsibility | Key Methods |
 |--------|----------------|-------------|
 | `MeterManager.cs` | Battery/Stomach tracking with direct modifications | `ModifyBattery()`, `ModifyStomach()`, delta-based events |
-| `SwipeEncounterManager.cs` | **Phase 8:** Wave-based question pools with streak combos | `StartEncounter()`, `ShowSingleCard()`, streak tracking |
-| `SwipeCardData.cs` | **Phase 7:** Swipe card data structure | `GetBatteryDelta()`, `GetEidiaReward()`, `GetFeedback()`, `WasSwipeCorrect()` |
-| `SwipeCard.cs` | **Phase 7:** Tinder-style swipe card UI | `Setup()`, `OnBeginDrag()`, `OnDrag()`, `OnEndDrag()`, `ShowResultFeedback()` |
-| `QTEInputController.cs` | **Phase 10:** Timeline-paused QTE prompts | `TriggerQTE(callback)`, `SetQTEConfig()`, shake/swipe detection |
+| `SwipeEncounterManager.cs` | Single card display with streak tracking | `ShowSingleCard()`, streak tracking, per-card timer |
+| `SwipeCardData.cs` | Swipe card data structure | `GetBatteryDelta()`, `GetEidiaReward()`, `GetFeedback()`, `WasSwipeCorrect()` |
+| `SwipeCard.cs` | Tinder-style swipe card UI with DOTween | `Setup()`, `OnBeginDrag()`, `OnDrag()`, `OnEndDrag()`, `ShowResultFeedback()` |
+| `InteractionHUDController.cs` | Standalone interaction prompts (Shake/Hold/Tap/Draw) | `RunInteraction()`, type-specific prompts |
 | `CatchMiniGame.cs` | Time attack catch mini-game | `Initialize()`, `HandlePlayerMovement()`, `OnItemCaught()` |
 | `FallingItem.cs` | Component-based item collision | `OnTriggerEnter2D()`, `Update()` |
 
@@ -148,8 +149,10 @@ This document describes the clean architecture implemented for Kashkha-Bot-3000,
 
 | Script | Responsibility | Key Methods |
 |--------|----------------|-------------|
-| `EncounterData.cs` | House/question metadata | `HouseLevel`, `Speaker`, `WaveNumber` |
-| `SwipeCardData.cs` | Single swipe card data | `CardName`, `QuestionAR`, `OptionCorrectAR`, `OptionWrongAR`, `RightIsCorrect` |
+| `HouseSequenceData.cs` | **Phase 16:** Ordered element sequences per house | `ValidateSequence()`, `GetSequenceSummary()`, `ElementType` enum |
+| `CinematicData.cs` | **Phase 16:** Cinematic configuration | `ID`, `Type` (Timeline/DOTween), `TextAR`, `Duration`, `TimelineAssetName` |
+| `InteractionData.cs` | Interaction configuration | `ID`, `HouseLevel`, `InteractionType`, `PromptTextAR`, `Duration`, `Threshold` |
+| `SwipeCardData.cs` | Single swipe card data | `CardName`, `QuestionAR`, `OptionCorrectAR`, `OptionWrongAR`, `CorrectSide` |
 | `OutfitData.cs` | Outfit stat bonuses | `OutfitStatType`, `OutfitRarity` enums |
 | `SaveData.cs` | Persistent save structure | `totalScrap`, `totalEidia`, `ownedOutfits`, `equippedOutfit` |
 
@@ -212,7 +215,7 @@ UIManager.Instance.ShowFeedback(text);
 
 ## 🎮 Game Flow
 
-### The 4-House Gauntlet (Phase 10: Timeline Intermissions)
+### The 4-House Gauntlet (Phase 16: Sequence-Driven Flow)
 
 ```
 Wardrobe (Spend Scrap on Outfits)
@@ -221,80 +224,140 @@ StartRun() → ResetMeters()
     ↓
 Transition: "السفر إلى بيت خالة أم محمد..."
     ↓
-┌─────────────────────────────────────────────┐
-│  HOUSE 1 (Swipe Encounters + Waves)         │
-│  Wave 1: 3 questions → Intermission         │
-│  Wave 2: 3 questions → Complete             │
-│  ↓                                          │
-│  Mini-Game (Catch)                          │
-└──────────────┬──────────────────────────────┘
+┌─────────────────────────────────────────────────┐
+│  HOUSE 1 (HouseFlowController Sequence)          │
+│  [Cinematic] House1_Intro                        │
+│  [Question] Q1 → [Question] Q2                  │
+│  [Interaction] SHAKE_Cup_1                       │
+│  [Question] Q3 → [Question] Q4                  │
+│  [Interaction] HOLD_Hand_1                       │
+│  [Question] Q5                                   │
+│  [Cinematic] House1_Outro                        │
+│  ↓                                               │
+│  Mini-Game (Catch)                               │
+└──────────────┬──────────────────────────────────┘
                ↓
-┌─────────────────────────────────────────────┐
-│  HOUSE HUB (Phase 6+)                       │
-│  • House 1: ✅ (completed)                  │
-│  • House 2: 🔓 (click to enter)             │
-│  • House 3: 🔒 (locked)                     │
-│  • House 4: 🔒 (locked)                     │
-└──────────────┬──────────────────────────────┘
+┌─────────────────────────────────────────────────┐
+│  HOUSE HUB (Phase 6+)                            │
+│  • House 1: ✅ (completed)                       │
+│  • House 2: 🔓 (click to enter)                  │
+│  • House 3: 🔒 (locked)                          │
+│  • House 4: 🔒 (locked)                          │
+└──────────────┬──────────────────────────────────┘
                ↓ (Click House 2)
-    Transition: "الذهاب إلى بيت جدو الحاج..."
+    Transition: "الذهاب إلى بيت عمو أبو أحمد..."
                ↓
-┌─────────────────────────────────────────────┐
-│  HOUSE 2 (Swipe Encounters + Waves)         │
-│  ↓                                          │
-│  Mini-Game (Catch)                          │
-└──────────────┬──────────────────────────────┘
+┌─────────────────────────────────────────────────┐
+│  HOUSE 2 (Sequence with 10 elements)             │
+│  Cinematic → Q11 → Q12 → SHAKE_Phone_2          │
+│  Q13 → Q14 → HOLD_Cup_2 → Q15 → Q16 → Cinematic│
+│  ↓                                               │
+│  Mini-Game (Catch)                               │
+└──────────────┬──────────────────────────────────┘
                ↓
-┌─────────────────────────────────────────────┐
-│  HOUSE 3 (Swipe Encounters + Waves)         │
-│  ↓                                          │
-│  Mini-Game (Catch)                          │
-└──────────────┬──────────────────────────────┘
+┌─────────────────────────────────────────────────┐
+│  HOUSE 3 (Sequence with 11 elements)             │
+│  Cinematic → Q21 → Q22 → SHAKE_Hand_3           │
+│  Q23 → Q24 → HOLD_Gift_3 → Q25 → Q26            │
+│  DRAW_Path_3 → Cinematic                         │
+│  ↓                                               │
+│  Mini-Game (Catch)                               │
+└──────────────┬──────────────────────────────────┘
                ↓
-┌─────────────────────────────────────────────┐
-│  HOUSE HUB (Celebration Panel)              │
-│  • All houses: ✅✅✅✅                     │
-│  • Play Again / Exit to Wardrobe buttons    │
-└─────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────┐
+│  HOUSE 4 (Sequence with 11 elements - INSANE)    │
+│  Cinematic → Q31 → Q32 → SHAKE_Insane_4         │
+│  Q33 → Q34 → HOLD_Strong_4 → Q35 → Q36          │
+│  TAP_Fast_4 → Q37 → Cinematic                    │
+│  ↓                                               │
+│  Mini-Game (Catch)                               │
+└──────────────┬──────────────────────────────────┘
+               ↓
+┌─────────────────────────────────────────────────┐
+│  HOUSE HUB (Celebration Panel)                   │
+│  • All houses: ✅✅✅✅                          │
+│  • Play Again / Exit to Wardrobe buttons         │
+└─────────────────────────────────────────────────┘
 ```
 
-### Wave & Intermission Flow (Phase 8/10)
+### House Sequence Element Flow (Phase 16)
 
 ```
-GameManager.StartSwipeEncounter(houseLevel)
+GameManager.StartHouse(houseLevel)
     ↓
-DataManager.GetShuffledQuestionsForHouse(houseLevel)
+Resources.Load<HouseSequenceData>("Sequences/House{N}_Sequence")
     ↓
-Pick N questions → Split into waves by WaveNumber
+HouseFlowController.PlayHouseSequence(houseLevel, sequence)
     ↓
-SwipeEncounterManager.StartEncounter(questionsByWave, totalWaves)
-    ↓
-┌─────────────────────────────────────────────┐
-│  WAVE 1:                                    │
-│  • Question 1: Swipe card → Answer → Float  │
-│  • Question 2: Swipe card → Answer → Float  │
-│  • Question 3: Swipe card → Answer → Float  │
-│  ↓                                          │
-│  Wave 1 Complete!                           │
-└──────────────┬──────────────────────────────┘
+┌─────────────────────────────────────────────────┐
+│  ITERATE THROUGH ELEMENTS (ONE AT A TIME):       │
+│                                                  │
+│  For each element:                               │
+│    1. [Question] → ShowSingleCard()              │
+│       • Wait for player swipe/timeout            │
+│       • Apply battery/eidia rewards              │
+│       • Spawn floating text                      │
+│                                                  │
+│    2. [Cinematic] → PlayCinematic()              │
+│       • Hide ALL gameplay UI                     │
+│       • Play Timeline OR DOTween text            │
+│       • Smart fallback if Timeline missing       │
+│       • Auto-restore gameplay UI after           │
+│                                                  │
+│    3. [Interaction] → RunInteraction()           │
+│       • Show Shake/Hold/Tap/Draw prompt          │
+│       • Wait for player input/timeout            │
+│       • Apply rewards/penalties                  │
+│                                                  │
+│  Pause between elements (0.5s default)           │
+└──────────────┬──────────────────────────────────┘
                ↓
-┌─────────────────────────────────────────────┐
-│  INTERMISSION (Phase 10)                    │
-│  IntermissionDirector spawns Timeline prefab│
-│  Timeline plays → Signals pause for:        │
-│    - ShowQuestion (card shown mid-timeline) │
-│    - PauseForQTE (QTE prompt shown)         │
-│    - OnActivate/OnDeactivate (NPCs, props)  │
-│  Timeline completes → Next wave starts      │
-└──────────────┬──────────────────────────────┘
-               ↓
-┌─────────────────────────────────────────────┐
-│  WAVE 2: More questions...                  │
-└──────────────┬──────────────────────────────┘
-               ↓
-All Waves Complete!
+All Elements Complete!
     ↓
-EndEncounter() → OnAllCardsSwiped → GameManager.EndHouse()
+OnHouseCompleted → GameManager.EndHouse()
+```
+
+### Cinematic Playback Flow (Phase 16)
+
+```
+HouseFlowController.PlayCinematic(cinematicID)
+    ↓
+DataManager.GetCinematicByID(cinematicID)
+    ↓
+Check: Pre-defined in DataManager?
+    ├─ YES → Return CinematicData
+    └─ NO  → Create UnityTimeline wrapper
+              (TimelineAssetName = cinematicID)
+    ↓
+CinematicController.PlayCinematic(cinematicData, onComplete)
+    ↓
+┌─────────────────────────────────────────────────┐
+│  CINEMATIC PLAYBACK:                             │
+│  1. Hide all gameplay UI                         │
+│     • Swipe encounter panel                      │
+│     • Interaction HUD                            │
+│     • Timer slider                               │
+│  2. Check cinematic type:                        │
+│     ┌────────────────────────────────────┐       │
+│     │ Timeline Mode:                     │       │
+│     │ • Has text? → Show panel + text    │       │
+│     │ • No text? → Hide panel            │       │
+│     │ • Play Timeline asset              │       │
+│     │ • Safety timeout (duration + 2s)   │       │
+│     └────────────────────────────────────┘       │
+│     ┌────────────────────────────────────┐       │
+│     │ DOTween Mode:                      │       │
+│     │ • Show panel + typewriter text     │       │
+│     │ • Animate character by character   │       │
+│     │ • Arabic RTL support               │       │
+│     └────────────────────────────────────┘       │
+│  3. Wait for completion                          │
+│  4. Hide cutscene UI                             │
+│  5. Restore gameplay UI                          │
+│  6. Call onComplete callback                     │
+└──────────────┬──────────────────────────────────┘
+               ↓
+HouseFlowController resumes → Next element
 ```
 
 ### Game Over Conditions
@@ -401,28 +464,29 @@ Haptic: Heavy    URP: Game Over
 ### 1. Single Responsibility
 Each script does ONE thing well:
 - `GameManager`: Game state and loop
+- `HouseFlowController`: Sequence playback (questions, cinematics, interactions)
+- `CinematicController`: Cinematic playback (Timeline + DOTween)
 - `MeterManager`: Math, thresholds, events
 - `UIManager`: Visual display only
-- `IntermissionSignalRouter`: Signal-to-gameplay routing
 
 ### 2. Loose Coupling
 Communication via events, not direct references:
 - `SwipeEncounterManager.OnCardProcessed` → GameManager spawns floating text
-- `IntermissionDirector.OnIntermissionComplete` → SwipeEncounterManager starts next wave
+- `CinematicController.OnCinematicCompleted` → HouseFlowController continues sequence
 - UI listens to events, doesn't poll state
 
 ### 3. Inspector-Configurable (NO HARDCODING)
 All magic numbers exposed as `[SerializeField]`:
 - Timer durations, thresholds, panic settings
-- QTE settings, shake/swipe thresholds
-- Questions-to-pick and waves per house
-- Fallback delay for missing timelines
+- Interaction settings (shake/hold/tap/draw)
+- Feedback display durations
+- Cinematic fallback timeout settings
 
-### 4. Timeline-First Architecture (Phase 10)
-Each intermission is a **prefab** with:
-- PlayableDirector component (plays Timeline asset)
-- IntermissionSignalRouter component (routes signals to gameplay)
-- SignalReceiver component (Unity's built-in, receives Timeline signals)
+### 4. Sequence-Driven Architecture (Phase 16)
+Each house is defined by a `HouseSequenceData` ScriptableObject with:
+- Ordered elements (Question, Cinematic, Interaction)
+- Explicit IDs that map to CSV data or cinematic registry
+- Designer notes for documentation
 - Fully configurable in Unity Editor
 
 ---
@@ -431,15 +495,14 @@ Each intermission is a **prefab** with:
 
 | Issue | Likely Cause | Solution |
 |-------|--------------|----------|
-| "No encounters parsed" | CSV not assigned | Drag Encounters.csv to DataManager.csvFile |
-| "Screen shake not working" | mainPanel not assigned | Assign UIParent RectTransform to UIManager.mainPanel |
-| **Phase 10: Timeline doesn't play** | Prefab missing PlayableDirector | Check prefab has PlayableDirector + Timeline asset assigned |
-| **Phase 10: Signals don't fire** | SignalReceiver not wired | Add SignalReceiver to prefab, wire to SignalRouter methods |
-| **Phase 10: Timeline doesn't pause** | SignalRouter missing director ref | Check IntermissionSignalRouter.ControlledDirector is assigned |
-| **Phase 10: Card doesn't show** | QuestionToShow not assigned | Assign SwipeCardData in SignalRouter inspector |
-| **Phase 10: QTE doesn't trigger** | QTEInputController missing in scene | Ensure QTEInputController exists and is accessible |
-| Wave intermission not firing | No timeline mapped for (house, wave) | Add entry in IntermissionDirector inspector |
-| Streak bonus not applying | Questions not tagged with WaveNumber | Check CSV WaveNumber column |
+| "No questions parsed" | CSV not assigned | Drag Questions.csv to DataManager.questionsCSV |
+| "Screen shake not working" | Component missing | Ensure CameraShakeManager exists in scene |
+| **Phase 16: Cinematic doesn't play** | Timeline asset missing OR no DOTween text | Check Resources/Timelines/ folder OR add DOTween text to DataManager |
+| **Phase 16: Both Timeline + text showing** | Cutscene panel not hidden | Check CinematicController.cutscenePanel assignment |
+| **Phase 16: Gameplay UI missing after cinematic** | UI not restored | Check ShowGameplayUI() called in CinematicController |
+| **Phase 16: Element not found** | Invalid ID in sequence | Verify ElementID matches CSV ID or cinematic ID |
+| **Phase 16: Sequence skips element** | Element ID null/empty | Check HouseSequenceData in inspector for empty fields |
+| Streak bonus not applying | Streak not tracked | Check SwipeEncounterManager.currentStreak increments |
 
 ---
 
@@ -447,10 +510,10 @@ Each intermission is a **prefab** with:
 
 | Package | Purpose | Version |
 |---------|---------|---------|
-| **DOTween** | UI animations, tweening | Latest |
+| **DOTween** | UI animations, tweening, cinematic text reveals | Latest |
 | **NaughtyAttributes** | Inspector enhancements | Latest |
 | **RTLTMPro** | Arabic text rendering | Latest |
-| **Unity Timeline** | Cutscene orchestration | Built-in |
+| **Unity Timeline** | Cinematic orchestration (optional) | Built-in |
 | **Unity Input System** | Touch/shake detection | 1.14.2 |
 
 ---
@@ -459,37 +522,43 @@ Each intermission is a **prefab** with:
 
 ### Easy to Add (No Architecture Changes)
 
-1. **Custom Signal Types**
-   - Create new Signal assets (MiniGame, Dialogue, etc.)
-   - Add methods to IntermissionSignalRouter
-   - Wire in SignalReceiver
+1. **More Cinematics**
+   - Add DOTween cinematics to DataManager pre-defined array
+   - Create Timeline assets in Resources/Timelines/
+   - Reference in house sequences
 
-2. **Voice Lines**
-   - Add Audio tracks to Timeline prefabs
-   - Sync with animation tracks
+2. **More Interactions**
+   - Add to Interactions.csv with new IDs
+   - Reference in house sequences
+   - Supports Shake/Hold/Tap/Draw types
 
 3. **More Mini-Game Types**
-   - New script: `PathDrawingGame.cs`
+   - New script: `NewMiniGame.cs`
    - MiniGameManager instantiates different prefab per slot
 
 ### Medium Effort (Minor Refactoring)
 
-1. **Dynamic Question Injection**
-   - SignalRouter requests questions from pool at runtime
-   - Requires passing houseLevel to SignalRouter
+1. **Conditional Elements**
+   - Sequence elements with prerequisites (e.g., "only show if streak >= 3")
+   - Requires extending SequenceElement with condition fields
 
-2. **Timeline Chaining**
-   - One Timeline prefab spawns next Timeline
-   - IntermissionDirector manages sequence
+2. **Cinematic Variants**
+   - Multiple cinematic versions per house (randomized)
+   - HouseFlowController picks at runtime
 
 ### Advanced (Major Architecture)
 
-1. **Visual Scenario Builder**
-   - Custom Editor window to chain events visually
-   - Export to Timeline prefabs
+1. **Visual Sequence Builder**
+   - Custom Editor window to chain elements visually
+   - Drag-and-drop questions, cinematics, interactions
+   - Auto-generates HouseSequenceData assets
+
+2. **Branching Sequences**
+   - Different paths based on player choices
+   - Requires state machine expansion
 
 ---
 
-**Last Updated:** Phase 10 - Signal Router System (Timeline Prefab Spawning)
+**Last Updated:** Phase 16 - Cinematic System Overhaul + House Sequence Fixes
 **Maintained By:** Core Development Team
-**Status:** ✅ Complete - Timeline Prefab Architecture with Full Gameplay Integration
+**Status:** ✅ **SEQUENCE-DRIVEN ARCHITECTURE** - Questions, Cinematics, Interactions unified

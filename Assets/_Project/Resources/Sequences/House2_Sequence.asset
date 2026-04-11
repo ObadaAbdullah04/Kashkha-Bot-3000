@@ -14,42 +14,30 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   HouseLevel: 2
   Sequence:
-  - Type: 0
-    ElementID: Q11
-    DesignerNote: Coffee cup shake
-  - Type: 0
-    ElementID: Q13
-    DesignerNote: You're a hero
   - Type: 1
-    ElementID: CS_H2_Greeting
-    DesignerNote: Uncle greets you
+    ElementID: House2_Intro
+    DesignerNote: 
   - Type: 0
-    ElementID: Q14
-    DesignerNote: Marriage question
+    ElementID: Q2_1
+    DesignerNote: 
   - Type: 0
-    ElementID: Q16
-    DesignerNote: Eid joy
+    ElementID: Q2_2
+    DesignerNote: 
+  - Type: 0
+    ElementID: Q2_3
+    DesignerNote: 
   - Type: 2
-    ElementID: HOLD_Cup_2
-    DesignerNote: Hold the cup steady
-  - Type: 0
-    ElementID: Q17
-    DesignerNote: Work question
-  - Type: 0
-    ElementID: Q19
-    DesignerNote: Love the country
-  - Type: 2
-    ElementID: TAP_Heart_2
-    DesignerNote: Tap the heart quickly
+    ElementID: SHAKE_Cup_2
+    DesignerNote: 
   - Type: 1
-    ElementID: CS_H2_Uncle_Nod
-    DesignerNote: Uncle approves
+    ElementID: House2_Coffee
+    DesignerNote: 
   - Type: 0
-    ElementID: Q12
-    DesignerNote: Coffee taste
+    ElementID: Q2_4
+    DesignerNote: 
   - Type: 0
-    ElementID: Q20
-    DesignerNote: Family unity
+    ElementID: Q2_5
+    DesignerNote: 
   - Type: 1
-    ElementID: CS_Timeout
-    DesignerNote: House complete!
+    ElementID: House2_Outro
+    DesignerNote: 

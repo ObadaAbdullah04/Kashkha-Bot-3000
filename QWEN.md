@@ -600,11 +600,78 @@ Wardrobe → House Hub → House 1 → Wave 1 → Intermission → Wave 2 → Ho
 
 **Key Insight:** Questions are now pooled and shuffled per house, split into waves with intermissions - giving you full control over pacing and future QTE/scene integration!
 
+## Phase 16: Cinematic System Overhaul + House Sequence Fixes (COMPLETE)
+
+### What Was Fixed:
+- ✅ **Timeline Parallel Execution** - Cinematics now play exclusively (no parallel questions/interactions)
+- ✅ **Cutscene Panel Visibility** - Panel hidden during Timeline mode, only shows for DOTween text
+- ✅ **Smart Fallback System** - Timeline → DOTween automatic fallback if Timeline asset missing
+- ✅ **House Sequence IDs** - All 4 house sequences updated with valid element IDs from CSV
+- ✅ **Gameplay UI Isolation** - Swipe/Interaction UI hidden during cinematics, auto-restores after
+
+### Architecture Improvements:
+- ✅ **CinematicController Refactored** - Smart UI management, fallback logic, state tracking
+- ✅ **HouseFlowController Enhanced** - Exclusive element execution with debug logging
+- ✅ **House Sequences Fixed** - House1-4 now reference valid Q1-Q40, interactions, cinematics
+- ✅ **Safety Timeout** - Timelines auto-complete if they exceed expected duration + 2s buffer
+
+### New Features:
+- ✅ **Cinematics Anywhere** - Can add cinematics at beginning, middle, or end of any house sequence
+- ✅ **Exclusive Playback** - Only cinematic UI visible, all gameplay UI hidden
+- ✅ **Auto-Restore** - Gameplay UI automatically restored after cinematic completes
+- ✅ **Fallback Protection** - If Timeline missing, falls back to DOTween text (configurable)
+
+### Modified Files:
+1. `CinematicController.cs` - Added gameplay UI hide/show, smart fallback, state tracking, safety timeout
+2. `HouseFlowController.cs` - Enhanced debug logging, exclusive element execution
+3. `House1_Sequence.asset` - Fixed to use Q1-Q5, SHAKE_Cup_1, HOLD_Hand_1, cinematics
+4. `House2_Sequence.asset` - Fixed to use Q11-Q16, SHAKE_Phone_2, HOLD_Cup_2, cinematics
+5. `House3_Sequence.asset` - Fixed to use Q21-Q26, SHAKE_Hand_3, HOLD_Gift_3, DRAW_Path_3, cinematics
+6. `House4_Sequence.asset` - Fixed to use Q31-Q37, SHAKE_Insane_4, HOLD_Strong_4, TAP_Fast_4, cinematics
+
+### New Files:
+1. `Assets/_Project/Resources/Sequences/SEQUENCE_VERIFICATION.md` - Sequence ID verification
+2. `Assets/_Project/Resources/Sequences/CUTSCENE_PANEL_FIX.md` - Cutscene panel visibility fix details
+
+### House Sequence Structure (Example - House 1):
+```
+House1_Sequence (8 elements):
+  1. [Cinematic] House1_Intro       → Opening cinematic
+  2. [Question] Q1                  → "تفضلي معمول مع الشاي!"
+  3. [Question] Q2                  → "ليش ما تزورينا أكثر؟"
+  4. [Interaction] SHAKE_Cup_1     → "هز الكوب!"
+  5. [Question] Q3                  → "شو صار بالدراسة؟"
+  6. [Question] Q4                  → "بدك قهوة؟"
+  7. [Interaction] HOLD_Hand_1     → "مصافحة اليد!"
+  8. [Question] Q5                  → "كيف حالك؟"
+  9. [Cinematic] House1_Outro       → Closing cinematic
+```
+
+### Cinematic Fallback Flow:
+```
+Requested: UnityTimeline "House1_Intro"
+    ↓
+Timeline exists in Resources/Timelines/?
+    ├─ YES → Play Timeline ✅
+    └─ NO  → Has DOTween text in DataManager?
+                ├─ YES → Fallback to DOTween ⚠️
+                └─ NO  → Error + Skip ❌
+```
+
+### Cinematic UI Behavior:
+| Mode | Cutscene Panel | Gameplay UI | Timeline Animation |
+|------|----------------|-------------|-------------------|
+| **Timeline (no text)** | ❌ Hidden | ❌ Hidden | ✅ Plays |
+| **Timeline (with text)** | ✅ Shows text | ❌ Hidden | ✅ Plays |
+| **DOTween** | ✅ Shows text | ❌ Hidden | N/A |
+
 ---
 
-**Last Updated:** Phase 12 Complete - Character Expression System + Critical Bug Fixes + Input Unification
+---
+
+**Last Updated:** Phase 16 Complete - Cinematic System Overhaul + House Sequence Fixes
 **Maintained By:** Core Development Team
-**Status:** 🔄 **REQUIRES COMPREHENSIVE REVIEW** - All major systems refactored, needs cleanup and validation
+**Status:** ✅ **CINEMATIC SYSTEM COMPLETE** - Exclusive playback, smart fallback, valid sequences
 
 ---
 

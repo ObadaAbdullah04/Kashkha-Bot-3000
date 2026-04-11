@@ -6,18 +6,16 @@ using System.Text.RegularExpressions;
 using System.Globalization;
 
 /// <summary>
-/// PHASE 13: Parses 3 CSV files into data pools.
+/// PHASE 15: Parses CSV files into data pools.
 ///
 /// CSV FILES:
 /// 1. Questions.csv (14 columns): ID, HouseLevel, Speaker, CardName, SpriteName, Question, OptionCorrect, OptionWrong, CorrectSide,
 ///    CorrectFB, IncorrectFB, CorrectBat, IncorrectBat, BaseEid
-/// 2. Cutscenes.csv (8 columns): ID, HouseLevel, CutsceneType, CharacterName, ExpressionName, Text, Duration, AnimationType
-/// 3. Interactions.csv (10 columns): ID, HouseLevel, InteractionType, PromptTextAR, Duration, Threshold, CorrectBat, IncorrectBat, CorrectEid, IncorrectEid
+/// 2. Interactions.csv (12 columns): ID, HouseLevel, InteractionType, PromptTextAR, Duration, Threshold, CorrectBat, IncorrectBat, CorrectStomach, IncorrectStomach, CorrectEid, IncorrectEid
 ///
-/// KEY CHANGES:
-/// - Questions are now pooled by HouseLevel (no wave assignments)
-/// - Cutscenes are loaded from separate CSV
-/// - Interactions are standalone gameplay moments (shake, hold, tap, draw)
+/// CINEMATICS:
+/// - Cinematics are NOT loaded from CSV — they are defined in Unity (Timeline assets) or via DOTween
+/// - CinematicData objects are created manually or loaded from ScriptableObjects
 /// - HouseSequenceData ScriptableObject defines element order
 /// - No shuffling or randomization - sequence is explicit
 /// </summary>
@@ -29,11 +27,12 @@ public class DataManager : MonoBehaviour
     [Tooltip("Questions CSV (Questions.csv)")]
     public TextAsset questionsCSV;
 
-    [Tooltip("Cutscenes CSV (Cutscenes.csv)")]
-    public TextAsset cutscenesCSV;
-
     [Tooltip("Interactions CSV (Interactions.csv)")]
     public TextAsset interactionsCSV;
+
+    [Header("Cinematics (Unity Timeline / DOTween)")]
+    [Tooltip("Pre-defined cinematics (optional — can also be loaded from Resources)")]
+    [SerializeField] private CinematicData[] preDefinedCinematics;
 
     [Header("Parsed Data")]
     [ReadOnly]
@@ -41,8 +40,8 @@ public class DataManager : MonoBehaviour
     public Dictionary<int, List<SwipeCardData>> questionPoolsByHouse = new Dictionary<int, List<SwipeCardData>>();
 
     [ReadOnly]
-    [Tooltip("Cutscenes pooled by HouseLevel")]
-    public Dictionary<int, List<CutsceneData>> cutscenePoolsByHouse = new Dictionary<int, List<CutsceneData>>();
+    [Tooltip("Cinematics by ID")]
+    public Dictionary<string, CinematicData> cinematicByID = new Dictionary<string, CinematicData>();
 
     [ReadOnly]
     [Tooltip("Interactions pooled by HouseLevel")]
@@ -65,18 +64,7 @@ public class DataManager : MonoBehaviour
     private const int Q_COL_BASE_EID = 13;
     private const int Q_TOTAL_COLS = 14;
 
-    // Cutscenes CSV Column indices (8 columns - PHASE 12 updated)
-    private const int CS_COL_ID = 0;
-    private const int CS_COL_HOUSE_LEVEL = 1;
-    private const int CS_COL_TYPE = 2;
-    private const int CS_COL_CHARACTER_NAME = 3;
-    private const int CS_COL_EXPRESSION_NAME = 4;
-    private const int CS_COL_TEXT = 5;
-    private const int CS_COL_DURATION = 6;
-    private const int CS_COL_ANIMATION = 7;
-    private const int CS_TOTAL_COLS = 8;
-
-    // Interactions CSV Column indices (10 columns - PHASE 13)
+    // Interactions CSV Column indices (12 columns - PHASE 14 updated with stomach)
     private const int INT_COL_ID = 0;
     private const int INT_COL_HOUSE_LEVEL = 1;
     private const int INT_COL_INTERACTION_TYPE = 2;
@@ -85,9 +73,11 @@ public class DataManager : MonoBehaviour
     private const int INT_COL_THRESHOLD = 5;
     private const int INT_COL_CORRECT_BAT = 6;
     private const int INT_COL_INCORRECT_BAT = 7;
-    private const int INT_COL_CORRECT_EID = 8;
-    private const int INT_COL_INCORRECT_EID = 9;
-    private const int INT_TOTAL_COLS = 10;
+    private const int INT_COL_CORRECT_STOMACH = 8;
+    private const int INT_COL_INCORRECT_STOMACH = 9;
+    private const int INT_COL_CORRECT_EID = 10;
+    private const int INT_COL_INCORRECT_EID = 11;
+    private const int INT_TOTAL_COLS = 12;
 
     private void Awake()
     {
@@ -108,11 +98,11 @@ public class DataManager : MonoBehaviour
     public void ParseAllCSVs()
     {
         questionPoolsByHouse.Clear();
-        cutscenePoolsByHouse.Clear();
+        cinematicByID.Clear();
         interactionPoolsByHouse.Clear();
 
         ParseQuestionsCSV();
-        ParseCutscenesCSV();
+        LoadCinematics();
         ParseInteractionsCSV();
 
         Debug.Log("[DataManager] All CSVs parsed!");
@@ -165,48 +155,29 @@ public class DataManager : MonoBehaviour
         Debug.Log($"[DataManager] ✅ Questions: {parsed} parsed, {skipped} skipped");
     }
 
-    [Button("Parse Cutscenes")]
-    private void ParseCutscenesCSV()
+    /// <summary>
+    /// Loads cinematics from inspector array (not CSV).
+    /// Cinematics are either pre-defined here or loaded from Timeline assets at runtime.
+    /// </summary>
+    private void LoadCinematics()
     {
-        cutscenePoolsByHouse.Clear();
+        cinematicByID.Clear();
 
-        if (cutscenesCSV == null)
+        if (preDefinedCinematics == null || preDefinedCinematics.Length == 0)
         {
-            Debug.LogWarning("[DataManager] ⚠️ No Cutscenes CSV assigned!");
+            Debug.Log("[DataManager] No pre-defined cinematics. Using Unity Timeline assets directly.");
             return;
         }
 
-        string[] lines = cutscenesCSV.text.Split('\n');
-        if (lines.Length < 2)
+        foreach (var cinematic in preDefinedCinematics)
         {
-            Debug.LogError("[DataManager] Cutscenes CSV is empty!");
-            return;
-        }
-
-        int parsed = 0, skipped = 0;
-
-        for (int i = 1; i < lines.Length; i++)
-        {
-            if (string.IsNullOrWhiteSpace(lines[i])) continue;
-
-            string[] fields = Regex.Split(lines[i].Trim(), ",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
-            CutsceneData cutscene = ParseCutscene(fields, i + 1);
-
-            if (cutscene != null)
+            if (cinematic != null && !string.IsNullOrEmpty(cinematic.ID))
             {
-                if (!cutscenePoolsByHouse.ContainsKey(cutscene.HouseLevel))
-                    cutscenePoolsByHouse[cutscene.HouseLevel] = new List<CutsceneData>();
-
-                cutscenePoolsByHouse[cutscene.HouseLevel].Add(cutscene);
-                parsed++;
-            }
-            else
-            {
-                skipped++;
+                cinematicByID[cinematic.ID] = cinematic;
             }
         }
 
-        Debug.Log($"[DataManager] Cutscenes: {parsed} parsed, {skipped} skipped");
+        Debug.Log($"[DataManager] Cinematics: {cinematicByID.Count} loaded from inspector");
     }
 
     [Button("Parse Interactions")]
@@ -268,14 +239,10 @@ public class DataManager : MonoBehaviour
             }
         }
 
-        Debug.Log("=== CUTSCENE POOLS ===");
-        foreach (var kvp in cutscenePoolsByHouse)
+        Debug.Log("=== CINEMATICS ===");
+        foreach (var kvp in cinematicByID)
         {
-            Debug.Log($"House {kvp.Key}: {kvp.Value.Count} cutscenes");
-            foreach (var c in kvp.Value)
-            {
-                Debug.Log($"  [{c.ID}] Type:{c.CutsceneType} | Character:{c.CharacterName} | Text:\"{c.TextAR}\"");
-            }
+            Debug.Log($"  [{kvp.Key}] Type:{kvp.Value.Type} | {(kvp.Value.Type == CinematicType.UnityTimeline ? kvp.Value.TimelineAssetName : kvp.Value.TextAR)}");
         }
 
         Debug.Log("=== INTERACTION POOLS ===");
@@ -343,46 +310,6 @@ public class DataManager : MonoBehaviour
         return cardData;
     }
 
-    private CutsceneData ParseCutscene(string[] fields, int row)
-    {
-        if (fields.Length < CS_TOTAL_COLS)
-        {
-            Debug.LogWarning($"[DataManager] Cutscenes Line {row}: Expected {CS_TOTAL_COLS} cols, got {fields.Length}");
-            return null;
-        }
-
-        string id = SafeField(fields, CS_COL_ID);
-        if (string.IsNullOrWhiteSpace(id))
-        {
-            Debug.LogWarning($"[DataManager] Cutscenes Line {row}: Empty ID");
-            return null;
-        }
-
-        if (!Enum.TryParse<CutsceneType>(SafeField(fields, CS_COL_TYPE), true, out CutsceneType cutsceneType))
-        {
-            Debug.LogWarning($"[DataManager] Cutscenes Line {row}: Invalid CutsceneType '{SafeField(fields, CS_COL_TYPE)}'");
-            return null;
-        }
-
-        if (!Enum.TryParse<AnimationType>(SafeField(fields, CS_COL_ANIMATION), true, out AnimationType animType))
-        {
-            Debug.LogWarning($"[DataManager] Cutscenes Line {row}: Invalid AnimationType '{SafeField(fields, CS_COL_ANIMATION)}', defaulting to FadeIn");
-            animType = AnimationType.FadeIn;
-        }
-
-        return new CutsceneData
-        {
-            ID = id,
-            HouseLevel = ParseInt(SafeField(fields, CS_COL_HOUSE_LEVEL)),
-            CutsceneType = cutsceneType,
-            CharacterName = SafeField(fields, CS_COL_CHARACTER_NAME),
-            ExpressionName = SafeField(fields, CS_COL_EXPRESSION_NAME),
-            TextAR = SafeField(fields, CS_COL_TEXT),
-            Duration = ParseFloat(SafeField(fields, CS_COL_DURATION)),
-            Animation = animType
-        };
-    }
-
     private InteractionData ParseInteraction(string[] fields, int row)
     {
         if (fields.Length < INT_TOTAL_COLS)
@@ -426,6 +353,8 @@ public class DataManager : MonoBehaviour
             Threshold = threshold,
             CorrectBatteryDelta = ParseFloat(SafeField(fields, INT_COL_CORRECT_BAT)),
             IncorrectBatteryDelta = ParseFloat(SafeField(fields, INT_COL_INCORRECT_BAT)),
+            CorrectStomachDelta = ParseFloat(SafeField(fields, INT_COL_CORRECT_STOMACH)),
+            IncorrectStomachDelta = ParseFloat(SafeField(fields, INT_COL_INCORRECT_STOMACH)),
             CorrectEid = ParseInt(SafeField(fields, INT_COL_CORRECT_EID)),
             IncorrectEid = ParseInt(SafeField(fields, INT_COL_INCORRECT_EID))
         };
@@ -456,19 +385,23 @@ public class DataManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Gets a cutscene by ID from the pool.
+    /// Gets a cinematic by ID. Returns pre-defined cinematic or creates wrapper for Timeline asset.
     /// </summary>
-    public CutsceneData GetCutsceneByID(string id)
+    public CinematicData GetCinematicByID(string id)
     {
-        foreach (var kvp in cutscenePoolsByHouse)
+        // First check pre-defined cinematics
+        if (cinematicByID.ContainsKey(id))
+            return cinematicByID[id];
+
+        // Otherwise, create a UnityTimeline wrapper
+        return new CinematicData
         {
-            foreach (var c in kvp.Value)
-            {
-                if (c.ID == id) return c;
-            }
-        }
-        Debug.LogWarning($"[DataManager] Cutscene not found: {id}");
-        return null;
+            ID = id,
+            HouseLevel = 0,
+            Type = CinematicType.UnityTimeline,
+            TimelineAssetName = id,
+            Duration = 0f
+        };
     }
 
     /// <summary>
@@ -515,24 +448,24 @@ public class DataManager : MonoBehaviour
         return new List<SwipeCardData>(questionPoolsByHouse[houseLevel]);
     }
 
-    [Button("Clear Data")]
-    public void ClearData()
-    {
-        questionPoolsByHouse.Clear();
-        cutscenePoolsByHouse.Clear();
-        interactionPoolsByHouse.Clear();
-    }
-
     private void PrintSummary()
     {
         Debug.Log("[DataManager] === PARSE SUMMARY ===");
         for (int h = 1; h <= 4; h++)
         {
             int qCount = questionPoolsByHouse.ContainsKey(h) ? questionPoolsByHouse[h].Count : 0;
-            int csCount = cutscenePoolsByHouse.ContainsKey(h) ? cutscenePoolsByHouse[h].Count : 0;
             int intCount = interactionPoolsByHouse.ContainsKey(h) ? interactionPoolsByHouse[h].Count : 0;
-            Debug.Log($"[DataManager]   House {h}: {qCount} questions, {csCount} cutscenes, {intCount} interactions");
+            Debug.Log($"[DataManager]   House {h}: {qCount} questions, {intCount} interactions");
         }
+        Debug.Log($"[DataManager]   Cinematics: {cinematicByID.Count} pre-defined");
         Debug.Log("[DataManager] === END SUMMARY ===");
+    }
+
+    [Button("Clear Data")]
+    public void ClearData()
+    {
+        questionPoolsByHouse.Clear();
+        cinematicByID.Clear();
+        interactionPoolsByHouse.Clear();
     }
 }

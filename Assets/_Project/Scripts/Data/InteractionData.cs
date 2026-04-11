@@ -3,14 +3,14 @@ using UnityEngine;
 
 /// <summary>
 /// Data model for a single interaction definition from Interactions.csv
-/// 
+///
 /// Interactions are standalone gameplay moments that require player input
 /// (shake, hold, tap, draw). They are triggered by HouseFlowController
 /// during house sequences, independent from questions or cutscenes.
-/// 
-/// CSV FORMAT (10 columns):
-/// ID, HouseLevel, InteractionType, PromptTextAR, Duration, Threshold, CorrectBat, IncorrectBat, CorrectEid, IncorrectEid
-/// 
+///
+/// CSV FORMAT (12 columns):
+/// ID, HouseLevel, InteractionType, PromptTextAR, Duration, Threshold, CorrectBat, IncorrectBat, CorrectStomach, IncorrectStomach, CorrectEid, IncorrectEid
+///
 /// USAGE:
 /// - Parsed by DataManager at startup
 /// - Placed in HouseSequenceData alongside Questions and Cutscenes
@@ -39,8 +39,11 @@ public class InteractionData
 
     #region Rewards/Penalties
 
-    public float CorrectBatteryDelta;     // Battery change on success (negative = drain)
+    public float CorrectBatteryDelta;     // Battery change on success (negative = drain, positive = gain)
     public float IncorrectBatteryDelta;   // Battery change on failure
+    
+    public float CorrectStomachDelta;     // Stomach change on success (usually positive for hospitality)
+    public float IncorrectStomachDelta;   // Stomach change on failure
 
     public int CorrectEid;                // Eidia reward on success
     public int IncorrectEid;              // Eidia reward on failure
@@ -55,6 +58,14 @@ public class InteractionData
     public float GetBatteryDelta(bool succeeded)
     {
         return succeeded ? CorrectBatteryDelta : IncorrectBatteryDelta;
+    }
+
+    /// <summary>
+    /// Returns stomach delta based on whether the interaction succeeded.
+    /// </summary>
+    public float GetStomachDelta(bool succeeded)
+    {
+        return succeeded ? CorrectStomachDelta : IncorrectStomachDelta;
     }
 
     /// <summary>
@@ -73,7 +84,7 @@ public class InteractionData
         // For Draw type, threshold is unused - success is path completion
         if (InteractionType == InteractionType.Draw)
             return currentValue > 0;
-        
+
         return currentValue >= Threshold;
     }
 
@@ -81,6 +92,6 @@ public class InteractionData
 
     public override string ToString()
     {
-        return $"[Interaction {ID}] Type:{InteractionType} | Prompt:\"{PromptTextAR}\" | Duration:{Duration}s | Threshold:{Threshold} | Eid:{CorrectEid}/{IncorrectEid}";
+        return $"[Interaction {ID}] Type:{InteractionType} | Prompt:\"{PromptTextAR}\" | Duration:{Duration}s | Threshold:{Threshold} | Bat:{CorrectBatteryDelta}/{IncorrectBatteryDelta} | Stomach:{CorrectStomachDelta}/{IncorrectStomachDelta} | Eid:{CorrectEid}/{IncorrectEid}";
     }
 }

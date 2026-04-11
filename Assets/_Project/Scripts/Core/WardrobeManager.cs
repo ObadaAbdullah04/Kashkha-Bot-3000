@@ -325,11 +325,18 @@ public class WardrobeManager : MonoBehaviour
                 break;
 
             case OutfitStatType.StomachResist:
-                // Applied as passive resistance in MeterManager (future implementation)
-                Debug.Log($"[Wardrobe] Outfit bonus: Stomach fill rate -{Mathf.Abs(value)}%");
+                if (MeterManager.Instance != null)
+                {
+                    // Apply stomach fill rate reduction (value is negative, e.g., -10 = 10% reduction)
+                    float reduction = Mathf.Abs(value) / 100f;
+                    MeterManager.Instance.ReduceStomachFillRate(reduction);
+                    Debug.Log($"[Wardrobe] Outfit bonus: Stomach fill rate -{Mathf.Abs(value)}%");
+                }
                 break;
 
             case OutfitStatType.TimerExtension:
+                // Applied in SwipeEncounterManager (future implementation)
+                Debug.Log($"[Wardrobe] Outfit bonus: Timer extension +{value}s");
                 break;
         }
     }
