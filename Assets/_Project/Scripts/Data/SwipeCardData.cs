@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 /// <summary>
 /// PHASE 7 REFACTORED: Single swipe card with explicit correct answers from CSV.
@@ -22,16 +23,17 @@ public class SwipeCardData
     #region Display Fields
 
     public string CardName;             // Title shown above question (e.g., "خال كريم")
+    public string SpriteName;           // Sprite file name in Resources/CharacterSprites/ (e.g., "KhalKarim")
     public string Speaker;              // Character name (for attribution)
     public string QuestionAR;           // Arabic question/situation text
-    
+
     // Options shown on card (player sees BOTH before swiping)
     public string OptionCorrectAR;    // Text of the correct answer
     public string OptionWrongAR;      // Text of the wrong answer
-    
+
     // Correctness (explicit from CSV, NOT randomized)
     public bool RightIsCorrect;       // true = right side is correct, false = left is correct
-    
+
     #endregion
     
     #region Feedback
@@ -73,7 +75,7 @@ public class SwipeCardData
     public int GetEidiaReward(bool swipedRight)
     {
         bool wasCorrect = (swipedRight && RightIsCorrect) || (!swipedRight && !RightIsCorrect);
-        return wasCorrect ? BaseEid : BaseEid / 2; // Wrong answer gets half base reward
+        return wasCorrect ? BaseEid : Mathf.CeilToInt(BaseEid / 2f); // Wrong answer gets half (rounded up)
     }
     
     /// <summary>
@@ -97,6 +99,6 @@ public class SwipeCardData
     
     public override string ToString()
     {
-        return $"[{CardName}] \"{QuestionAR}\" | Correct:{(RightIsCorrect ? "RIGHT" : "LEFT")} | BaseEid:{BaseEid}";
+        return $"[{CardName}] ({SpriteName}) \"{QuestionAR}\" | Correct:{(RightIsCorrect ? "RIGHT" : "LEFT")} | BaseEid:{BaseEid}";
     }
 }

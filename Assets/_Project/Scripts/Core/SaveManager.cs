@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.IO;
+using System;
 using NaughtyAttributes;
 
 /// <summary>
@@ -15,6 +16,12 @@ public class SaveManager : MonoBehaviour
 
     public SaveData CurrentData => currentSaveData;
     private string SavePath => Path.Combine(Application.persistentDataPath, fileName);
+
+    /// <summary>
+    /// Fires when scrap currency is modified.
+    /// Used by UnifiedHubManager to refresh wardrobe/upgrade UI in real-time.
+    /// </summary>
+    public static Action<int> OnScrapChanged; // (newScrapTotal)
 
     private void Awake()
     {
@@ -41,7 +48,24 @@ public class SaveManager : MonoBehaviour
         Debug.Log($"[Save] Saved! Eidia: {currentSaveData.TotalEidia}");
     }
 
-    [Button("💾 Save")]
+    /// <summary>
+    /// Adds scrap to the global save data and persists immediately.
+    /// Called when mini-games complete to ensure scrap persists across runs.
+    /// </summary>
+    public void AddScrap(int amount)
+    {
+        if (amount <= 0) return;
+
+        currentSaveData.TotalScrap += amount;
+        SaveGame();
+        
+        // Fire event to notify UI updates
+        OnScrapChanged?.Invoke(currentSaveData.TotalScrap);
+        
+        Debug.Log($"[Save] Scrap added: +{amount}. Total: {currentSaveData.TotalScrap}");
+    }
+
+    [Button("Save")]
     public void SaveGame()
     {
         try
@@ -82,7 +106,7 @@ public class SaveManager : MonoBehaviour
         }
     }
 
-    [Button("🗑 Reset")]
+    [Button("Reset")]
     public void ResetProgress()
     {
         currentSaveData = new SaveData();

@@ -338,10 +338,10 @@ public class WardrobeManager : MonoBehaviour
 
     #region Inspector Test Buttons
 
-    [Button("▶ Parse CSV")]
+    [Button("Parse CSV")]
     private void TestParse() => ParseOutfitsCSV();
 
-    [Button("💰 Add 50 Scrap")]
+    [Button("Add 50 Scrap")]
     private void TestAddScrap()
     {
         if (SaveManager.Instance != null)
@@ -353,28 +353,28 @@ public class WardrobeManager : MonoBehaviour
         }
     }
 
-    [Button("👕 Purchase Outfit 1")]
+    [Button("Purchase Outfit 1")]
     private void TestPurchase1() => PurchaseOutfit(1);
 
-    [Button("👕 Purchase Outfit 2")]
+    [Button("Purchase Outfit 2")]
     private void TestPurchase2() => PurchaseOutfit(2);
 
-    [Button("👕 Purchase Outfit 3")]
+    [Button("Purchase Outfit 3")]
     private void TestPurchase3() => PurchaseOutfit(3);
 
-    [Button("⚡ Equip Outfit 1")]
+    [Button("Equip Outfit 1")]
     private void TestEquip1() => EquipOutfit(1);
 
-    [Button("⚡ Equip Outfit 2")]
+    [Button("Equip Outfit 2")]
     private void TestEquip2() => EquipOutfit(2);
 
-    [Button("⚡ Equip Outfit 3")]
+    [Button("Equip Outfit 3")]
     private void TestEquip3() => EquipOutfit(3);
 
-    [Button("❌ Unequip")]
+    [Button("Unequip")]
     private void TestUnequip() => UnequipOutfit();
 
-    [Button("📊 Show Stats")]
+    [Button("Show Stats")]
     private void TestShowStats()
     {
         var (statType, value) = GetEquippedStatBonus();

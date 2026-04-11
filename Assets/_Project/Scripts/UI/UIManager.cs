@@ -36,10 +36,6 @@ public class UIManager : MonoBehaviour
     [SerializeField] private RTLTextMeshPro feedbackText;
     [SerializeField] private GameObject feedbackPanel;
 
-    [Header("QTE Warning UI")]
-    [SerializeField] private GameObject qteWarningPanel;
-    [SerializeField] private RTLTextMeshPro qteWarningText;
-
     [Header("Meter UI")]
     [SerializeField] private Slider batterySlider;
     [SerializeField] private Slider stomachSlider;
@@ -76,12 +72,6 @@ public class UIManager : MonoBehaviour
     [SerializeField] private float feedbackFadeInDuration = 0.22f;
     [SerializeField] private float feedbackDisplayDuration = 1.9f;
     [SerializeField] private float feedbackFadeOutDuration = 0.22f;
-
-    [Header("QTE Warning Animation")]
-    [SerializeField] private Vector3 qteWarningPunchAmount = Vector3.one * 0.1f;
-    [SerializeField] private float qteWarningDuration = 0.5f;
-    [SerializeField] private int qteWarningVibrato = 5;
-    [SerializeField] private float qteWarningElasticity = 1f;
 
     [Header("Card Idle Animation")]
 
@@ -134,6 +124,8 @@ public class UIManager : MonoBehaviour
         GameManager.OnStateChanged += HandleStateChanged;
         GameManager.OnRunStarted += HandleRunStarted;
         MeterManager.OnMetersChanged += HandleMetersChanged;
+        MeterManager.OnBatteryModified += HandleBatteryModified;
+        MeterManager.OnStomachModified += HandleStomachModified;
     }
 
     private void OnDisable()
@@ -141,6 +133,8 @@ public class UIManager : MonoBehaviour
         GameManager.OnStateChanged -= HandleStateChanged;
         GameManager.OnRunStarted -= HandleRunStarted;
         MeterManager.OnMetersChanged -= HandleMetersChanged;
+        MeterManager.OnBatteryModified -= HandleBatteryModified;
+        MeterManager.OnStomachModified -= HandleStomachModified;
 
         // Kill all active tweens to prevent memory leaks
         _feedbackSequence?.Kill();
@@ -166,20 +160,21 @@ public class UIManager : MonoBehaviour
         HideAllPanels();
         encounterPanel.SetActive(true);
         feedbackPanel.SetActive(false);
-        qteWarningPanel.SetActive(false);
 
+        // Set slider max values correctly
         if (batterySlider != null)
         {
+            float maxBattery = MeterManager.Instance != null ? MeterManager.Instance.MaxBattery : 100f;
             batterySlider.minValue = 0f;
-            batterySlider.maxValue = 100f;
-            batterySlider.value = 100f;
+            batterySlider.maxValue = maxBattery;
+            batterySlider.value = maxBattery; // Start at full battery
         }
 
         if (stomachSlider != null)
         {
             stomachSlider.minValue = 0f;
             stomachSlider.maxValue = 100f;
-            stomachSlider.value = 0f;
+            stomachSlider.value = 0f; // Start empty
         }
     }
 
@@ -236,28 +231,6 @@ public class UIManager : MonoBehaviour
         ShowFeedback(text, true, onComplete);
     }
 
-    public void ShowQTEWarning(string instructionText)
-    {
-        if (qteWarningPanel == null || qteWarningText == null)
-        {
-            Debug.LogWarning("[UIManager] QTE Warning UI not assigned!");
-            return;
-        }
-
-        // Hide any existing QTE warning first to prevent stacking
-        qteWarningPanel.SetActive(false);
-
-        qteWarningText.text = instructionText;
-        qteWarningPanel.SetActive(true);
-        qteWarningPanel.transform.DOPunchScale(qteWarningPunchAmount, qteWarningDuration, qteWarningVibrato, qteWarningElasticity);
-    }
-
-    public void HideQTEWarning()
-    {
-        if (qteWarningPanel != null)
-            qteWarningPanel.SetActive(false);
-    }
-
     /// <summary>
     /// Hides all UI panels during the inter-house mini-game.
     /// Called by MiniGameManager before instantiating the catch game prefab.
@@ -304,11 +277,17 @@ public class UIManager : MonoBehaviour
         {
             _feedbackCanvasGroup = feedbackPanel.GetComponent<CanvasGroup>();
             if (_feedbackCanvasGroup == null)
+            {
+                Debug.LogWarning("[UIManager] feedbackPanel missing CanvasGroup — adding at runtime. Please add to prefab!");
                 _feedbackCanvasGroup = feedbackPanel.AddComponent<CanvasGroup>();
+            }
         }
 
         if (feedbackPanel.GetComponent<Image>() == null)
+        {
+            Debug.LogWarning("[UIManager] feedbackPanel missing Image component — adding at runtime. Please add to prefab!");
             feedbackPanel.AddComponent<Image>();
+        }
     }
 
     private void AnimateTextFadeIn(GameObject uiObject, float duration, float delay = 0f)
@@ -326,7 +305,6 @@ public class UIManager : MonoBehaviour
         gameOverPanel.SetActive(false);
         winPanel.SetActive(false);
         feedbackPanel.SetActive(false);
-        qteWarningPanel.SetActive(false);
         unifiedHubPanel.SetActive(false);
         swipeEncounterPanel.SetActive(false);
     }
@@ -425,19 +403,63 @@ public class UIManager : MonoBehaviour
 
     private void HandleMetersChanged(float battery, float stomach)
     {
+        // Fallback handler for initialization - sets values instantly
         if (batterySlider != null)
+        {
+            float maxBattery = MeterManager.Instance != null ? MeterManager.Instance.MaxBattery : 100f;
+            batterySlider.maxValue = maxBattery;
             batterySlider.value = battery;
+        }
 
         if (stomachSlider != null)
+        {
+            stomachSlider.maxValue = 100f;
             stomachSlider.value = stomach;
+        }
+    }
+
+    /// <summary>
+    /// Event handler for battery modification - animates slider with DOTween.
+    /// Receives (currentValue 0-maxBattery, delta) from MeterManager.
+    /// </summary>
+    private void HandleBatteryModified(float currentValue, float delta)
+    {
+        if (batterySlider == null) return;
+
+        // Kill any existing tween on this slider to prevent conflicts
+        batterySlider.DOKill();
+
+        // Get current max battery from MeterManager (can be >100 from upgrades)
+        float maxBattery = MeterManager.Instance != null ? MeterManager.Instance.MaxBattery : 100f;
+
+        // Update slider max value to match current max battery
+        batterySlider.maxValue = maxBattery;
+
+        // Set value directly (no normalization needed with correct maxValue)
+        batterySlider.DOValue(currentValue, 0.3f).SetEase(Ease.OutQuad);
+    }
+
+    /// <summary>
+    /// Event handler for stomach modification - animates slider with DOTween.
+    /// Receives (currentValue 0-100, delta) from MeterManager.
+    /// </summary>
+    private void HandleStomachModified(float currentValue, float delta)
+    {
+        if (stomachSlider == null) return;
+
+        // Kill any existing tween on this slider to prevent conflicts
+        stomachSlider.DOKill();
+
+        // Stomach is always 0-100, so maxValue stays at 100
+        stomachSlider.maxValue = 100f;
+
+        // Set value directly (no normalization needed with correct maxValue)
+        stomachSlider.DOValue(currentValue, 0.3f).SetEase(Ease.OutQuad);
     }
 
     #endregion
 
     #region Inspector Test Buttons
-
-    [Button("Test QTE Warning")]
-    private void TestQTE() => ShowQTEWarning("CoffeeRefuse");
 
     #endregion
 }

@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8e3eb7c40a6583d49ad7e904ed46e504, type: 3}
+  m_Name: Grandma_Expressions
+  m_EditorClassIdentifier: 
+  characterName: "\u062E\u0627\u0644\u0629 \u0646\u0627\u062F\u064A\u0629"
+  defaultSprite: {fileID: 21300000, guid: 6671b13d833a90d4a9fbcff639bef2ed, type: 3}
+  expressions:
+  - name: Neutral
+    sprite: {fileID: 21300000, guid: 6671b13d833a90d4a9fbcff639bef2ed, type: 3}
+  - name: Happy
+    sprite: {fileID: 21300000, guid: f195b571e39d4164f87f053ec53d37d0, type: 3}
+  - name: Angry
+    sprite: {fileID: 21300000, guid: 4f517a4c1fa371d448dc58fcc7d5d5a1, type: 3}
+  - name: Surprised
+    sprite: {fileID: 21300000, guid: 34dd7c27ea1d65b44b957cf6f431a04f, type: 3}
+  - name: Hospitality
+    sprite: {fileID: 21300000, guid: 87782554741475841b6ede5a57f96fb1, type: 3}

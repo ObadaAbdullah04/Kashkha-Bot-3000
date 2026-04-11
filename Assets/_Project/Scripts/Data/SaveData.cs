@@ -12,8 +12,8 @@ public class SaveData
     public int TotalEidia = 0;
     public int HighScore = 0;
     public string LastSaveDate = "";
-    
-    [Header("Wardrobe Progression")]
+
+    // Wardrobe Progression
     public List<int> ownedOutfitIDs = new List<int>();  // IDs of purchased outfits
     public int equippedOutfitID = 0;                     // 0 = no outfit equipped
 }

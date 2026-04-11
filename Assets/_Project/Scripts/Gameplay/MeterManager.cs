@@ -288,7 +288,7 @@ public class MeterManager : MonoBehaviour
     [Button("Reset")]
     private void TestReset() => ResetMeters();
 
-    [Button("☠️ Enable House 4 Mode")]
+    [Button("Enable House 4 Mode")]
     private void TestHouse4() => EnableHouse4Mode();
 
     #endregion

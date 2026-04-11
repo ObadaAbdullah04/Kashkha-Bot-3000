@@ -12,13 +12,13 @@ using NaughtyAttributes;
 /// 1. GameManager calls StartHouse(houseLevel, sequence)
 /// 2. HouseFlowController starts PlayHouseSequence() coroutine
 /// 3. Coroutine iterates through elements ONE AT A TIME:
-///    - Triggers current element (Question / QTE / Cutscene)
+///    - Triggers current element (Question or Cutscene)
 ///    - YIELDS (pauses) until element completes via callback
 ///    - Advances to next element → repeat
 /// 4. All elements done → OnHouseCompleted → GameManager.EndHouse()
 ///
 /// KEY DESIGN:
-/// - No Timeline, no Signals, no INotification needed
+/// - Pure coroutine-driven architecture
 /// - Each element controls its own duration (player-paced)
 /// - Simple to extend: add new ElementType → add case in switch
 /// - Easy to add pauses: yield return new WaitForSeconds(X)
@@ -38,11 +38,11 @@ public class HouseFlowController : MonoBehaviour
     [Tooltip("Reference to SwipeEncounterManager for questions")]
     [SerializeField] private SwipeEncounterManager swipeEncounterManager;
 
-    [Tooltip("Reference to QTEController for QTEs")]
-    [SerializeField] private QTEController qteController;
-
     [Tooltip("Reference to CutsceneTrigger for cutscenes")]
     [SerializeField] private CutsceneTrigger cutsceneTrigger;
+
+    [Tooltip("Reference to InteractionHUDController for interactions")]
+    [SerializeField] private InteractionHUDController interactionHUDController;
 
     [Header("Timing")]
     [Tooltip("Pause between elements (seconds)")]
@@ -131,6 +131,15 @@ public class HouseFlowController : MonoBehaviour
 
         OnHouseStarted?.Invoke(houseLevel);
 
+        // Count total questions for card counter
+        int totalQuestions = 0;
+        for (int i = 0; i < currentSequence.Count; i++)
+        {
+            if (currentSequence[i].Type == ElementType.Question)
+                totalQuestions++;
+        }
+        int questionIndex = 0;
+
         // Iterate through each element in sequence
         for (int i = 0; i < currentSequence.Count; i++)
         {
@@ -149,15 +158,16 @@ public class HouseFlowController : MonoBehaviour
             switch (element.Type)
             {
                 case ElementType.Question:
-                    yield return PlayQuestion(element.ElementID);
-                    break;
-
-                case ElementType.QTE:
-                    yield return PlayQTE(element.ElementID);
+                    yield return PlayQuestion(element.ElementID, questionIndex, totalQuestions);
+                    questionIndex++;
                     break;
 
                 case ElementType.Cutscene:
                     yield return PlayCutscene(element.ElementID);
+                    break;
+
+                case ElementType.Interaction:
+                    yield return PlayInteraction(element.ElementID);
                     break;
 
                 default:
@@ -203,7 +213,7 @@ public class HouseFlowController : MonoBehaviour
     /// <summary>
     /// Plays a Question element. Shows swipe card, waits for player action.
     /// </summary>
-    private IEnumerator PlayQuestion(string questionID)
+    private IEnumerator PlayQuestion(string questionID, int questionIndex, int totalQuestions)
     {
         SwipeCardData questionData = DataManager.Instance?.GetQuestionByID(questionID);
         if (questionData == null)
@@ -222,7 +232,7 @@ public class HouseFlowController : MonoBehaviour
 
         // Show card and wait for completion
         bool cardDone = false;
-        swipeEncounterManager.ShowSingleCard(questionData, (batteryDelta, eidia, wasCorrect) =>
+        swipeEncounterManager.ShowSingleCard(questionData, questionIndex, totalQuestions, (batteryDelta, eidia, wasCorrect) =>
         {
             cardDone = true;
             if (debugLogging)
@@ -232,40 +242,6 @@ public class HouseFlowController : MonoBehaviour
 
         // Wait for card to be answered or timeout
         yield return new WaitUntil(() => cardDone);
-    }
-
-    /// <summary>
-    /// Plays a QTE element. Shows QTE prompt, waits for player input.
-    /// </summary>
-    private IEnumerator PlayQTE(string qteID)
-    {
-        QTEData qteData = DataManager.Instance?.GetQTEByID(qteID);
-        if (qteData == null)
-        {
-            Debug.LogError($"[HouseFlowController] QTE not found: {qteID}");
-            OnElementCompleted?.Invoke(ElementType.QTE, qteID);
-            yield break;
-        }
-
-        if (qteController == null)
-        {
-            Debug.LogWarning("[HouseFlowController] QTEController not assigned — skipping QTE.");
-            OnElementCompleted?.Invoke(ElementType.QTE, qteID);
-            yield break;
-        }
-
-        // Start QTE and wait for completion
-        bool qteDone = false;
-        qteController.StartQTE(qteData, (wasSuccess, batteryDelta, id) =>
-        {
-            qteDone = true;
-            if (debugLogging)
-                Debug.Log($"[HouseFlowController] QTE complete: {qteID} | Success={wasSuccess}");
-            OnElementCompleted?.Invoke(ElementType.QTE, qteID);
-        });
-
-        // Wait for QTE to complete (success, fail, or timeout)
-        yield return new WaitUntil(() => qteDone);
     }
 
     /// <summary>
@@ -302,11 +278,46 @@ public class HouseFlowController : MonoBehaviour
         yield return new WaitUntil(() => cutsceneDone);
     }
 
+    /// <summary>
+    /// Plays an Interaction element. Shows interaction HUD, waits for player input.
+    /// PHASE 13: New interaction type (shake, hold, tap, draw).
+    /// </summary>
+    private IEnumerator PlayInteraction(string interactionID)
+    {
+        InteractionData interactionData = DataManager.Instance?.GetInteractionByID(interactionID);
+        if (interactionData == null)
+        {
+            Debug.LogError($"[HouseFlowController] Interaction not found: {interactionID}");
+            OnElementCompleted?.Invoke(ElementType.Interaction, interactionID);
+            yield break;
+        }
+
+        if (interactionHUDController == null)
+        {
+            Debug.LogError("[HouseFlowController] InteractionHUDController not assigned!");
+            OnElementCompleted?.Invoke(ElementType.Interaction, interactionID);
+            yield break;
+        }
+
+        // Show interaction HUD and wait for completion
+        bool interactionDone = false;
+        interactionHUDController.RunInteraction(interactionData, (succeeded, batteryDelta, eidiaReward) =>
+        {
+            interactionDone = true;
+            if (debugLogging)
+                Debug.Log($"[HouseFlowController] Interaction complete: {interactionID} | Success={succeeded} | Battery:{batteryDelta} | Eid:{eidiaReward}");
+            OnElementCompleted?.Invoke(ElementType.Interaction, interactionID);
+        });
+
+        // Wait for interaction to be completed or timeout
+        yield return new WaitUntil(() => interactionDone);
+    }
+
     #endregion
 
     #region Inspector Buttons
 
-    [Button("▶ Test Current Sequence")]
+    [Button("Test Current Sequence")]
     private void TestSequence()
     {
         // This button requires a HouseSequenceData to be assigned

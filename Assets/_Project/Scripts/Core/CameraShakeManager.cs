@@ -94,7 +94,7 @@ public class CameraShakeManager : MonoBehaviour
             impulseSource.m_ImpulseDefinition.m_ImpulseDuration = duration;
             impulseSource.GenerateImpulse(strength);
             if (debugLogging)
-                Debug.Log($"[CameraShake] ✓ Impulse fired: {strength}, {duration}s");
+                Debug.Log($"[CameraShake] Impulse fired: {strength}, {duration}s");
             return;
         }
 
@@ -116,6 +116,6 @@ public class CameraShakeManager : MonoBehaviour
             .OnComplete(() => targetCamera.transform.position = _originalCameraPos);
 
         if (debugLogging)
-            Debug.Log($"[CameraShake] ✓ DOTween fallback started");
+            Debug.Log($"[CameraShake] DOTween fallback started");
     }
 }

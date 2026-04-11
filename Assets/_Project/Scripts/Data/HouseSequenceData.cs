@@ -4,15 +4,15 @@ using UnityEngine;
 
 /// <summary>
 /// PHASE 9: ScriptableObject defining the ordered sequence of elements for a house.
-/// 
-/// This defines the exact order of Questions, QTEs, and Cutscenes that will play
-/// during a house visit. The Timeline drives the pacing, this data defines the content.
-/// 
+///
+/// This defines the exact order of Questions and Cutscenes that will play
+/// during a house visit. The sequence drives the pacing, this data defines the content.
+///
 /// USAGE:
 /// 1. Right-click in Project window → Create → Game → House Sequence
 /// 2. Name it (e.g., "House1_Sequence")
 /// 3. Set HouseLevel (1-4)
-/// 4. Add elements in order (Question IDs, QTE IDs, Cutscene IDs)
+/// 4. Add elements in order (Question IDs, Cutscene IDs)
 /// 5. Assign to HouseFlowController.SequenceData
 /// </summary>
 [CreateAssetMenu(menuName = "Game/House Sequence", fileName = "HouseSequence_New")]
@@ -75,7 +75,7 @@ public class HouseSequenceData : ScriptableObject
         if (Sequence == null || Sequence.Count == 0)
             return "Empty sequence";
 
-        int questionCount = 0, qteCount = 0, cutsceneCount = 0;
+        int questionCount = 0, cutsceneCount = 0, interactionCount = 0;
         foreach (var element in Sequence)
         {
             if (element != null)
@@ -83,13 +83,13 @@ public class HouseSequenceData : ScriptableObject
                 switch (element.Type)
                 {
                     case ElementType.Question: questionCount++; break;
-                    case ElementType.QTE: qteCount++; break;
                     case ElementType.Cutscene: cutsceneCount++; break;
+                    case ElementType.Interaction: interactionCount++; break;
                 }
             }
         }
 
-        return $"Total: {Sequence.Count} elements | {questionCount} Questions | {qteCount} QTEs | {cutsceneCount} Cutscenes";
+        return $"Total: {Sequence.Count} elements | {questionCount} Questions | {cutsceneCount} Cutscenes | {interactionCount} Interactions";
     }
 }
 
@@ -130,10 +130,11 @@ public class SequenceElement
 
 /// <summary>
 /// Types of elements that can appear in a house sequence.
+/// PHASE 13: Added Interaction type for standalone gameplay moments (shake, hold, tap, draw).
 /// </summary>
 public enum ElementType
 {
-    Question,   // Triggers SwipeEncounterManager.ShowCard()
-    QTE,        // Triggers QTEController.StartQTE()
-    Cutscene    // Triggers CutsceneTrigger.PlayCutscene()
+    Question,       // Triggers SwipeEncounterManager.ShowSingleCard()
+    Cutscene,       // Triggers CutsceneTrigger.PlayCutscene()
+    Interaction     // Triggers InteractionHUDController.RunInteraction()
 }

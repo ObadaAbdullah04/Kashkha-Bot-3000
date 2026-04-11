@@ -93,8 +93,18 @@ public class FloatingTextManager : MonoBehaviour
 
         if (canvasParent == null)
         {
-            Debug.LogWarning("[FloatingTextManager] canvasParent not assigned, using main Canvas");
-            canvasParent = FindObjectOfType<Canvas>()?.transform;
+            // Try to find the main HUD canvas by tag first, then by name fallback
+            GameObject mainCanvas = GameObject.FindGameObjectWithTag("MainCanvas");
+            if (mainCanvas != null)
+            {
+                canvasParent = mainCanvas.GetComponent<Canvas>()?.transform;
+            }
+
+            if (canvasParent == null)
+            {
+                canvasParent = FindObjectOfType<Canvas>()?.transform;
+                Debug.LogWarning("[FloatingTextManager] canvasParent not assigned and no tagged canvas found. Using arbitrary canvas. Please assign in inspector or tag main canvas as 'MainCanvas'.");
+            }
         }
 
         // Pre-instantiate all pool objects

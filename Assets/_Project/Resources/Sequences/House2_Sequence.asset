@@ -16,25 +16,40 @@ MonoBehaviour:
   Sequence:
   - Type: 0
     ElementID: Q11
-    DesignerNote: 
-  - Type: 1
-    ElementID: QTE_Swipe_Greeting
-    DesignerNote: 
-  - Type: 0
-    ElementID: Q14
-    DesignerNote: 
-  - Type: 2
-    ElementID: Cutscene_Uncle_Nod
-    DesignerNote: 
-  - Type: 0
-    ElementID: Q12
-    DesignerNote: 
-  - Type: 1
-    ElementID: QTE_Hold_Dua
-    DesignerNote: 
+    DesignerNote: Coffee cup shake
   - Type: 0
     ElementID: Q13
-    DesignerNote: 
+    DesignerNote: You're a hero
+  - Type: 1
+    ElementID: CS_H2_Greeting
+    DesignerNote: Uncle greets you
+  - Type: 0
+    ElementID: Q14
+    DesignerNote: Marriage question
+  - Type: 0
+    ElementID: Q16
+    DesignerNote: Eid joy
   - Type: 2
-    ElementID: Cutscene_Coffee_Pour
-    DesignerNote: 
+    ElementID: HOLD_Cup_2
+    DesignerNote: Hold the cup steady
+  - Type: 0
+    ElementID: Q17
+    DesignerNote: Work question
+  - Type: 0
+    ElementID: Q19
+    DesignerNote: Love the country
+  - Type: 2
+    ElementID: TAP_Heart_2
+    DesignerNote: Tap the heart quickly
+  - Type: 1
+    ElementID: CS_H2_Uncle_Nod
+    DesignerNote: Uncle approves
+  - Type: 0
+    ElementID: Q12
+    DesignerNote: Coffee taste
+  - Type: 0
+    ElementID: Q20
+    DesignerNote: Family unity
+  - Type: 1
+    ElementID: CS_Timeout
+    DesignerNote: House complete!

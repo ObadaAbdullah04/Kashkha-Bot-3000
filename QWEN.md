@@ -602,6 +602,87 @@ Wardrobe → House Hub → House 1 → Wave 1 → Intermission → Wave 2 → Ho
 
 ---
 
-**Last Updated:** Phase 8 Refactoring Complete - Wave-Based Question Pools with Streak Combos
+**Last Updated:** Phase 12 Complete - Character Expression System + Critical Bug Fixes + Input Unification
 **Maintained By:** Core Development Team
-**Status:** ✅ Solid Foundation - Ready for QTE/Scene Integration & Content Expansion
+**Status:** 🔄 **REQUIRES COMPREHENSIVE REVIEW** - All major systems refactored, needs cleanup and validation
+
+---
+
+---
+
+## Phase 12: Character Expression System + Cutscene Enhancements (COMPLETE)
+
+### What Was Added:
+- ✅ **CharacterExpressionSO ScriptableObject** - Data-driven expression management for character sprites
+- ✅ **Placeholder Sprite Generator** - Editor tool to generate 256x256 colored circle sprites (4 characters × 5 expressions)
+- ✅ **Cutscenes.csv Extended** - Added `CharacterName` and `ExpressionName` columns (8 columns total)
+- ✅ **DataManager Updated** - Parses new CSV columns into CutsceneData
+- ✅ **CutsceneTrigger Expression Lookup** - Reads character/expression from CSV data and applies correct sprite
+- ✅ **Unity Timeline Support** - Added `CutsceneType.Timeline` enum and `PlayTimelineCutscene()` method
+- ✅ **InputManager Singleton** - Centralized input handling for all DeviceControls actions
+
+### New Files:
+1. `Assets/_Project/Scripts/Data/CharacterExpressionSO.cs` - ScriptableObject for character expressions
+2. `Assets/_Project/Editor/PlaceholderSpriteGenerator.cs` - Editor tool to generate placeholder sprites
+3. `Assets/_Project/Data/CharacterExpressions/SETUP_GUIDE.md` - Step-by-step setup instructions
+4. `Assets/_Project/Scripts/Core/InputManager.cs` - Centralized input management
+
+### Modified Files:
+1. `CutsceneData.cs` - Added `CharacterName`, `ExpressionName` fields; Added `Timeline` to CutsceneType enum
+2. `DataManager.cs` - Updated CSV parser for 8-column format
+3. `Cutscenes.csv` - Extended with CharacterName/ExpressionName, 16 entries updated
+4. `CutsceneTrigger.cs` - Expression system integration, Timeline support, GetCharacterSprite() helper
+
+### Manual Steps Required (Unity Editor - 30 min):
+1. Run **Tools → Kashkha → Generate Placeholder Sprites**
+2. Create 4 CharacterExpressionSO assets (see SETUP_GUIDE.md)
+3. Assign expressions to CutsceneTrigger inspector
+
+---
+
+## Phase 11: Critical Bug Fixes + Input System Unification (COMPLETE)
+
+### Critical Bugs Fixed:
+- ✅ **Battery/Stomach HUD Sliders** - Fixed normalization for maxBattery > 100
+- ✅ **Scrap Currency Flow** - Added `SaveManager.OnScrapChanged` event
+- ✅ **Card Counter Text** - Added null validation and debug logging
+
+### Architecture Improvements:
+- ✅ **SwipeCard Refactored** - Uses sprite + name (removed duplicate cardNameText/speakerText)
+- ✅ **House 4 Unlock Logic** - Fixed bug where House 4 wasn't unlocking after House 3
+- ✅ **Mini-Game Replay** - Added `allowMiniGameReplay` toggle for replaying unlocked mini-games
+- ✅ **QTEController InputSystem** - Fully migrated to DeviceControls Input Actions
+- ✅ **InputManager Created** - Centralized input singleton for unified input handling
+
+### Modified Files:
+1. `UIManager.cs` - Fixed slider normalization, uses MeterManager.MaxBattery
+2. `SaveManager.cs` - Added `OnScrapChanged` event
+3. `UnifiedHubManager.cs` - Subscribed to scrap events, fixed House 4 unlock, added mini-game replay
+4. `SwipeEncounterManager.cs` - Card counter validation
+5. `SwipeCard.cs` - Removed duplicate text, uses sprite + speaker name
+6. `QTEController.cs` - Replaced legacy Input with DeviceControls actions
+7. `CutsceneData.cs` - Added Timeline enum value
+
+### New Files:
+1. `Assets/_Project/Scripts/Core/InputManager.cs` - Centralized input management
+
+### Input Actions Now Unified:
+- `MoveHorizontal` - CatchMiniGame movement
+- `ShakeSkip` - QTE Shake type
+- `SwipeUp` - QTE Swipe type  
+- `Hold` - QTE Hold type
+- `Acceleration` - Mobile shake detection
+- `Draw` - PathDrawingGame
+- `Tap` - Mini-game interactions
+
+---
+
+## Phase 10: Data Flow & House Progression Fixes (COMPLETE)
+
+### What Was Fixed:
+- ✅ **MeterManager → UIManager** - Slider normalization bug (0-100 values into 0-1 slider)
+- ✅ **Scrap Not Updating** - Mini-game scrap now fires events to refresh Wardrobe/Upgrades UI
+- ✅ **House Progression 1→2→3→4** - House 4 unlock logic fixed
+- ✅ **Card Counter** - Added validation and debug logging
+
+---

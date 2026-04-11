@@ -23,10 +23,13 @@ public class SwipeCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
     #region Inspector Fields
 
     [Header("Card Content")]
-    [Tooltip("Card name/title text (RTLTextMeshPro) - e.g., 'خال كريم'")]
-    [SerializeField] private RTLTextMeshPro cardNameText;
+    [Tooltip("Character portrait image (loaded from Resources/CharacterSprites/)")]
+    [SerializeField] private UnityEngine.UI.Image characterImage;
 
-    [Tooltip("Speaker name text (RTLTextMeshPro)")]
+    [Tooltip("Default sprite if character sprite not found")]
+    [SerializeField] private Sprite defaultSprite;
+
+    [Tooltip("Speaker name text (RTLTextMeshPro) - displayed below character sprite")]
     [SerializeField] private RTLTextMeshPro speakerText;
 
     [Tooltip("Question text (RTLTextMeshPro)")]
@@ -96,6 +99,7 @@ public class SwipeCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
     private SwipeCardData cardData;
     private int cardIndex;
     private int totalCards;
+    private Sequence _feedbackSequence;
 
     #endregion
 
@@ -119,12 +123,45 @@ public class SwipeCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
         cardIndex = index;
         totalCards = total;
 
-        // Set text content
-        if (cardNameText != null)
-            cardNameText.text = data.CardName;
+        // Load character sprite
+        if (characterImage != null && !string.IsNullOrEmpty(data.SpriteName))
+        {
+            Sprite sprite = Resources.Load<Sprite>("CharacterSprites/" + data.SpriteName);
 
-        if (speakerText != null)
+            if (sprite != null)
+            {
+                characterImage.sprite = sprite;
+                characterImage.enabled = true;
+            }
+            else if (defaultSprite != null)
+            {
+                characterImage.sprite = defaultSprite;
+                characterImage.enabled = true;
+#if UNITY_EDITOR
+                Debug.LogWarning($"[SwipeCard] Sprite not found: 'CharacterSprites/{data.SpriteName}'. Using default.");
+#endif
+            }
+            else
+            {
+                characterImage.enabled = false;
+            }
+        }
+        else if (characterImage != null)
+        {
+            // No sprite name provided, hide character image
+            characterImage.enabled = false;
+        }
+
+        // Set speaker name text
+        if (speakerText != null && !string.IsNullOrEmpty(data.Speaker))
+        {
             speakerText.text = data.Speaker;
+            speakerText.gameObject.SetActive(true);
+        }
+        else if (speakerText != null)
+        {
+            speakerText.gameObject.SetActive(false);
+        }
 
         if (questionText != null)
             questionText.text = data.QuestionAR;
@@ -142,7 +179,7 @@ public class SwipeCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
         ResetCard();
 
 #if UNITY_EDITOR
-        Debug.Log($"[SwipeCard] Setup: Card {index + 1}/{total} - {data.CardName}");
+        Debug.Log($"[SwipeCard] Setup: Card {index + 1}/{total} - Speaker: {data.Speaker}");
 #endif
     }
 
@@ -282,7 +319,8 @@ public class SwipeCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
             feedbackText.color = flashColor;
             feedbackText.alpha = 0f;
 
-            DOTween.Sequence()
+            _feedbackSequence?.Kill();
+            _feedbackSequence = DOTween.Sequence()
                 .Append(feedbackText.DOFade(1f, 0.3f))
                 .AppendInterval(feedbackTextDuration)
                 .Append(feedbackText.DOFade(0f, 0.3f));
@@ -349,6 +387,7 @@ public class SwipeCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
     private void OnDestroy()
     {
         // Kill all tweens on this card to prevent memory leaks
+        _feedbackSequence?.Kill();
         DOTween.Kill(transform);
         if (canvasGroup != null)
             DOTween.Kill(canvasGroup);

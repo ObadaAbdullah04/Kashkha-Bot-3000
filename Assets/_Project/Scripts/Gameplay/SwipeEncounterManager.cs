@@ -11,10 +11,10 @@ using NaughtyAttributes;
 /// USAGE:
 /// - HouseFlowController calls ShowSingleCard() for each question in the sequence
 /// - Streak combos are tracked for bonus Eidia
-/// - No Timeline, no wave system — pure coroutine-driven flow
+/// - Pure coroutine-driven flow
 ///
 /// KEY METHOD:
-/// - ShowSingleCard(cardData, onComplete): Shows a single card, waits for swipe/timeout
+/// - ShowSingleCard(cardData, cardIndex, totalCards, onComplete): Shows a single card, waits for swipe/timeout
 /// </summary>
 public class SwipeEncounterManager : MonoBehaviour
 {
@@ -35,6 +35,10 @@ public class SwipeEncounterManager : MonoBehaviour
 
     [Tooltip("Timer text display (RTLTextMeshPro)")]
     [SerializeField] private RTLTextMeshPro timerText;
+
+    [Header("Card Counter UI")]
+    [Tooltip("Text display showing current card progress (e.g., 'Card 1/5')")]
+    [SerializeField] private RTLTextMeshPro cardCounterText;
 
     [Header("Timing Settings")]
     [Tooltip("Time limit per card swipe (seconds)")]
@@ -79,6 +83,7 @@ public class SwipeEncounterManager : MonoBehaviour
     private bool isProcessingSwipe = false;
     private int currentStreak = 0;
     private int streakBonusTotal = 0;
+    private int currentCardIndex = 0;
 
     #endregion
 
@@ -96,16 +101,6 @@ public class SwipeEncounterManager : MonoBehaviour
         }
     }
 
-    private void OnEnable()
-    {
-        SwipeCard.OnCardSwiped += HandleCardSwiped;
-    }
-
-    private void OnDisable()
-    {
-        SwipeCard.OnCardSwiped -= HandleCardSwiped;
-    }
-
     private void Update()
     {
         if (!isTimerRunning || isProcessingSwipe) return;
@@ -121,7 +116,7 @@ public class SwipeEncounterManager : MonoBehaviour
         if (timeRemaining <= 0)
         {
             timeRemaining = 0;
-            HandleTimeout();
+            // Timeout handled by per-card timeout handler in ShowSingleCard
         }
 
         if (timerText != null && timeRemaining < panicThreshold)
@@ -138,7 +133,7 @@ public class SwipeEncounterManager : MonoBehaviour
     /// Shows a SINGLE swipe card. Called by HouseFlowController for each question.
     /// Card is shown, player swipes or times out, onComplete callback fires.
     /// </summary>
-    public void ShowSingleCard(SwipeCardData cardData, Action<float, int, bool> onComplete)
+    public void ShowSingleCard(SwipeCardData cardData, int cardIndex, int totalCards, Action<float, int, bool> onComplete)
     {
         if (cardData == null)
         {
@@ -155,9 +150,13 @@ public class SwipeEncounterManager : MonoBehaviour
         }
 
         isProcessingSwipe = true;
+        currentCardIndex = cardIndex;
+
+        // Update card counter UI
+        UpdateCardCounter(cardIndex + 1, totalCards);
 
         activeCard = Instantiate(swipeCardPrefab, cardParent);
-        activeCard.Setup(cardData, 1, 1);
+        activeCard.Setup(cardData, cardIndex, totalCards);
 
         if (activeCard.transform != null)
         {
@@ -247,6 +246,8 @@ public class SwipeEncounterManager : MonoBehaviour
         ClearCards();
         currentStreak = 0;
         streakBonusTotal = 0;
+        currentCardIndex = 0;
+        UpdateCardCounter(0, 0); // Clear counter
     }
 
     public int GetStreakBonus() => streakBonusTotal;
@@ -254,6 +255,30 @@ public class SwipeEncounterManager : MonoBehaviour
     #endregion
 
     #region Helpers
+
+    /// <summary>
+    /// Updates the card counter text display (e.g., "Card 1/5").
+    /// </summary>
+    private void UpdateCardCounter(int current, int total)
+    {
+        if (cardCounterText == null)
+        {
+            Debug.LogWarning("[SwipeEncounterManager] cardCounterText is not assigned! Please assign in inspector.");
+            return;
+        }
+
+        if (total > 0)
+        {
+            cardCounterText.text = $"{current}/{total}";
+#if UNITY_EDITOR
+            Debug.Log($"[SwipeEncounterManager] Card counter updated: {cardCounterText.text}");
+#endif
+        }
+        else
+        {
+            cardCounterText.text = "";
+        }
+    }
 
     private void StartTimer()
     {
@@ -273,16 +298,6 @@ public class SwipeEncounterManager : MonoBehaviour
         activeCard = null;
     }
 
-    private void HandleCardSwiped(SwipeCard card, int direction)
-    {
-        // Handled by per-card handlers in ShowSingleCard
-    }
-
-    private void HandleTimeout()
-    {
-        // Handled by per-card timeout handler in ShowSingleCard
-    }
-
     private int CalculateStreakBonus(int streak)
     {
         return streak switch { 2 => 3, 3 => 5, >= 4 => 8, _ => 0 };
@@ -292,7 +307,7 @@ public class SwipeEncounterManager : MonoBehaviour
 
     #region Inspector Buttons
 
-    [Button("▶ Test Single Card")]
+    [Button("Test Single Card")]
     private void TestSingleCard()
     {
         var testData = new SwipeCardData
@@ -303,14 +318,14 @@ public class SwipeEncounterManager : MonoBehaviour
             OptionCorrectAR = "أكل بشكر",
             OptionWrongAR = "لا بشكر",
             RightIsCorrect = true,
-            CorrectFeedbackAR = "قبلتِ الضيافة بأدب! 🌟",
-            IncorrectFeedbackAR = "رفضتِ الضيافة - زعلت الخالة 😞",
+            CorrectFeedbackAR = "قبلتِ الضيافة بأدب!",
+            IncorrectFeedbackAR = "رفضتِ الضيافة - زعلت الخالة",
             CorrectBatteryDelta = -5f,
             IncorrectBatteryDelta = -15f,
             BaseEid = 10
         };
 
-        ShowSingleCard(testData, (batteryDelta, eidia, wasCorrect) =>
+        ShowSingleCard(testData, 0, 1, (batteryDelta, eidia, wasCorrect) =>
         {
             Debug.Log($"[Test] Card complete: {(wasCorrect ? "CORRECT" : "INCORRECT")} | Battery: {batteryDelta}, Eidia: {eidia}");
         });

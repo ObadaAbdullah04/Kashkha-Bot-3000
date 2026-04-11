@@ -14,36 +14,39 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   HouseLevel: 3
   Sequence:
+  - Type: 1
+    ElementID: CS_H3_Blessing
+    DesignerNote: Grandma blesses you
   - Type: 0
     ElementID: Q21
-    DesignerNote: 
-  - Type: 1
-    ElementID: QTE_Shake_Cup
-    DesignerNote: 
+    DesignerNote: Tea or coffee
   - Type: 0
     ElementID: Q23
-    DesignerNote: 
+    DesignerNote: Prayer question
   - Type: 2
-    ElementID: Cutscene_Respect_Elder
-    DesignerNote: 
+    ElementID: TAP_Door_1
+    DesignerNote: Knock on the door
   - Type: 0
     ElementID: Q25
-    DesignerNote: 
-  - Type: 1
-    ElementID: QTE_Swipe_Food
-    DesignerNote: 
+    DesignerNote: Family gathering
   - Type: 0
-    ElementID: Q27
-    DesignerNote: 
+    ElementID: Q28
+    DesignerNote: Prayer blessing
+  - Type: 1
+    ElementID: CS_H3_Family_Gather
+    DesignerNote: Family gathers
   - Type: 2
-    ElementID: Cutscene_Family_Gather
-    DesignerNote: 
+    ElementID: SHAKE_Hand_3
+    DesignerNote: Warm handshake
   - Type: 0
-    ElementID: Q29
-    DesignerNote: 
+    ElementID: Q26
+    DesignerNote: Where's grandma
+  - Type: 0
+    ElementID: Q30
+    DesignerNote: Story time
+  - Type: 2
+    ElementID: HOLD_Gift_3
+    DesignerNote: Hold the gift tightly
   - Type: 1
-    ElementID: QTE_Hold_Respect
-    DesignerNote: 
-  - Type: 0
-    ElementID: Q22
-    DesignerNote: 
+    ElementID: CS_H3_Respect_Elder
+    DesignerNote: Respect elder

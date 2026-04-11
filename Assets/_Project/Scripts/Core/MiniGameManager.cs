@@ -285,10 +285,16 @@ public class MiniGameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Called by CatchMiniGame when it ends. Fires event for FloatingTextManager, then goes to HouseHub.
+    /// Called by CatchMiniGame when it ends. Fires event for FloatingTextManager, then persists scrap and goes to HouseHub.
     /// </summary>
     public void EndMiniGame(int eidiaEarned, int scrapEarned)
     {
+        // CRITICAL: Persist scrap to SaveManager BEFORE firing UI event
+        if (scrapEarned > 0 && SaveManager.Instance != null)
+        {
+            SaveManager.Instance.AddScrap(scrapEarned);
+        }
+
         // Fire event for FloatingTextManager BEFORE destroying the instance
         OnMiniGameEnded?.Invoke(eidiaEarned, scrapEarned);
         Debug.Log($"[MiniGameManager] Mini-game ended. Rewards: +{eidiaEarned} Eidia, +{scrapEarned} Scrap");

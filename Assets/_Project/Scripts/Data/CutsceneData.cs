@@ -2,12 +2,12 @@ using System;
 
 /// <summary>
 /// PHASE 9: Data model for a single cutscene definition from Cutscenes.csv
-/// 
-/// Cutscenes are triggered by Timeline signals during house sequences.
+///
+/// Cutscenes are triggered by HouseFlowController during house sequences.
 /// They play DOTween animations, show text, and create cinematic moments.
-/// 
-/// CSV FORMAT (6 columns):
-/// ID, HouseLevel, CutsceneType, TextAR, Duration, AnimationType
+///
+/// CSV FORMAT (8 columns):
+/// ID, HouseLevel, CutsceneType, CharacterName, ExpressionName, Text, Duration, AnimationType
 /// </summary>
 [Serializable]
 public class CutsceneData
@@ -33,9 +33,16 @@ public class CutsceneData
 
     #endregion
 
+    #region Expression System (PHASE 12)
+
+    public string CharacterName;        // Character name (matches CharacterExpressionSO)
+    public string ExpressionName;       // Expression name (Neutral, Happy, Angry, etc.)
+
+    #endregion
+
     public override string ToString()
     {
-        return $"[Cutscene {ID}] Type:{CutsceneType} | Duration:{Duration}s | Text:\"{TextAR}\"";
+        return $"[Cutscene {ID}] Type:{CutsceneType} | Character:{CharacterName} | Expression:{ExpressionName} | Duration:{Duration}s | Text:\"{TextAR}\"";
     }
 }
 

@@ -124,11 +124,8 @@ public class PathDrawingGame : MonoBehaviour
         // FIX #1: Auto-configure Canvas for proper rendering
         ConfigureCanvas();
 
-        // Enable input action
-        if (drawAction != null && drawAction.action != null)
-        {
-            drawAction.action.Enable();
-        }
+        // Enable input action (handled by OnEnable, not needed here)
+        // drawAction.action.Enable(); // Moved to OnEnable for proper lifecycle handling
 
         InitializeGame();
     }
@@ -613,7 +610,7 @@ public class PathDrawingGame : MonoBehaviour
     {
         // Calculate final rewards for the manager call
         int eidiaReward = gameEnded && timeRemaining > 0 ? Mathf.CeilToInt(timeRemaining) : 0;
-        int scrapReward = gameEnded && timeRemaining > 0 ? Mathf.Max(1, Mathf.CeilToInt(timeRemaining / 3)) : 1;
+        int scrapReward = gameEnded && timeRemaining > 0 ? Mathf.Max(1, Mathf.CeilToInt(timeRemaining / 3f)) : 0; // No scrap on failure
 
         // Return to MiniGameManager
         if (MiniGameManager.Instance != null)

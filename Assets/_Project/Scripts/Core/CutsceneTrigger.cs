@@ -6,8 +6,8 @@ using DG.Tweening;
 using NaughtyAttributes;
 
 /// <summary>
-/// PHASE 9.4: Cutscene trigger system for Timeline-driven house flow.
-/// 
+/// PHASE 9.4: Cutscene trigger system for house flow.
+///
 /// This system plays DOTween-based cutscenes when triggered by HouseFlowController.
 /// Cutscenes are defined in Cutscenes.csv and include various types:
 /// - TextReveal: Text fades in with typewriter effect
@@ -15,18 +15,18 @@ using NaughtyAttributes;
 /// - CameraPan: Camera moves to show different area
 /// - Dialogue: Two characters exchange lines
 /// - ReactionShot: Single character reacts to previous event
-/// 
+///
 /// ARCHITECTURE:
 /// 1. HouseFlowController calls CutsceneTrigger.PlayCutscene(cutsceneData, onComplete)
 /// 2. CutsceneTrigger loads cutscene config from CutsceneData (CSV)
 /// 3. Plays appropriate DOTween animation based on CutsceneType
 /// 4. Shows Arabic text with animation
 /// 5. Calls onComplete callback when cutscene duration expires
-/// 
+///
 /// USAGE:
 /// 1. Add CutsceneTrigger component to a GameObject in the scene
 /// 2. Assign cutscene UI prefabs (text panel, character sprites, etc.)
-/// 3. HouseFlowController will call PlayCutscene() automatically from Timeline signals
+/// 3. HouseFlowController will call PlayCutscene() automatically during house sequences
 /// </summary>
 public class CutsceneTrigger : MonoBehaviour
 {
@@ -51,8 +51,8 @@ public class CutsceneTrigger : MonoBehaviour
     [SerializeField] private RTLTextMeshPro secondaryText;
 
     [Header("Sprite Libraries")]
-    [Tooltip("Map of character expressions (Sprite name -> Sprite reference)")]
-    [SerializeField] private Sprite[] expressionSprites;
+    [Tooltip("Character expression ScriptableObjects (assign all characters' expressions)")]
+    [SerializeField] private CharacterExpressionSO[] characterExpressions;
 
     [Header("Animation Settings")]
     [Tooltip("Default cutscene duration if not specified in data")]
@@ -354,14 +354,24 @@ public class CutsceneTrigger : MonoBehaviour
 
     /// <summary>
     /// CharacterReaction: Character sprite changes expression + text.
+    /// Now uses CharacterExpressionSO system from CSV data.
     /// </summary>
     private IEnumerator PlayCharacterReaction(string text, float duration)
     {
         // Show character sprite if assigned
-        if (characterSprite != null && expressionSprites.Length > 0)
+        if (characterSprite != null)
         {
             characterSprite.gameObject.SetActive(true);
-            characterSprite.sprite = expressionSprites[0];
+
+            // Get sprite from expression system using CSV data
+            string charName = currentCutsceneData?.CharacterName ?? "";
+            string exprName = currentCutsceneData?.ExpressionName ?? "Neutral";
+
+            Sprite sprite = GetCharacterSprite(exprName, charName);
+            if (sprite != null)
+            {
+                characterSprite.sprite = sprite;
+            }
 
             // Pop-in animation
             characterSprite.transform.localScale = Vector3.zero;
@@ -385,6 +395,41 @@ public class CutsceneTrigger : MonoBehaviour
 
         // Wait for duration
         yield return new WaitForSeconds(duration);
+    }
+
+    /// <summary>
+    /// Gets character sprite by expression name from the expression library.
+    /// </summary>
+    /// <param name="expressionName">Expression name (case-insensitive)</param>
+    /// <param name="characterName">Optional character name to search specific SO</param>
+    /// <returns>Sprite if found, null otherwise</returns>
+    private Sprite GetCharacterSprite(string expressionName, string characterName = null)
+    {
+        if (characterExpressions == null || characterExpressions.Length == 0)
+        {
+            Debug.LogWarning("[CutsceneTrigger] No character expressions assigned!");
+            return null;
+        }
+
+        // If character name provided, search for that specific character
+        if (!string.IsNullOrEmpty(characterName))
+        {
+            foreach (var charExpr in characterExpressions)
+            {
+                if (charExpr != null && charExpr.characterName.Equals(characterName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return charExpr.GetExpressionSprite(expressionName);
+                }
+            }
+        }
+
+        // Otherwise, use first character's expressions (fallback)
+        if (characterExpressions[0] != null)
+        {
+            return characterExpressions[0].GetExpressionSprite(expressionName);
+        }
+
+        return null;
     }
 
     /// <summary>
@@ -466,14 +511,18 @@ public class CutsceneTrigger : MonoBehaviour
     private IEnumerator PlayReactionShot(string text, float duration)
     {
         // Quick character sprite show
-        if (characterSprite != null && expressionSprites.Length > 0)
+        if (characterSprite != null)
         {
-            characterSprite.gameObject.SetActive(true);
-            characterSprite.sprite = expressionSprites[0];
+            Sprite sprite = GetCharacterSprite("Neutral");
+            if (sprite != null)
+            {
+                characterSprite.gameObject.SetActive(true);
+                characterSprite.sprite = sprite;
 
-            // Quick punch-in
-            characterSprite.transform.localScale = Vector3.one * 0.8f;
-            characterSprite.transform.DOScale(Vector3.one, 0.3f).SetEase(Ease.OutBack);
+                // Quick punch-in
+                characterSprite.transform.localScale = Vector3.one * 0.8f;
+                characterSprite.transform.DOScale(Vector3.one, 0.3f).SetEase(Ease.OutBack);
+            }
         }
 
         // Quick text flash
@@ -548,7 +597,7 @@ public class CutsceneTrigger : MonoBehaviour
 
     #region Inspector Buttons
 
-    [Button("🧪 Test TextReveal")]
+    [Button("Test TextReveal")]
     private void TestTextReveal()
     {
         if (Application.isPlaying)
@@ -574,7 +623,7 @@ public class CutsceneTrigger : MonoBehaviour
         }
     }
 
-    [Button("🧪 Test CharacterReaction")]
+    [Button("Test CharacterReaction")]
     private void TestCharacterReaction()
     {
         if (Application.isPlaying)
@@ -600,7 +649,7 @@ public class CutsceneTrigger : MonoBehaviour
         }
     }
 
-    [Button("🧪 Test CameraPan")]
+    [Button("Test CameraPan")]
     private void TestCameraPan()
     {
         if (Application.isPlaying)
@@ -610,7 +659,7 @@ public class CutsceneTrigger : MonoBehaviour
                 ID = "Test_Pan",
                 HouseLevel = 1,
                 CutsceneType = CutsceneType.CameraPan,
-                TextAR = "دخلت بيت خالة أم محمد 🏠",
+                TextAR = "دخلت بيت خالة أم محمد",
                 Duration = 3f,
                 Animation = AnimationType.Slide
             };

@@ -61,7 +61,6 @@ public class GameManager : MonoBehaviour
     [SerializeField] private bool isHouse4Active = false;
     [SerializeField] private int currentRunSeed = 0;
     [SerializeField] private bool[] completedHouses = new bool[5];
-    [SerializeField] private bool house4Unlocked = false;
     [SerializeField] private int accumulatedEidia = 0;
     [SerializeField] private int encounterStreakBonus = 0; // Streak bonus from current encounter
 
@@ -128,7 +127,6 @@ public class GameManager : MonoBehaviour
         accumulatedEidia = 0;
         encounterStreakBonus = 0;
         completedHouses = new bool[5];
-        house4Unlocked = false;
         currentRunSeed = UnityEngine.Random.Range(int.MinValue, int.MaxValue);
 
         Debug.Log($"[GameManager] Run Seed: {currentRunSeed}");
@@ -180,7 +178,7 @@ public class GameManager : MonoBehaviour
 
     /// <summary>
     /// PHASE 9.6: Starts the self-driving house flow coroutine.
-    /// No Timeline needed — HouseFlowController drives itself.
+    /// HouseFlowController drives itself via coroutines.
     /// </summary>
     private void StartHouseFlowController(int houseLevel)
     {
@@ -239,7 +237,8 @@ public class GameManager : MonoBehaviour
         if (questions != null && questions.Count > 0)
         {
             // Pick first 4 questions as a simple test
-            for (int i = 0; i < Mathf.Min(4, questions.Count); i++)
+            int count = Mathf.Min(4, questions.Count);
+            for (int i = 0; i < count; i++)
             {
                 elements.Add(new SequenceElement(ElementType.Question, questions[i].ID));
             }
@@ -272,6 +271,9 @@ public class GameManager : MonoBehaviour
 
     private void HandleCardProcessed(float batteryDelta, int eidia, bool wasCorrect)
     {
+        // Prevent eidia accumulation after game over or win
+        if (currentState == GameState.GameOver || currentState == GameState.Win) return;
+
         accumulatedEidia += eidia;
 
         PlayFeedbackEffects(wasCorrect);
@@ -284,7 +286,7 @@ public class GameManager : MonoBehaviour
     /// </summary>
     private void HandleHouseFlowCompleted(int houseLevel)
     {
-        Debug.Log($"[GameManager] House {houseLevel} flow completed via Timeline!");
+        Debug.Log($"[GameManager] House {houseLevel} flow completed!");
         
         // Get streak bonus if applicable
         if (SwipeEncounterManager.Instance != null)
@@ -346,13 +348,10 @@ public class GameManager : MonoBehaviour
         ChangeState(GameState.HouseHub);
         int next = currentHouseLevel + 1;
 
-        if (currentHouseLevel >= 3)
-            house4Unlocked = true;
-
-        UnifiedHubManager.Instance?.InitializeHub(next, completedHouses, house4Unlocked);
+        UnifiedHubManager.Instance?.InitializeHub(next, completedHouses);
         UIManager.Instance?.ShowUnifiedHub();
 
-        Debug.Log($"[GameManager] Unified Hub. Next: {next}, House 4: {house4Unlocked}");
+        Debug.Log($"[GameManager] Unified Hub. Next: {next}");
     }
 
     private void EnterHouse(int houseLevel)
@@ -487,19 +486,19 @@ public class GameManager : MonoBehaviour
 
     #region Test Buttons
 
-    [Button("▶ Start Run")]
+    [Button("Start Run")]
     private void TestStartRun() => StartRun();
 
-    [Button("⚠ Battery Game Over")]
+    [Button("Battery Game Over")]
     private void TestBatteryGO() => HandleGameOver("Battery");
 
-    [Button("⚠ Stomach Game Over")]
+    [Button("Stomach Game Over")]
     private void TestStomachGO() => HandleGameOver("Stomach");
 
-    [Button("✓ Win")]
+    [Button("Win")]
     private void TestWin() => WinGame();
 
-    [Button("☠️ Start House 4")]
+    [Button("Start House 4")]
     private void TestHouse4()
     {
         isHouse4Active = true;

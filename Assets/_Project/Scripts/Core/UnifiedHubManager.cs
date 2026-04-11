@@ -151,6 +151,10 @@ public class UnifiedHubManager : MonoBehaviour
     [Tooltip("'Play Again' button shown after full run completion")]
     [SerializeField] private Button playAgainButton;
 
+    [Header("Mini-Game Replay Settings")]
+    [Tooltip("Allow replaying mini-games after they've been unlocked")]
+    [SerializeField] private bool allowMiniGameReplay = true;
+
     [Header("Action Button")]
     [Tooltip("Primary action button (Start Run / Start Next House / Continue)")]
     [SerializeField] private Button actionButton;
@@ -279,6 +283,7 @@ public class UnifiedHubManager : MonoBehaviour
         WardrobeManager.OnOutfitPurchased += RefreshWardrobeUI;
         WardrobeManager.OnOutfitEquipped += HandleOutfitEquipped;
         WardrobeManager.OnScrapChanged += RefreshWardrobeUI;
+        SaveManager.OnScrapChanged += OnScrapChangedFromSaveManager; // Subscribe to scrap changes from mini-games
     }
 
     private void OnDisable()
@@ -287,6 +292,7 @@ public class UnifiedHubManager : MonoBehaviour
         WardrobeManager.OnOutfitPurchased -= RefreshWardrobeUI;
         WardrobeManager.OnOutfitEquipped -= HandleOutfitEquipped;
         WardrobeManager.OnScrapChanged -= RefreshWardrobeUI;
+        SaveManager.OnScrapChanged -= OnScrapChangedFromSaveManager; // Unsubscribe from scrap changes
     }
 
     private void InitializeArrays()
@@ -363,7 +369,7 @@ public class UnifiedHubManager : MonoBehaviour
     /// Initializes the hub for the current game state.
     /// Called by GameManager when hub should appear.
     /// </summary>
-    public void InitializeHub(int nextHouseLevel, bool[] completedHousesArray, bool house4Unlocked)
+    public void InitializeHub(int nextHouseLevel, bool[] completedHousesArray)
     {
         // Reset run state
         isFullRunComplete = false;
@@ -373,8 +379,8 @@ public class UnifiedHubManager : MonoBehaviour
         if (completedHousesArray != null && completedHousesArray.Length >= 5)
             completedHousesArray.CopyTo(this.completedHouses, 0);
 
-        // Determine highest unlocked house
-        if (house4Unlocked && completedHouses[3])
+        // Determine highest unlocked house (House 4 unlocks after House 3 completion)
+        if (completedHouses[3])
             highestUnlockedHouse = 4;
         else if (completedHouses[2])
             highestUnlockedHouse = 3;
@@ -416,10 +422,19 @@ public class UnifiedHubManager : MonoBehaviour
             // Update next house to play
             nextHouseLevelToPlay = houseLevel + 1;
 
+            // Unlock House 4 when House 3 is completed
+            if (houseLevel == 3 && highestUnlockedHouse < 4)
+            {
+                highestUnlockedHouse = 4;
+#if UNITY_EDITOR
+                Debug.Log("[UnifiedHub] House 4 unlocked!");
+#endif
+            }
+
             UpdateAllUI();
 
 #if UNITY_EDITOR
-            Debug.Log($"[UnifiedHub] House {houseLevel} marked complete. Next: {nextHouseLevelToPlay}");
+            Debug.Log($"[UnifiedHub] House {houseLevel} marked complete. Next: {nextHouseLevelToPlay}, Unlocked: {highestUnlockedHouse}");
 #endif
         }
     }
@@ -481,11 +496,12 @@ public class UnifiedHubManager : MonoBehaviour
         int previousHouse = miniGameIndex + 1;
         int nextHouse = miniGameIndex + 2;
 
-        // Validate previous house is complete
+        // Validate previous house is complete (unlock condition)
         if (!completedHouses[previousHouse]) return;
 
-        // Validate next house isn't already complete
-        if (completedHouses[nextHouse]) return;
+        // For non-replay: validate next house isn't already complete
+        // For replay mode: allow even if next house is complete
+        if (!allowMiniGameReplay && completedHouses[nextHouse]) return;
 
         OnStartMiniGame?.Invoke(miniGameIndex);
     }
@@ -521,6 +537,11 @@ public class UnifiedHubManager : MonoBehaviour
     #endregion
 
     #region Wardrobe Tab
+
+    /// <summary>
+    /// Wrapper for SaveManager.OnScrapChanged (Action<int>) to match RefreshWardrobeUI (Action).
+    /// </summary>
+    private void OnScrapChangedFromSaveManager(int newScrapTotal) => RefreshWardrobeUI();
 
     private void RefreshWardrobeUI()
     {
@@ -781,15 +802,27 @@ public class UnifiedHubManager : MonoBehaviour
     {
         // Mini-game 1: Between House 1 and 2
         if (miniGameButtons[0] != null)
-            miniGameButtons[0].interactable = completedHouses[1] && !completedHouses[2];
+        {
+            bool unlocked1 = completedHouses[1];
+            bool available1 = allowMiniGameReplay ? unlocked1 : (unlocked1 && !completedHouses[2]);
+            miniGameButtons[0].interactable = available1;
+        }
 
         // Mini-game 2: Between House 2 and 3
         if (miniGameButtons[1] != null)
-            miniGameButtons[1].interactable = completedHouses[2] && !completedHouses[3];
+        {
+            bool unlocked2 = completedHouses[2];
+            bool available2 = allowMiniGameReplay ? unlocked2 : (unlocked2 && !completedHouses[3]);
+            miniGameButtons[1].interactable = available2;
+        }
 
         // Mini-game 3: Between House 3 and 4
         if (miniGameButtons[2] != null)
-            miniGameButtons[2].interactable = completedHouses[3] && !completedHouses[4] && highestUnlockedHouse >= 4;
+        {
+            bool unlocked3 = completedHouses[3] && highestUnlockedHouse >= 4;
+            bool available3 = allowMiniGameReplay ? unlocked3 : (unlocked3 && !completedHouses[4]);
+            miniGameButtons[2].interactable = available3;
+        }
     }
 
     private void UpdateActionButton()
@@ -842,32 +875,32 @@ public class UnifiedHubManager : MonoBehaviour
 
     #region Inspector Test Buttons
 
-    [Button("🧪 Test: Hub Start (House 1)")]
+    [Button("Test: Hub Start (House 1)")]
     private void TestHubStart()
     {
         bool[] completed = new bool[5];
-        InitializeHub(1, completed, false);
+        InitializeHub(1, completed);
     }
 
-    [Button("🧪 Test: After House 1")]
+    [Button("Test: After House 1")]
     private void TestHubAfterHouse1()
     {
         bool[] completed = new bool[5];
         completed[1] = true;
-        InitializeHub(2, completed, false);
+        InitializeHub(2, completed);
     }
 
-    [Button("🧪 Test: After House 3 (House 4 unlocked)")]
+    [Button("Test: After House 3 (House 4 unlocked)")]
     private void TestHubAfterHouse3()
     {
         bool[] completed = new bool[5];
         completed[1] = true;
         completed[2] = true;
         completed[3] = true;
-        InitializeHub(4, completed, true);
+        InitializeHub(4, completed);
     }
 
-    [Button("🧪 Test: Full Run Complete")]
+    [Button("Test: Full Run Complete")]
     private void TestHubFullComplete()
     {
         bool[] completed = new bool[5];
@@ -875,7 +908,7 @@ public class UnifiedHubManager : MonoBehaviour
         completed[2] = true;
         completed[3] = true;
         completed[4] = true;
-        InitializeHub(4, completed, true);
+        InitializeHub(4, completed);
     }
 
     #endregion

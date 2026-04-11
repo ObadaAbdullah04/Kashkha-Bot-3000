@@ -1,0 +1,15 @@
+ID,HouseLevel,InteractionType,PromptTextAR,Duration,Threshold,CorrectBat,IncorrectBat,CorrectEid,IncorrectEid
+SHAKE_Cup_1,1,Shake,هز الكوب!,5,5,-5,-15,10,3
+HOLD_Hand_1,1,Hold,مصافحة اليد!,4,2.0,-5,-15,10,3
+TAP_Door_1,1,Tap,اطرق الباب!,5,4,-5,-15,10,3
+SHAKE_Phone_2,2,Shake,هز الهاتف بقوة!,4,8,-10,-20,15,5
+HOLD_Cup_2,2,Hold,امسك الكوب بثبات!,3,1.5,-10,-20,15,5
+TAP_Heart_2,2,Tap,اضغط بسرعة!,4,6,-10,-20,15,5
+SHAKE_Hand_3,3,Shake,هز اليد بحرارة!,5,10,-10,-25,20,8
+HOLD_Gift_3,3,Hold,تمسك بالهدية!,4,2.5,-10,-25,20,8
+TAP_Celebrate_3,3,Tap,صفق بسرعة!,5,8,-10,-25,20,8
+DRAW_Path_3,3,Draw,ارسم المسار!,6,_,-10,-25,20,8
+SHAKE_Insane_4,4,Shake,هز هز هز!,3,12,-15,-30,25,10
+HOLD_Strong_4,4,Hold,اثبت بقوة!,3,3.0,-15,-30,25,10
+TAP_Fast_4,4,Tap,اضغط أسرع!,3,10,-15,-30,25,10
+DRAW_Escape_4,4,Draw,ارسم مخرج!,5,_,-15,-30,25,10

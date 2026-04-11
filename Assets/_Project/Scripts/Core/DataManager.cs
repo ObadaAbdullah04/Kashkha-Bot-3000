@@ -6,17 +6,18 @@ using System.Text.RegularExpressions;
 using System.Globalization;
 
 /// <summary>
-/// PHASE 9 REFACTORED: Parses 3 CSV files into data pools.
+/// PHASE 13: Parses 3 CSV files into data pools.
 ///
 /// CSV FILES:
-/// 1. Questions.csv (13 columns): ID, HouseLevel, Speaker, CardName, Question, OptionCorrect, OptionWrong, CorrectSide,
+/// 1. Questions.csv (14 columns): ID, HouseLevel, Speaker, CardName, SpriteName, Question, OptionCorrect, OptionWrong, CorrectSide,
 ///    CorrectFB, IncorrectFB, CorrectBat, IncorrectBat, BaseEid
-/// 2. QTEs.csv (8 columns): ID, HouseLevel, QTEType, Duration, SuccessText, FailText, SuccessBatteryEffect, FailBatteryEffect
-/// 3. Cutscenes.csv (6 columns): ID, HouseLevel, CutsceneType, Text, Duration, AnimationType
+/// 2. Cutscenes.csv (8 columns): ID, HouseLevel, CutsceneType, CharacterName, ExpressionName, Text, Duration, AnimationType
+/// 3. Interactions.csv (10 columns): ID, HouseLevel, InteractionType, PromptTextAR, Duration, Threshold, CorrectBat, IncorrectBat, CorrectEid, IncorrectEid
 ///
 /// KEY CHANGES:
 /// - Questions are now pooled by HouseLevel (no wave assignments)
-/// - QTEs and Cutscenes are loaded from separate CSVs
+/// - Cutscenes are loaded from separate CSV
+/// - Interactions are standalone gameplay moments (shake, hold, tap, draw)
 /// - HouseSequenceData ScriptableObject defines element order
 /// - No shuffling or randomization - sequence is explicit
 /// </summary>
@@ -27,61 +28,66 @@ public class DataManager : MonoBehaviour
     [Header("CSV Files")]
     [Tooltip("Questions CSV (Questions.csv)")]
     public TextAsset questionsCSV;
-    
-    [Tooltip("QTEs CSV (QTEs.csv)")]
-    public TextAsset qtesCSV;
-    
+
     [Tooltip("Cutscenes CSV (Cutscenes.csv)")]
     public TextAsset cutscenesCSV;
+
+    [Tooltip("Interactions CSV (Interactions.csv)")]
+    public TextAsset interactionsCSV;
 
     [Header("Parsed Data")]
     [ReadOnly]
     [Tooltip("Questions pooled by HouseLevel")]
     public Dictionary<int, List<SwipeCardData>> questionPoolsByHouse = new Dictionary<int, List<SwipeCardData>>();
-    
-    [ReadOnly]
-    [Tooltip("QTEs pooled by HouseLevel")]
-    public Dictionary<int, List<QTEData>> qtePoolsByHouse = new Dictionary<int, List<QTEData>>();
-    
+
     [ReadOnly]
     [Tooltip("Cutscenes pooled by HouseLevel")]
     public Dictionary<int, List<CutsceneData>> cutscenePoolsByHouse = new Dictionary<int, List<CutsceneData>>();
 
-    // Questions CSV Column indices (13 columns)
+    [ReadOnly]
+    [Tooltip("Interactions pooled by HouseLevel")]
+    public Dictionary<int, List<InteractionData>> interactionPoolsByHouse = new Dictionary<int, List<InteractionData>>();
+
+    // Questions CSV Column indices (14 columns)
     private const int Q_COL_ID = 0;
     private const int Q_COL_HOUSE_LEVEL = 1;
     private const int Q_COL_SPEAKER = 2;
     private const int Q_COL_CARD_NAME = 3;
-    private const int Q_COL_QUESTION = 4;
-    private const int Q_COL_OPTION_CORRECT = 5;
-    private const int Q_COL_OPTION_WRONG = 6;
-    private const int Q_COL_CORRECT_SIDE = 7;
-    private const int Q_COL_CORRECT_FB = 8;
-    private const int Q_COL_INCORRECT_FB = 9;
-    private const int Q_COL_CORRECT_BAT = 10;
-    private const int Q_COL_INCORRECT_BAT = 11;
-    private const int Q_COL_BASE_EID = 12;
-    private const int Q_TOTAL_COLS = 13;
+    private const int Q_COL_SPRITE_NAME = 4;
+    private const int Q_COL_QUESTION = 5;
+    private const int Q_COL_OPTION_CORRECT = 6;
+    private const int Q_COL_OPTION_WRONG = 7;
+    private const int Q_COL_CORRECT_SIDE = 8;
+    private const int Q_COL_CORRECT_FB = 9;
+    private const int Q_COL_INCORRECT_FB = 10;
+    private const int Q_COL_CORRECT_BAT = 11;
+    private const int Q_COL_INCORRECT_BAT = 12;
+    private const int Q_COL_BASE_EID = 13;
+    private const int Q_TOTAL_COLS = 14;
 
-    // QTEs CSV Column indices (8 columns)
-    private const int QTE_COL_ID = 0;
-    private const int QTE_COL_HOUSE_LEVEL = 1;
-    private const int QTE_COL_TYPE = 2;
-    private const int QTE_COL_DURATION = 3;
-    private const int QTE_COL_SUCCESS_TEXT = 4;
-    private const int QTE_COL_FAIL_TEXT = 5;
-    private const int QTE_COL_SUCCESS_BAT = 6;
-    private const int QTE_COL_FAIL_BAT = 7;
-    private const int QTE_TOTAL_COLS = 8;
-
-    // Cutscenes CSV Column indices (6 columns)
+    // Cutscenes CSV Column indices (8 columns - PHASE 12 updated)
     private const int CS_COL_ID = 0;
     private const int CS_COL_HOUSE_LEVEL = 1;
     private const int CS_COL_TYPE = 2;
-    private const int CS_COL_TEXT = 3;
-    private const int CS_COL_DURATION = 4;
-    private const int CS_COL_ANIMATION = 5;
-    private const int CS_TOTAL_COLS = 6;
+    private const int CS_COL_CHARACTER_NAME = 3;
+    private const int CS_COL_EXPRESSION_NAME = 4;
+    private const int CS_COL_TEXT = 5;
+    private const int CS_COL_DURATION = 6;
+    private const int CS_COL_ANIMATION = 7;
+    private const int CS_TOTAL_COLS = 8;
+
+    // Interactions CSV Column indices (10 columns - PHASE 13)
+    private const int INT_COL_ID = 0;
+    private const int INT_COL_HOUSE_LEVEL = 1;
+    private const int INT_COL_INTERACTION_TYPE = 2;
+    private const int INT_COL_PROMPT_TEXT = 3;
+    private const int INT_COL_DURATION = 4;
+    private const int INT_COL_THRESHOLD = 5;
+    private const int INT_COL_CORRECT_BAT = 6;
+    private const int INT_COL_INCORRECT_BAT = 7;
+    private const int INT_COL_CORRECT_EID = 8;
+    private const int INT_COL_INCORRECT_EID = 9;
+    private const int INT_TOTAL_COLS = 10;
 
     private void Awake()
     {
@@ -98,36 +104,38 @@ public class DataManager : MonoBehaviour
         }
     }
 
-    [Button("▶ Parse All CSVs")]
+    [Button("Parse All CSVs")]
     public void ParseAllCSVs()
     {
         questionPoolsByHouse.Clear();
-        qtePoolsByHouse.Clear();
         cutscenePoolsByHouse.Clear();
+        interactionPoolsByHouse.Clear();
 
         ParseQuestionsCSV();
-        ParseQTEsCSV();
         ParseCutscenesCSV();
+        ParseInteractionsCSV();
 
-        Debug.Log("[DataManager] ✅ All CSVs parsed!");
+        Debug.Log("[DataManager] All CSVs parsed!");
         PrintSummary();
     }
 
-    [Button("▶ Parse Questions")]
+    [Button("Parse Questions")]
     private void ParseQuestionsCSV()
     {
         questionPoolsByHouse.Clear();
 
         if (questionsCSV == null)
         {
-            Debug.LogWarning("[DataManager] ⚠️ No Questions CSV assigned!");
+            Debug.LogError("[DataManager] ⚠️ No Questions CSV assigned! Please assign Questions.csv in inspector.");
             return;
         }
+
+        Debug.Log($"[DataManager] Parsing Questions CSV: {questionsCSV.name} ({questionsCSV.text.Length} bytes)");
 
         string[] lines = questionsCSV.text.Split('\n');
         if (lines.Length < 2)
         {
-            Debug.LogError("[DataManager] ❌ Questions CSV is empty!");
+            Debug.LogError("[DataManager] Questions CSV is empty or has no data rows!");
             return;
         }
 
@@ -157,51 +165,7 @@ public class DataManager : MonoBehaviour
         Debug.Log($"[DataManager] ✅ Questions: {parsed} parsed, {skipped} skipped");
     }
 
-    [Button("▶ Parse QTEs")]
-    private void ParseQTEsCSV()
-    {
-        qtePoolsByHouse.Clear();
-
-        if (qtesCSV == null)
-        {
-            Debug.LogWarning("[DataManager] ⚠️ No QTEs CSV assigned!");
-            return;
-        }
-
-        string[] lines = qtesCSV.text.Split('\n');
-        if (lines.Length < 2)
-        {
-            Debug.LogError("[DataManager] ❌ QTEs CSV is empty!");
-            return;
-        }
-
-        int parsed = 0, skipped = 0;
-
-        for (int i = 1; i < lines.Length; i++)
-        {
-            if (string.IsNullOrWhiteSpace(lines[i])) continue;
-
-            string[] fields = Regex.Split(lines[i].Trim(), ",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
-            QTEData qte = ParseQTE(fields, i + 1);
-
-            if (qte != null)
-            {
-                if (!qtePoolsByHouse.ContainsKey(qte.HouseLevel))
-                    qtePoolsByHouse[qte.HouseLevel] = new List<QTEData>();
-
-                qtePoolsByHouse[qte.HouseLevel].Add(qte);
-                parsed++;
-            }
-            else
-            {
-                skipped++;
-            }
-        }
-
-        Debug.Log($"[DataManager] ✅ QTEs: {parsed} parsed, {skipped} skipped");
-    }
-
-    [Button("▶ Parse Cutscenes")]
+    [Button("Parse Cutscenes")]
     private void ParseCutscenesCSV()
     {
         cutscenePoolsByHouse.Clear();
@@ -215,7 +179,7 @@ public class DataManager : MonoBehaviour
         string[] lines = cutscenesCSV.text.Split('\n');
         if (lines.Length < 2)
         {
-            Debug.LogError("[DataManager] ❌ Cutscenes CSV is empty!");
+            Debug.LogError("[DataManager] Cutscenes CSV is empty!");
             return;
         }
 
@@ -242,10 +206,54 @@ public class DataManager : MonoBehaviour
             }
         }
 
-        Debug.Log($"[DataManager] ✅ Cutscenes: {parsed} parsed, {skipped} skipped");
+        Debug.Log($"[DataManager] Cutscenes: {parsed} parsed, {skipped} skipped");
     }
 
-    [Button("👁 Preview All Data")]
+    [Button("Parse Interactions")]
+    private void ParseInteractionsCSV()
+    {
+        interactionPoolsByHouse.Clear();
+
+        if (interactionsCSV == null)
+        {
+            Debug.LogWarning("[DataManager] ⚠️ No Interactions CSV assigned!");
+            return;
+        }
+
+        string[] lines = interactionsCSV.text.Split('\n');
+        if (lines.Length < 2)
+        {
+            Debug.LogError("[DataManager] Interactions CSV is empty!");
+            return;
+        }
+
+        int parsed = 0, skipped = 0;
+
+        for (int i = 1; i < lines.Length; i++)
+        {
+            if (string.IsNullOrWhiteSpace(lines[i])) continue;
+
+            string[] fields = Regex.Split(lines[i].Trim(), ",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
+            InteractionData interaction = ParseInteraction(fields, i + 1);
+
+            if (interaction != null)
+            {
+                if (!interactionPoolsByHouse.ContainsKey(interaction.HouseLevel))
+                    interactionPoolsByHouse[interaction.HouseLevel] = new List<InteractionData>();
+
+                interactionPoolsByHouse[interaction.HouseLevel].Add(interaction);
+                parsed++;
+            }
+            else
+            {
+                skipped++;
+            }
+        }
+
+        Debug.Log($"[DataManager] Interactions: {parsed} parsed, {skipped} skipped");
+    }
+
+    [Button("Preview All Data")]
     public void PreviewData()
     {
         Debug.Log("=== QUESTION POOLS ===");
@@ -260,23 +268,23 @@ public class DataManager : MonoBehaviour
             }
         }
 
-        Debug.Log("=== QTE POOLS ===");
-        foreach (var kvp in qtePoolsByHouse)
-        {
-            Debug.Log($"House {kvp.Key}: {kvp.Value.Count} QTEs");
-            foreach (var q in kvp.Value)
-            {
-                Debug.Log($"  [{q.ID}] Type:{q.QTEType} | Duration:{q.Duration}s");
-            }
-        }
-
         Debug.Log("=== CUTSCENE POOLS ===");
         foreach (var kvp in cutscenePoolsByHouse)
         {
             Debug.Log($"House {kvp.Key}: {kvp.Value.Count} cutscenes");
             foreach (var c in kvp.Value)
             {
-                Debug.Log($"  [{c.ID}] Type:{c.CutsceneType} | Text:\"{c.TextAR}\"");
+                Debug.Log($"  [{c.ID}] Type:{c.CutsceneType} | Character:{c.CharacterName} | Text:\"{c.TextAR}\"");
+            }
+        }
+
+        Debug.Log("=== INTERACTION POOLS ===");
+        foreach (var kvp in interactionPoolsByHouse)
+        {
+            Debug.Log($"House {kvp.Key}: {kvp.Value.Count} interactions");
+            foreach (var i in kvp.Value)
+            {
+                Debug.Log($"  [{i.ID}] Type:{i.InteractionType} | Prompt:\"{i.PromptTextAR}\" | Duration:{i.Duration}s | Threshold:{i.Threshold}");
             }
         }
         Debug.Log("=== END PREVIEW ===");
@@ -286,7 +294,7 @@ public class DataManager : MonoBehaviour
     {
         if (fields.Length < Q_TOTAL_COLS)
         {
-            Debug.LogWarning($"[DataManager] Questions Line {row}: Expected {Q_TOTAL_COLS} cols, got {fields.Length}");
+            Debug.LogWarning($"[DataManager] Questions Line {row}: Expected {Q_TOTAL_COLS} cols, got {fields.Length}. Line: {string.Join(",", fields)}");
             return null;
         }
 
@@ -307,12 +315,13 @@ public class DataManager : MonoBehaviour
         int correctSide = ParseInt(SafeField(fields, Q_COL_CORRECT_SIDE));
         bool rightIsCorrect = (correctSide == 1);
 
-        return new SwipeCardData
+        var cardData = new SwipeCardData
         {
             ID = id,
             HouseLevel = ParseInt(SafeField(fields, Q_COL_HOUSE_LEVEL)),
             Speaker = SafeField(fields, Q_COL_SPEAKER),
             CardName = SafeField(fields, Q_COL_CARD_NAME),
+            SpriteName = SafeField(fields, Q_COL_SPRITE_NAME),
             QuestionAR = question,
             OptionCorrectAR = SafeField(fields, Q_COL_OPTION_CORRECT),
             OptionWrongAR = SafeField(fields, Q_COL_OPTION_WRONG),
@@ -323,40 +332,15 @@ public class DataManager : MonoBehaviour
             IncorrectBatteryDelta = ParseFloat(SafeField(fields, Q_COL_INCORRECT_BAT)),
             BaseEid = ParseInt(SafeField(fields, Q_COL_BASE_EID))
         };
-    }
 
-    private QTEData ParseQTE(string[] fields, int row)
-    {
-        if (fields.Length < QTE_TOTAL_COLS)
+#if UNITY_EDITOR
+        if (row <= 3) // Log first 3 questions for verification
         {
-            Debug.LogWarning($"[DataManager] QTEs Line {row}: Expected {QTE_TOTAL_COLS} cols, got {fields.Length}");
-            return null;
+            Debug.Log($"[DataManager] Parsed Q[{id}]: {cardData.CardName} | Sprite:{cardData.SpriteName} | House:{cardData.HouseLevel}");
         }
+#endif
 
-        string id = SafeField(fields, QTE_COL_ID);
-        if (string.IsNullOrWhiteSpace(id))
-        {
-            Debug.LogWarning($"[DataManager] QTEs Line {row}: Empty ID");
-            return null;
-        }
-
-        if (!Enum.TryParse<QTEType>(SafeField(fields, QTE_COL_TYPE), true, out QTEType qteType))
-        {
-            Debug.LogWarning($"[DataManager] QTEs Line {row}: Invalid QTEType '{SafeField(fields, QTE_COL_TYPE)}'");
-            return null;
-        }
-
-        return new QTEData
-        {
-            ID = id,
-            HouseLevel = ParseInt(SafeField(fields, QTE_COL_HOUSE_LEVEL)),
-            QTEType = qteType,
-            Duration = ParseFloat(SafeField(fields, QTE_COL_DURATION)),
-            SuccessTextAR = SafeField(fields, QTE_COL_SUCCESS_TEXT),
-            FailTextAR = SafeField(fields, QTE_COL_FAIL_TEXT),
-            SuccessBatteryEffect = ParseFloat(SafeField(fields, QTE_COL_SUCCESS_BAT)),
-            FailBatteryEffect = ParseFloat(SafeField(fields, QTE_COL_FAIL_BAT))
-        };
+        return cardData;
     }
 
     private CutsceneData ParseCutscene(string[] fields, int row)
@@ -391,9 +375,59 @@ public class DataManager : MonoBehaviour
             ID = id,
             HouseLevel = ParseInt(SafeField(fields, CS_COL_HOUSE_LEVEL)),
             CutsceneType = cutsceneType,
+            CharacterName = SafeField(fields, CS_COL_CHARACTER_NAME),
+            ExpressionName = SafeField(fields, CS_COL_EXPRESSION_NAME),
             TextAR = SafeField(fields, CS_COL_TEXT),
             Duration = ParseFloat(SafeField(fields, CS_COL_DURATION)),
             Animation = animType
+        };
+    }
+
+    private InteractionData ParseInteraction(string[] fields, int row)
+    {
+        if (fields.Length < INT_TOTAL_COLS)
+        {
+            Debug.LogWarning($"[DataManager] Interactions Line {row}: Expected {INT_TOTAL_COLS} cols, got {fields.Length}");
+            return null;
+        }
+
+        string id = SafeField(fields, INT_COL_ID);
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            Debug.LogWarning($"[DataManager] Interactions Line {row}: Empty ID");
+            return null;
+        }
+
+        if (!Enum.TryParse<InteractionType>(SafeField(fields, INT_COL_INTERACTION_TYPE), true, out InteractionType interactionType))
+        {
+            Debug.LogWarning($"[DataManager] Interactions Line {row}: Invalid InteractionType '{SafeField(fields, INT_COL_INTERACTION_TYPE)}'");
+            return null;
+        }
+
+        string promptText = SafeField(fields, INT_COL_PROMPT_TEXT);
+        if (string.IsNullOrWhiteSpace(promptText) || promptText == "_")
+        {
+            Debug.LogWarning($"[DataManager] Interactions Line {row}: Empty PromptText");
+            return null;
+        }
+
+        float threshold = ParseFloat(SafeField(fields, INT_COL_THRESHOLD));
+        // For Draw type, threshold is unused (set to 1 as placeholder)
+        if (interactionType == InteractionType.Draw && threshold == 0)
+            threshold = 1f;
+
+        return new InteractionData
+        {
+            ID = id,
+            HouseLevel = ParseInt(SafeField(fields, INT_COL_HOUSE_LEVEL)),
+            InteractionType = interactionType,
+            PromptTextAR = promptText,
+            Duration = ParseFloat(SafeField(fields, INT_COL_DURATION)),
+            Threshold = threshold,
+            CorrectBatteryDelta = ParseFloat(SafeField(fields, INT_COL_CORRECT_BAT)),
+            IncorrectBatteryDelta = ParseFloat(SafeField(fields, INT_COL_INCORRECT_BAT)),
+            CorrectEid = ParseInt(SafeField(fields, INT_COL_CORRECT_EID)),
+            IncorrectEid = ParseInt(SafeField(fields, INT_COL_INCORRECT_EID))
         };
     }
 
@@ -422,22 +456,6 @@ public class DataManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Gets a QTE by ID from the pool.
-    /// </summary>
-    public QTEData GetQTEByID(string id)
-    {
-        foreach (var kvp in qtePoolsByHouse)
-        {
-            foreach (var q in kvp.Value)
-            {
-                if (q.ID == id) return q;
-            }
-        }
-        Debug.LogWarning($"[DataManager] QTE not found: {id}");
-        return null;
-    }
-
-    /// <summary>
     /// Gets a cutscene by ID from the pool.
     /// </summary>
     public CutsceneData GetCutsceneByID(string id)
@@ -454,6 +472,36 @@ public class DataManager : MonoBehaviour
     }
 
     /// <summary>
+    /// Gets an interaction by ID from the pool.
+    /// </summary>
+    public InteractionData GetInteractionByID(string id)
+    {
+        foreach (var kvp in interactionPoolsByHouse)
+        {
+            foreach (var i in kvp.Value)
+            {
+                if (i.ID == id) return i;
+            }
+        }
+        Debug.LogWarning($"[DataManager] Interaction not found: {id}");
+        return null;
+    }
+
+    /// <summary>
+    /// Gets all interactions for a house level.
+    /// </summary>
+    public List<InteractionData> GetInteractionsForHouse(int houseLevel)
+    {
+        if (!interactionPoolsByHouse.ContainsKey(houseLevel))
+        {
+            Debug.LogWarning($"[DataManager] No interactions for House {houseLevel}!");
+            return new List<InteractionData>();
+        }
+
+        return new List<InteractionData>(interactionPoolsByHouse[houseLevel]);
+    }
+
+    /// <summary>
     /// Gets all questions for a house level (no shuffling).
     /// </summary>
     public List<SwipeCardData> GetQuestionsForHouse(int houseLevel)
@@ -467,12 +515,12 @@ public class DataManager : MonoBehaviour
         return new List<SwipeCardData>(questionPoolsByHouse[houseLevel]);
     }
 
-    [Button("🗑 Clear Data")]
+    [Button("Clear Data")]
     public void ClearData()
     {
         questionPoolsByHouse.Clear();
-        qtePoolsByHouse.Clear();
         cutscenePoolsByHouse.Clear();
+        interactionPoolsByHouse.Clear();
     }
 
     private void PrintSummary()
@@ -481,9 +529,9 @@ public class DataManager : MonoBehaviour
         for (int h = 1; h <= 4; h++)
         {
             int qCount = questionPoolsByHouse.ContainsKey(h) ? questionPoolsByHouse[h].Count : 0;
-            int qteCount = qtePoolsByHouse.ContainsKey(h) ? qtePoolsByHouse[h].Count : 0;
             int csCount = cutscenePoolsByHouse.ContainsKey(h) ? cutscenePoolsByHouse[h].Count : 0;
-            Debug.Log($"[DataManager]   House {h}: {qCount} questions, {qteCount} QTEs, {csCount} cutscenes");
+            int intCount = interactionPoolsByHouse.ContainsKey(h) ? interactionPoolsByHouse[h].Count : 0;
+            Debug.Log($"[DataManager]   House {h}: {qCount} questions, {csCount} cutscenes, {intCount} interactions");
         }
         Debug.Log("[DataManager] === END SUMMARY ===");
     }

@@ -8,7 +8,7 @@ using RTLTMPro;
 /// PHASE 6: Transition scene player - handles transitions between houses.
 /// 
 /// CURRENT: Simple fade + Arabic text overlay
-/// FUTURE: Timeline-based travel animations (walking, door opening, etc.)
+/// FUTURE: Rich cinematic animations (walking, door opening, etc.)
 /// 
 /// FLOW:
 /// House Hub → Click House 2 → PlayTransition("بيت خالة أم محمد") → Fade in → Text → Fade out → House 2 encounters
@@ -223,7 +223,7 @@ public class TransitionPlayer : MonoBehaviour
 
     #region Inspector Test Buttons
 
-    [Button("▶ Test Transition: House 1 → 2")]
+    [Button("Test Transition: House 1 to 2")]
     private void TestTransition1to2()
     {
         PlayTransition("السفر إلى بيت خالة أم محمد...", () =>
@@ -232,7 +232,7 @@ public class TransitionPlayer : MonoBehaviour
         });
     }
 
-    [Button("▶ Test Transition: House 2 → 3")]
+    [Button("Test Transition: House 2 to 3")]
     private void TestTransition2to3()
     {
         PlayTransition("الذهاب إلى بيت جدو الحاج...", () =>
@@ -241,7 +241,7 @@ public class TransitionPlayer : MonoBehaviour
         });
     }
 
-    [Button("⏹ Skip Transition")]
+    [Button("Skip Transition")]
     private void TestSkip() => SkipTransition();
 
     #endregion

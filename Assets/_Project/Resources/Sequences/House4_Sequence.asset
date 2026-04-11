@@ -16,37 +16,40 @@ MonoBehaviour:
   Sequence:
   - Type: 0
     ElementID: Q31
-    DesignerNote: 
-  - Type: 1
-    ElementID: QTE_Double_Shake
-    DesignerNote: 
+    DesignerNote: Shake shake shake
   - Type: 0
     ElementID: Q33
-    DesignerNote: 
+    DesignerNote: Coffee in boss mode
   - Type: 2
-    ElementID: Cutscene_Boss_Intro
-    DesignerNote: 
+    ElementID: SHAKE_Insane_4
+    DesignerNote: SHAKE CRAZY!
   - Type: 0
     ElementID: Q35
-    DesignerNote: 
-  - Type: 1
-    ElementID: QTE_Fast_Swipe
-    DesignerNote: 
+    DesignerNote: How are you (insane)
   - Type: 0
     ElementID: Q37
-    DesignerNote: 
+    DesignerNote: Love country (hard)
   - Type: 2
-    ElementID: Cutscene_Boss_Win
-    DesignerNote: 
-  - Type: 0
-    ElementID: Q32
-    DesignerNote: 
-  - Type: 1
-    ElementID: QTE_Hold_Endure
-    DesignerNote: 
+    ElementID: HOLD_Strong_4
+    DesignerNote: Hold strong!
   - Type: 0
     ElementID: Q34
-    DesignerNote: 
+    DesignerNote: Eid Eid? (fast)
+  - Type: 0
+    ElementID: Q36
+    DesignerNote: Prayer (insane)
   - Type: 2
-    ElementID: Cutscene_Boss_Fail
-    DesignerNote: 
+    ElementID: TAP_Fast_4
+    DesignerNote: Tap FASTER!
+  - Type: 0
+    ElementID: Q38
+    DesignerNote: Family all of us
+  - Type: 0
+    ElementID: Q40
+    DesignerNote: Story time (boss)
+  - Type: 1
+    ElementID: CS_H4_Boss_Intro
+    DesignerNote: Boss intro
+  - Type: 1
+    ElementID: CS_H4_Boss_Win
+    DesignerNote: Boss defeated!

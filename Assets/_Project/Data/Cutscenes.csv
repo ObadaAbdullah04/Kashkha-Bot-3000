@@ -1,13 +1,17 @@
-ID,HouseLevel,CutsceneType,Text,Duration,AnimationType
-Cutscene_FinishCoffee,1,TextReveal,"شربت القهوة وخلصت! ☕",3,FadeIn
-Cutscene_Aunt_Smile,1,CharacterReaction,"خالة أم محمد ابتسمت! 😊",2,Bounce
-Cutscene_Enter_House,1,CameraPan,"دخلت بيت خالة أم محمد 🏠",3,Slide
-Cutscene_Uncle_Nod,2,TextReveal,"عمو أبو أحمد هز برأسه 👍",2,FadeIn
-Cutscene_Coffee_Pour,2,CharacterReaction,"عمو أبو أحمد صبّ القهوة ☕",3,Typewriter
-Cutscene_Respect_Elder,3,Dialogue,"خالة نادية: الأدب أهم شي! 🙏",4,Slide
-Cutscene_Family_Gather,3,ReactionShot,"العيلة كلها اجتمعت! 👨‍👩‍👧‍👦",3,Bounce
-Cutscene_Boss_Intro,4,CameraPan,"الجنون: جاهز للتحدي؟! 💀",4,Pulse
-Cutscene_Boss_Win,4,CharacterReaction,"الجنون: أحسنت! قوي! 💪",3,Bounce
-Cutscene_Boss_Fail,4,ReactionShot,"الجنون: ضعيف! حاول مرة ثانية! 😈",3,Pulse
-Cutscene_Celebration,1,TextReveal,"أحسنت! خلصت البيت! 🎉",3,FadeIn
-Cutscene_Timeout,2,TextReveal,"خلص الوقت! ⏰",2,Pulse
+ID,HouseLevel,CutsceneType,CharacterName,ExpressionName,TextAR,Duration,AnimationType
+CS_H1_FinishCoffee,1,TextReveal,,,شربت القهوة وخلصت! ☕,3,FadeIn
+CS_H1_Aunt_Smile,1,CharacterReaction,خالة أم محمد,Happy,خالة أم محمد ابتسمت! 😊,2,Bounce
+CS_H1_Enter_House,1,CameraPan,,,دخلت بيت خالة أم محمد 🏠,3,Slide
+CS_H1_Welcome,1,CharacterReaction,خالة أم محمد,Hospitality,!هلا والله! تفضل يا بني,3,Bounce
+CS_H1_Reproach,1,CharacterReaction,خالة أم محمد,Angry,ليش ما جيتنا قبل؟,2.5,Pulse
+CS_H2_Uncle_Nod,2,TextReveal,,,عمو أبو أحمد هز برأسه 👍,2,FadeIn
+CS_H2_Coffee_Pour,2,CharacterReaction,العم أبو محمد,Hospitality,عمو أبو أحمد صبّ القهوة ☕,3,Typewriter
+CS_H2_Greeting,2,CharacterReaction,العم أبو محمد,Neutral,أهلاً أهلاً! كيف حالك؟,3,FadeIn
+CS_H3_Respect_Elder,3,Dialogue,الجدّة,Happy,خالة نادية: الأدب أهم شي! 🙏,4,Slide
+CS_H3_Family_Gather,3,ReactionShot,الجدّة,Happy,العيلة كلها اجتمعت! 👨‍👩‍👧‍👦,3,Bounce
+CS_H3_Blessing,3,CharacterReaction,الجدّة,Happy,الله يخليك يا بني,3.5,Bounce
+CS_H4_Boss_Intro,4,CameraPan,بوس المرحلة 4,Angry,الجنون: جاهز للتحدي؟! 💀,4,Pulse
+CS_H4_Boss_Win,4,CharacterReaction,بوس المرحلة 4,Surprised,الجنون: أحسنت! قوي! 💪,3,Bounce
+CS_H4_Boss_Fail,4,ReactionShot,بوس المرحلة 4,Angry,الجنون: ضعيف! حاول مرة ثانية! 😈,3,Pulse
+CS_Celebration,1,TextReveal,,,أحسنت! خلصت البيت! 🎉,3,FadeIn
+CS_Timeout,2,TextReveal,,,خلص الوقت! ⏰,2,Pulse

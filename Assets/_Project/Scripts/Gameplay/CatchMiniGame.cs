@@ -328,20 +328,8 @@ public class CatchMiniGame : MonoBehaviour
         if (playerBasket == null) return;
         if (moveAction == null || moveAction.action == null) return;
 
-        // Read input from New Input System
-        float moveInput = 0f;
-
-        // Try reading as Vector2 first (for D-pad/Joystick)
-        var vectorValue = moveAction.action.ReadValue<Vector2>();
-        if (vectorValue != Vector2.zero)
-        {
-            moveInput = vectorValue.x;
-        }
-        else
-        {
-            // Fallback to 1D float (for A/D keys)
-            moveInput = moveAction.action.ReadValue<float>();
-        }
+        // Read input from New Input System (consistent Vector2 read avoids stale fallback values)
+        float moveInput = moveAction.action.ReadValue<Vector2>().x;
 
         // === MOBILE TOUCH OVERRIDE (Screen Halves) ===
         // Check if touch is actually pressed (not just touchscreen exists)
