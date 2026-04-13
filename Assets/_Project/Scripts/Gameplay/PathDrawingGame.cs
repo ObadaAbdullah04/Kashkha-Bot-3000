@@ -297,6 +297,8 @@ public class PathDrawingGame : MonoBehaviour
         isHolding = false;
         // Clear the line immediately when released (real pathfinding behavior)
         linePoints.Clear();
+        // Clear hit obstacles on each new draw attempt
+        alreadyHitObstacles.Clear();
         UpdateLineRenderer();
     }
 
@@ -493,7 +495,8 @@ public class PathDrawingGame : MonoBehaviour
 
         // Clear the ENTIRE line - player must start fresh
         linePoints.Clear();
-        alreadyHitObstacles.Clear(); // Reset hit obstacles so they can hit again
+        // Clear hit obstacles so each new draw attempt can hit any obstacle
+        alreadyHitObstacles.Clear();
         UpdateLineRenderer();
 
         // Visual feedback - flash line red briefly

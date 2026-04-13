@@ -209,6 +209,10 @@ public class SwipeEncounterManager : MonoBehaviour
             CameraShakeManager.Instance?.ShakeWrongAnswer();
 
             activeCard?.ShowResultFeedback(false, timeoutFeedbackText);
+            
+            // BUG FIX #5: Show feedback panel in addition to card feedback
+            UIManager.Instance?.ShowFeedback(timeoutFeedbackText, false, null);
+            
             OnCardProcessed?.Invoke(batteryDelta, eidiaReward, false);
 
             DOTween.Sequence()
@@ -248,6 +252,10 @@ public class SwipeEncounterManager : MonoBehaviour
             }
 
             MeterManager.Instance?.ModifyBattery(batteryDelta);
+            
+            // BUG FIX #5: Show feedback panel in addition to card feedback
+            UIManager.Instance?.ShowFeedback(feedback, wasCorrect, null);
+            
             OnCardProcessed?.Invoke(batteryDelta, eidiaReward, wasCorrect);
             card.ShowResultFeedback(wasCorrect, feedback);
 

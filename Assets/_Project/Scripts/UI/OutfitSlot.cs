@@ -185,12 +185,14 @@ public class OutfitSlot : MonoBehaviour
         if (_isOwned)
         {
             // Equip this outfit
+            Debug.Log($"[OutfitSlot] Equipping outfit: {_currentOutfit.displayNameAR} (ID: {_currentOutfit.ID})");
             if (WardrobeManager.Instance != null)
                 WardrobeManager.Instance.EquipOutfit(_currentOutfit.ID);
         }
         else
         {
             // Purchase this outfit
+            Debug.Log($"[OutfitSlot] Purchasing outfit: {_currentOutfit.displayNameAR} (ID: {_currentOutfit.ID}, Cost: {_currentOutfit.scrapCost})");
             if (WardrobeManager.Instance != null)
                 WardrobeManager.Instance.PurchaseOutfit(_currentOutfit.ID);
         }

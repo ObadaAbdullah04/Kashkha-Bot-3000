@@ -309,13 +309,26 @@ public class GameManager : MonoBehaviour
 
     private void EndHouse()
     {
+        // Mark house as complete if valid house level
         if (currentHouseLevel >= 1 && currentHouseLevel <= 4)
-            completedHouses[currentHouseLevel] = true;
-
-        if (isHouse4Active)
         {
-            Debug.Log("[GameManager] House 4 cleared! INSANE MODE COMPLETE!");
-            WinGame(isHouse4Clear: true);
+            completedHouses[currentHouseLevel] = true;
+        }
+
+        // House 4 completion - trigger win immediately (no hub shown)
+        if (currentHouseLevel == 4)
+        {
+            Debug.Log("[GameManager] House 4 completed! Triggering win...");
+            if (isHouse4Active)
+            {
+                Debug.Log("[GameManager] INSANE MODE COMPLETE!");
+                WinGame(isHouse4Clear: true);
+            }
+            else
+            {
+                Debug.Log("[GameManager] Normal House 4 complete - winning!");
+                WinGame(isHouse4Clear: false);
+            }
             return;
         }
 
@@ -429,6 +442,10 @@ public class GameManager : MonoBehaviour
 
         Debug.Log($"[GameManager] {msg}");
         SaveManager.Instance?.AddRunRewards(accumulatedEidia);
+
+        // Hide the hub panel before showing win state
+        UIManager.Instance?.HideUnifiedHub();
+
         ChangeState(GameState.Win);
     }
 

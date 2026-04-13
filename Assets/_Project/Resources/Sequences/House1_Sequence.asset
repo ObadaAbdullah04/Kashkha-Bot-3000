@@ -23,8 +23,14 @@ MonoBehaviour:
   - Type: 0
     ElementID: Q2
     DesignerNote: 
+  - Type: 0
+    ElementID: Q3
+    DesignerNote: 
   - Type: 2
     ElementID: SHAKE_Cup_1
+    DesignerNote: 
+  - Type: 0
+    ElementID: Q4
     DesignerNote: 
   - Type: 1
     ElementID: House1_Outro

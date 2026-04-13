@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using RTLTMPro;
@@ -269,6 +270,15 @@ public class UnifiedHubManager : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
+
+            // Force all tab panels OFF regardless of scene checkbox settings
+            if (housesTabPanel != null) housesTabPanel.SetActive(false);
+            if (wardrobeTabPanel != null) wardrobeTabPanel.SetActive(false);
+            if (upgradesTabPanel != null) upgradesTabPanel.SetActive(false);
+
+            // Start with Houses tab active
+            activeTab = HubTab.Houses;
+            if (housesTabPanel != null) housesTabPanel.SetActive(true);
         }
         else
         {
@@ -415,28 +425,32 @@ public class UnifiedHubManager : MonoBehaviour
     /// </summary>
     public void MarkHouseComplete(int houseLevel)
     {
-        if (houseLevel >= 1 && houseLevel <= 4)
+        // Validate house level to prevent indexing errors
+        if (houseLevel < 1 || houseLevel > 4)
         {
-            completedHouses[houseLevel] = true;
+            Debug.LogWarning($"[UnifiedHub] Invalid house level: {houseLevel}");
+            return;
+        }
 
-            // Update next house to play
-            nextHouseLevelToPlay = houseLevel + 1;
+        completedHouses[houseLevel] = true;
 
-            // Unlock House 4 when House 3 is completed
-            if (houseLevel == 3 && highestUnlockedHouse < 4)
-            {
-                highestUnlockedHouse = 4;
+        // Update next house to play (cap at 5 since there's no house 5)
+        nextHouseLevelToPlay = Mathf.Min(houseLevel + 1, 5);
+
+        // Unlock House 4 when House 3 is completed
+        if (houseLevel == 3 && highestUnlockedHouse < 4)
+        {
+            highestUnlockedHouse = 4;
 #if UNITY_EDITOR
-                Debug.Log("[UnifiedHub] House 4 unlocked!");
-#endif
-            }
-
-            UpdateAllUI();
-
-#if UNITY_EDITOR
-            Debug.Log($"[UnifiedHub] House {houseLevel} marked complete. Next: {nextHouseLevelToPlay}, Unlocked: {highestUnlockedHouse}");
+            Debug.Log("[UnifiedHub] House 4 unlocked!");
 #endif
         }
+
+        UpdateAllUI();
+
+#if UNITY_EDITOR
+        Debug.Log($"[UnifiedHub] House {houseLevel} marked complete. Next: {nextHouseLevelToPlay}, Unlocked: {highestUnlockedHouse}");
+#endif
     }
 
     #endregion
@@ -450,12 +464,12 @@ public class UnifiedHubManager : MonoBehaviour
     {
         activeTab = tab;
 
-        // Show/hide tab panels
+        // ONLY the active tab panel is ON, all others are OFF
         if (housesTabPanel != null) housesTabPanel.SetActive(tab == HubTab.Houses);
         if (wardrobeTabPanel != null) wardrobeTabPanel.SetActive(tab == HubTab.Wardrobe);
         if (upgradesTabPanel != null) upgradesTabPanel.SetActive(tab == HubTab.Upgrades);
 
-        // Update tab button visuals
+        // Tab buttons: disable the currently active tab button (can't click it again)
         if (housesTabButton != null) housesTabButton.interactable = tab != HubTab.Houses;
         if (wardrobeTabButton != null) wardrobeTabButton.interactable = tab != HubTab.Wardrobe;
         if (upgradesTabButton != null) upgradesTabButton.interactable = tab != HubTab.Upgrades;
@@ -575,15 +589,29 @@ public class UnifiedHubManager : MonoBehaviour
                 }
             }
         }
+        else
+        {
+            Debug.LogWarning("[UnifiedHub] No outfit slots assigned in inspector!");
+        }
     }
 
     private void HandleOutfitEquipped()
     {
+        int outfitID = WardrobeManager.Instance.EquippedOutfitID;
+        string outfitName = "none";
+
+        if (outfitID != 0 && WardrobeManager.Instance.AllOutfits.Count > 0)
+        {
+            var outfit = WardrobeManager.Instance.AllOutfits.Find(o => o.ID == outfitID);
+            if (outfit != null) outfitName = outfit.displayNameAR;
+        }
+
+        Debug.Log($"[UnifiedHub] Outfit equipped: ID={outfitID}, Name={outfitName}");
+
         RefreshWardrobeUI();
 
-        // Notify game manager for stat application
-        if (WardrobeManager.Instance != null)
-            OnOutfitEquipped?.Invoke(WardrobeManager.Instance.EquippedOutfitID);
+        // Notify GameManager for stat application
+        OnOutfitEquipped?.Invoke(outfitID);
     }
 
     #endregion
@@ -838,9 +866,18 @@ public class UnifiedHubManager : MonoBehaviour
         actionButton.gameObject.SetActive(true);
 
         // Determine button text based on what's available
+        // Guard against nextHouseLevelToPlay > 4 (all houses complete)
+        if (nextHouseLevelToPlay > 4)
+        {
+            actionButtonText.text = "متابعة";
+            actionButton.interactable = false;
+            return;
+        }
+
         int miniGameIndex = nextHouseLevelToPlay - 1;
         bool miniGameAvailable = miniGameIndex >= 0 && miniGameIndex < 3 &&
                                  completedHouses[nextHouseLevelToPlay] &&
+                                 nextHouseLevelToPlay + 1 <= 4 &&
                                  !completedHouses[nextHouseLevelToPlay + 1];
 
         bool houseAvailable = !completedHouses[nextHouseLevelToPlay] &&

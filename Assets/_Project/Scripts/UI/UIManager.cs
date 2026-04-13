@@ -159,20 +159,47 @@ public class UIManager : MonoBehaviour
         swipeEncounterPanel.SetActive(true);
         feedbackPanel.SetActive(false);
 
-        // Set slider max values correctly
-        if (batterySlider != null)
-        {
-            float maxBattery = MeterManager.Instance != null ? MeterManager.Instance.MaxBattery : 100f;
-            batterySlider.minValue = 0f;
-            batterySlider.maxValue = maxBattery;
-            batterySlider.value = maxBattery; // Start at full battery
-        }
+        // Hide HUD meters by default - only shown during encounters
+        SetHUDEnabled(false);
 
-        if (stomachSlider != null)
+        // Set slider max values and refresh current values from MeterManager
+        if (MeterManager.Instance != null)
         {
-            stomachSlider.minValue = 0f;
-            stomachSlider.maxValue = 100f;
-            stomachSlider.value = 0f; // Start empty
+            if (batterySlider != null)
+            {
+                float maxBattery = MeterManager.Instance.MaxBattery;
+                float currentBattery = MeterManager.Instance.CurrentBattery;
+
+                batterySlider.minValue = 0f;
+                batterySlider.maxValue = maxBattery;
+                batterySlider.value = currentBattery;
+            }
+
+            if (stomachSlider != null)
+            {
+                float currentStomach = MeterManager.Instance.CurrentStomach;
+
+                stomachSlider.minValue = 0f;
+                stomachSlider.maxValue = 100f;
+                stomachSlider.value = currentStomach;
+            }
+        }
+        else
+        {
+            // Fallback if MeterManager not available
+            if (batterySlider != null)
+            {
+                batterySlider.minValue = 0f;
+                batterySlider.maxValue = 100f;
+                batterySlider.value = 100f;
+            }
+
+            if (stomachSlider != null)
+            {
+                stomachSlider.minValue = 0f;
+                stomachSlider.maxValue = 100f;
+                stomachSlider.value = 0f;
+            }
         }
     }
 
@@ -350,19 +377,67 @@ public class UIManager : MonoBehaviour
             case GameState.Wardrobe:
             case GameState.HouseHub:
                 // Both shown via unified hub - manager controls display
+                // Hide HUD meters when in hub
+                SetHUDEnabled(false);
                 break;
             case GameState.Encounter:
                 swipeEncounterPanel.SetActive(true);
+                // Show HUD meters and force refresh when entering a house
+                SetHUDEnabled(true);
+                RefreshMeters();
                 break;
             case GameState.InterHouseMiniGame:
                 // All panels hidden - mini-game prefab handles its own UI
+                SetHUDEnabled(false);
                 break;
             case GameState.GameOver:
                 gameOverPanel.SetActive(true);
+                SetHUDEnabled(false);
                 break;
             case GameState.Win:
                 winPanel.SetActive(true);
+                SetHUDEnabled(false);
                 break;
+        }
+    }
+
+    /// <summary>
+    /// Shows or hides the HUD meters (battery/stomach sliders).
+    /// </summary>
+    private void SetHUDEnabled(bool enabled)
+    {
+        if (batterySlider != null)
+            batterySlider.gameObject.SetActive(enabled);
+
+        if (stomachSlider != null)
+            stomachSlider.gameObject.SetActive(enabled);
+    }
+
+    /// <summary>
+    /// Force-refreshes meter sliders to current values.
+    /// Called when entering a house to ensure UI is up to date.
+    /// </summary>
+    private void RefreshMeters()
+    {
+        if (MeterManager.Instance == null) return;
+
+        if (batterySlider != null)
+        {
+            float maxBattery = MeterManager.Instance.MaxBattery;
+            float currentBattery = MeterManager.Instance.CurrentBattery;
+            
+            batterySlider.minValue = 0f;
+            batterySlider.maxValue = maxBattery;
+            batterySlider.value = currentBattery;
+        }
+
+        if (stomachSlider != null)
+        {
+            float currentStomach = MeterManager.Instance.CurrentStomach;
+            
+            stomachSlider.minValue = 0f;
+            stomachSlider.maxValue = 100f;
+            stomachSlider.value = currentStomach;
         }
     }
 
