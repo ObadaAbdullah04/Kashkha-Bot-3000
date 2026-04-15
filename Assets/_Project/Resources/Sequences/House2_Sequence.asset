@@ -15,29 +15,32 @@ MonoBehaviour:
   HouseLevel: 2
   Sequence:
   - Type: 1
-    ElementID: House2_Intro
+    ElementID: House_Intro 2
     DesignerNote: 
   - Type: 0
-    ElementID: Q2_1
+    ElementID: Q7
     DesignerNote: 
   - Type: 0
-    ElementID: Q2_2
-    DesignerNote: 
-  - Type: 0
-    ElementID: Q2_3
+    ElementID: Q8
     DesignerNote: 
   - Type: 2
-    ElementID: SHAKE_Cup_2
-    DesignerNote: 
-  - Type: 1
-    ElementID: House2_Coffee
+    ElementID: HOLD_Cup_2
     DesignerNote: 
   - Type: 0
-    ElementID: Q2_4
+    ElementID: Q9
     DesignerNote: 
   - Type: 0
-    ElementID: Q2_5
+    ElementID: Q10
+    DesignerNote: 
+  - Type: 2
+    ElementID: TAP_Heart_2
+    DesignerNote: 
+  - Type: 0
+    ElementID: Q11
+    DesignerNote: 
+  - Type: 0
+    ElementID: Q12
     DesignerNote: 
   - Type: 1
-    ElementID: House2_Outro
+    ElementID: House_Outro 2
     DesignerNote: 

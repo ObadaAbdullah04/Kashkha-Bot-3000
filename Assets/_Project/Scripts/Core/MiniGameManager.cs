@@ -24,6 +24,10 @@ public class MiniGameManager : MonoBehaviour
     [Tooltip("The instantiated prefab for Path-Drawing Maze mini-game")]
     [SerializeField] private GameObject pathDrawingPrefab;
 
+    [Header("Memory Swap Prefab (PHASE 17)")]
+    [Tooltip("The instantiated prefab for Memory Swap tile matching game")]
+    [SerializeField] private GameObject memorySwapPrefab;
+
     [Header("Mini-Game Assignment (PHASE 6 UPDATE)")]
     [Tooltip("Mini-game for slot 1 (between House 1 and 2)")]
     [SerializeField] private MiniGameType miniGameSlot1 = MiniGameType.CatchGame;
@@ -34,21 +38,21 @@ public class MiniGameManager : MonoBehaviour
     [Tooltip("Mini-game for slot 3 (between House 3 and 4)")]
     [SerializeField] private MiniGameType miniGameSlot3 = MiniGameType.CatchGame;
 
-    [Header("Catch Game Settings")]
-    [Tooltip("Duration for House 1 catch mini-game")]
-    [SerializeField] private float house1Duration = 10f;
-    [Tooltip("Duration for House 2 catch mini-game")]
-    [SerializeField] private float house2Duration = 12f;
-    [Tooltip("Duration for House 3 catch mini-game")]
-    [SerializeField] private float house3Duration = 15f;
+    [Header("Mini-Game Scaling")]
+    [Tooltip("Base duration for Catch game (House 1)")]
+    [SerializeField] private float baseCatchDuration = 10f;
+    [Tooltip("Multiplier for Catch game duration per level (e.g. 1.2 = +2s each house)")]
+    [SerializeField] private float catchDurationMultiplier = 1.2f;
 
-    [Header("Path Drawing Settings")]
-    [Tooltip("Time limit for House 1 path drawing")]
-    [SerializeField] private float pathTimeHouse1 = 35f;
-    [Tooltip("Time limit for House 2 path drawing")]
-    [SerializeField] private float pathTimeHouse2 = 30f;
-    [Tooltip("Time limit for House 3 path drawing")]
-    [SerializeField] private float pathTimeHouse3 = 40f;
+    [Space]
+    [Tooltip("Base time limit for Path Drawing (House 1)")]
+    [SerializeField] private float basePathTime = 35f;
+    [Tooltip("Multiplier for Path Drawing difficulty (less time = harder)")]
+    [SerializeField] private float pathTimeMultiplier = 0.85f;
+
+    [Header("Catch Game Settings (Legacy - No longer used individually)")]
+    // [HideInInspector] [SerializeField] private float house1Duration = 10f; // Kept for metadata compatibility if needed
+    // ... rest of header ...
 
     private GameObject _activeMiniGameInstance;
 
@@ -108,6 +112,10 @@ public class MiniGameManager : MonoBehaviour
                 StartPathDrawingGame(houseLevel);
                 break;
 
+            case MiniGameType.MemorySwap:
+                StartMemorySwapGame(houseLevel);
+                break;
+
             default:
                 Debug.LogWarning($"[MiniGameManager] Unknown mini-game type: {type}. Defaulting to CatchGame.");
                 StartCatchGame(houseLevel);
@@ -148,12 +156,21 @@ public class MiniGameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Instantiates and configures a mini-game prefab with proper canvas setup.
+    /// Instantiates and configures a mini-game prefab with proper canvas setup and background.
     /// </summary>
-    private GameObject InstantiateMiniGamePrefab(GameObject prefab)
+    private GameObject InstantiateMiniGamePrefab(GameObject prefab, int houseLevel)
     {
         var instance = Instantiate(prefab, Vector3.zero, Quaternion.identity);
         ConfigureCanvasForInstance(instance);
+
+        // PHASE 18: Automatically initialize background loader if present
+        var bgLoader = instance.GetComponentInChildren<MiniGameBackgroundLoader>();
+        if (bgLoader != null)
+        {
+            bgLoader.Initialize(houseLevel);
+            Debug.Log($"[MiniGameManager] Initialized background for House {houseLevel}");
+        }
+
         return instance;
     }
 
@@ -264,19 +281,20 @@ public class MiniGameManager : MonoBehaviour
 
         PrepareForMiniGame();
 
-        float duration = GetDurationForHouse(houseLevel, house1Duration, house2Duration, house3Duration);
+        // Calculate duration based on house level (e.g. House 1 = 10s, House 2 = 12s, House 3 = 14.4s)
+        float duration = baseCatchDuration * Mathf.Pow(catchDurationMultiplier, houseLevel - 1);
 
-        Debug.Log($"[MiniGameManager] Starting Catch Game (House {houseLevel}, {duration}s)");
+        Debug.Log($"[MiniGameManager] Starting Catch Game (House {houseLevel}, {duration:F1}s)");
 
         // Instantiate and configure
-        _activeMiniGameInstance = InstantiateMiniGamePrefab(catchGamePrefab);
+        _activeMiniGameInstance = InstantiateMiniGamePrefab(catchGamePrefab, houseLevel);
 
         // Initialize CatchMiniGame
         CatchMiniGame catchGame = _activeMiniGameInstance.GetComponent<CatchMiniGame>();
         if (catchGame != null)
         {
             catchGame.Initialize(duration);
-            Debug.Log($"[MiniGameManager] Initialized CatchMiniGame with duration: {duration}s");
+            Debug.Log($"[MiniGameManager] Initialized CatchMiniGame with duration: {duration:F1}s");
         }
         else
         {
@@ -285,30 +303,40 @@ public class MiniGameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Called by CatchMiniGame when it ends. Fires event for FloatingTextManager, then persists scrap and goes to HouseHub.
+    /// Called by mini-games when they end. Fires event for FloatingTextManager, then persists scrap and goes to HouseHub.
     /// </summary>
     public void EndMiniGame(int eidiaEarned, int scrapEarned)
     {
+        Debug.Log($"[MiniGameManager] === EndMiniGame called === Eidia: {eidiaEarned}, Scrap: {scrapEarned}");
+
         // CRITICAL: Persist scrap to SaveManager BEFORE firing UI event
         if (scrapEarned > 0 && SaveManager.Instance != null)
         {
             SaveManager.Instance.AddScrap(scrapEarned);
+            Debug.Log($"[MiniGameManager] Scrap persisted: {scrapEarned}");
         }
 
         // Fire event for FloatingTextManager BEFORE destroying the instance
         OnMiniGameEnded?.Invoke(eidiaEarned, scrapEarned);
-        Debug.Log($"[MiniGameManager] Mini-game ended. Rewards: +{eidiaEarned} Eidia, +{scrapEarned} Scrap");
+        Debug.Log($"[MiniGameManager] OnMiniGameEnded event fired");
 
+        // Destroy the mini-game instance
         if (_activeMiniGameInstance != null)
         {
+            Debug.Log($"[MiniGameManager] Destroying mini-game instance: {_activeMiniGameInstance.name}");
             Destroy(_activeMiniGameInstance);
             _activeMiniGameInstance = null;
         }
 
-        // PHASE 10: After mini-game, show unified hub
+        // Transition to hub
         if (GameManager.Instance != null)
         {
+            Debug.Log($"[MiniGameManager] Calling GameManager.OnMiniGameComplete({eidiaEarned})");
             GameManager.Instance.OnMiniGameComplete(eidiaEarned);
+        }
+        else
+        {
+            Debug.LogError("[MiniGameManager] GameManager.Instance is null! Cannot transition to hub!");
         }
     }
     
@@ -328,14 +356,59 @@ public class MiniGameManager : MonoBehaviour
 
         PrepareForMiniGame();
 
-        float timeLimit = GetDurationForHouse(houseLevel, pathTimeHouse1, pathTimeHouse2, pathTimeHouse3);
+        // Harder = less time for path drawing
+        float timeLimit = basePathTime * Mathf.Pow(pathTimeMultiplier, houseLevel - 1);
 
-        Debug.Log($"[MiniGameManager] Starting Path Drawing Game (House {houseLevel}, {timeLimit}s)");
+        Debug.Log($"[MiniGameManager] Starting Path Drawing Game (House {houseLevel}, {timeLimit:F1}s)");
 
         // Instantiate and configure
-        _activeMiniGameInstance = InstantiateMiniGamePrefab(pathDrawingPrefab);
+        _activeMiniGameInstance = InstantiateMiniGamePrefab(pathDrawingPrefab, houseLevel);
 
         Debug.Log($"[MiniGameManager] PathDrawingGame initialized with manual obstacles");
+    }
+
+    /// <summary>
+    /// PHASE 17: Starts the Memory Swap tile matching mini-game.
+    /// Player flips tiles to find matching pairs and earn Tech Scrap.
+    /// </summary>
+    public void StartMemorySwapGame(int houseLevel)
+    {
+        Debug.Log($"[MiniGameManager] StartMemorySwapGame called! House: {houseLevel}");
+        Debug.Log($"[MiniGameManager] memorySwapPrefab is {(memorySwapPrefab != null ? "ASSIGNED" : "NULL!")}");
+
+        if (memorySwapPrefab == null)
+        {
+            Debug.LogError("[MiniGameManager] memorySwapPrefab not assigned! Please drag MemorySwap_Canvas.prefab into the Inspector field.");
+            FallbackToNextHouse();
+            return;
+        }
+
+        PrepareForMiniGame();
+
+        Debug.Log($"[MiniGameManager] Starting Memory Swap Game (House {houseLevel})");
+
+        // Instantiate and configure
+        _activeMiniGameInstance = InstantiateMiniGamePrefab(memorySwapPrefab, houseLevel);
+
+        if (_activeMiniGameInstance != null)
+        {
+            Debug.Log($"[MiniGameManager] MemorySwapMiniGame instantiated successfully: {_activeMiniGameInstance.name}");
+            
+            // Verify the script component exists
+            var memoryGame = _activeMiniGameInstance.GetComponentInChildren<MemorySwapMiniGame>();
+            if (memoryGame != null)
+            {
+                Debug.Log($"[MiniGameManager] MemorySwapMiniGame component found on: {memoryGame.gameObject.name}");
+            }
+            else
+            {
+                Debug.LogError("[MiniGameManager] MemorySwapMiniGame component NOT found on prefab! Add the script to the Canvas or a child GameObject.");
+            }
+        }
+        else
+        {
+            Debug.LogError("[MiniGameManager] Failed to instantiate MemorySwap prefab!");
+        }
     }
 
     [Button("Test Catch Game (House 1)")]
@@ -346,15 +419,18 @@ public class MiniGameManager : MonoBehaviour
 
     [Button("Test Catch Game (House 3)")]
     private void TestCatchGame3() => StartCatchGame(3);
-    
+
     [Button("🗺️ Test Path Game (House 1)")]
     private void TestPathGame1() => StartPathDrawingGame(1);
-    
+
     [Button("🗺️ Test Path Game (House 2)")]
     private void TestPathGame2() => StartPathDrawingGame(2);
-    
+
     [Button("🗺️ Test Path Game (House 3)")]
     private void TestPathGame3() => StartPathDrawingGame(3);
+
+    [Button("🧠 Test Memory Swap Game")]
+    private void TestMemorySwapGame() => StartMemorySwapGame(1);
 
     #endregion
 }

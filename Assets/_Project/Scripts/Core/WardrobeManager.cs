@@ -6,61 +6,32 @@ using NaughtyAttributes;
 using System.Text.RegularExpressions;
 
 /// <summary>
-/// Manages the Wardrobe meta-progression system.
-/// Handles outfit purchasing, equipping, and stat application.
+/// SIMPLIFIED Wardrobe System - Phase 18
+/// Manages exactly 4 choices: Default skin + 3 outfits.
+/// - Default skin (ID 0, always available)
+/// - 2 outfits available from start (ID 1, 2)
+/// - 1 outfit locked (ID 3, requires Tech Scrap)
 /// </summary>
 public class WardrobeManager : MonoBehaviour
 {
-    #region Singleton
-
     public static WardrobeManager Instance { get; private set; }
-    #endregion
-
-
-    #region Inspector Fields
 
     [Header("CSV Data")]
     [SerializeField] private TextAsset outfitsCSV;
 
-    [Header("Parsed Data")]
-    [ReadOnly] [SerializeField] private List<OutfitData> allOutfits = new List<OutfitData>();
-
     [Header("Runtime State")]
+    [ReadOnly] [SerializeField] private List<OutfitData> allOutfits = new List<OutfitData>();
     [ReadOnly] [SerializeField] private int currentScrap = 0;
     [ReadOnly] [SerializeField] private int equippedOutfitID = 0;
-
-    #endregion
-
-    #region Events
 
     public static Action OnWardrobeDataLoaded;
     public static Action OnScrapChanged;
     public static Action OnOutfitPurchased;
     public static Action OnOutfitEquipped;
 
-    #endregion
-
-    #region Public Properties
-
     public List<OutfitData> AllOutfits => allOutfits;
     public int CurrentScrap => currentScrap;
     public int EquippedOutfitID => equippedOutfitID;
-
-    /// <summary>
-    /// Gets the currently equipped outfit data (null if none equipped).
-    /// </summary>
-    public OutfitData EquippedOutfit
-    {
-        get
-        {
-            if (equippedOutfitID == 0) return null;
-            return allOutfits.FirstOrDefault(o => o.ID == equippedOutfitID);
-        }
-    }
-
-    #endregion
-
-    #region Unity Lifecycle
 
     private void Awake()
     {
@@ -69,9 +40,8 @@ public class WardrobeManager : MonoBehaviour
             Instance = this;
             transform.SetParent(null);
             DontDestroyOnLoad(gameObject);
-            
-            // Auto-parse CSV on startup
             ParseOutfitsCSV();
+            LoadEquippedOutfit();
         }
         else
         {
@@ -81,312 +51,93 @@ public class WardrobeManager : MonoBehaviour
 
     private void OnEnable()
     {
-        // Sync scrap when save data loads
-        if (SaveManager.Instance != null)
-            currentScrap = SaveManager.Instance.CurrentData.TotalScrap;
+        SyncScrap();
     }
 
-    #endregion
-
-    #region Data Loading
-
-    /// <summary>
-    /// Parses the Outfits.csv file. Call in Editor or at runtime start.
-    /// </summary>
     [Button("Parse Outfits CSV")]
     public void ParseOutfitsCSV()
     {
         allOutfits.Clear();
-
-        if (outfitsCSV == null)
-        {
-            Debug.LogError("[WardrobeManager] No Outfits.csv file assigned!");
-            return;
-        }
+        if (outfitsCSV == null) return;
 
         string[] lines = outfitsCSV.text.Split('\n');
-        if (lines.Length < 2)
-        {
-            Debug.LogError("[WardrobeManager] Outfits.csv is empty!");
-            return;
-        }
-
-        // Skip header line
         for (int i = 1; i < lines.Length; i++)
         {
             if (string.IsNullOrWhiteSpace(lines[i])) continue;
+            string[] fields = Regex.Split(lines[i].Trim(), ",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
+            if (fields.Length < 6) continue;
 
-            // Use Regex to safely handle commas in quoted strings (Arabic text)
-            string[] fields = Regex.Split(lines[i], ",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
+            int.TryParse(fields[0], out int id);
+            int.TryParse(fields[4], out int scrapCost);
+            int.TryParse(fields[5], out int lockedInt);
 
-            if (fields.Length < 9)
-            {
-                Debug.LogWarning($"[WardrobeManager] Line {i + 1}: Expected 9 columns, got {fields.Length}");
-                continue;
-            }
-
-            // Safe parsing
-            if (!int.TryParse(fields[0], out int id)) continue;
-            int scrapCost = 0;
-            int.TryParse(fields[5], out scrapCost);
-            int statTypeInt = 0;
-            int.TryParse(fields[6], out statTypeInt);
-            float statValue = 0f;
-            float.TryParse(fields[7], out statValue);
-            int rarityInt = 0;
-            int.TryParse(fields[8], out rarityInt);
-
-            OutfitData data = new OutfitData
+            allOutfits.Add(new OutfitData
             {
                 ID = id,
-                internalName = fields[1].Trim('"'),
-                displayNameAR = fields[2].Trim('"'),
-                descriptionAR = fields[3].Trim('"'),
-                iconSpritePath = fields[4].Trim('"'),
+                internalName = fields[1].Trim('"').Trim(),
+                displayNameAR = fields[2].Trim('"').Trim(),
+                spriteName = fields[3].Trim('"').Trim(),
                 scrapCost = scrapCost,
-                statType = (OutfitStatType)statTypeInt,
-                statValue = statValue,
-                rarity = (OutfitRarity)rarityInt
-            };
-
-            allOutfits.Add(data);
+                isLocked = (lockedInt == 1)
+            });
         }
-
-        Debug.Log($"[WardrobeManager] Parsed {allOutfits.Count} outfits.");
         OnWardrobeDataLoaded?.Invoke();
     }
 
-    #endregion
+    private void LoadEquippedOutfit()
+    {
+        if (SaveManager.Instance != null)
+            equippedOutfitID = SaveManager.Instance.CurrentData.equippedOutfitID;
+    }
 
-    #region Scrap Management
-
-    /// <summary>
-    /// Syncs scrap from SaveManager. Call when entering Wardrobe state.
-    /// Does NOT fire OnScrapChanged to avoid event loops.
-    /// </summary>
     public void SyncScrap()
     {
         if (SaveManager.Instance != null)
         {
             currentScrap = SaveManager.Instance.CurrentData.TotalScrap;
             Debug.Log($"[WardrobeManager] Scrap synced: {currentScrap}");
-            // Note: Don't fire OnScrapChanged here - caller should refresh UI directly
-        }
-    }
-
-    #endregion
-
-    #region Purchase System
-
-    /// <summary>
-    /// Returns true if player owns this outfit.
-    /// </summary>
-    public bool OwnsOutfit(int outfitID)
-    {
-        if (SaveManager.Instance == null) return false;
-        return SaveManager.Instance.CurrentData.ownedOutfitIDs.Contains(outfitID);
-    }
-
-    /// <summary>
-    /// Attempts to purchase an outfit. Returns true if successful.
-    /// </summary>
-    public bool PurchaseOutfit(int outfitID)
-    {
-        if (SaveManager.Instance == null)
-        {
-            Debug.LogError("[WardrobeManager] SaveManager not available!");
-            return false;
-        }
-
-        OutfitData outfit = allOutfits.FirstOrDefault(o => o.ID == outfitID);
-        if (outfit == null)
-        {
-            Debug.LogError($"[WardrobeManager] Outfit ID {outfitID} not found!");
-            return false;
-        }
-
-        if (OwnsOutfit(outfitID))
-        {
-            Debug.LogWarning($"[WardrobeManager] Already own outfit {outfit.internalName}!");
-            return false;
-        }
-
-        if (currentScrap < outfit.scrapCost)
-        {
-            Debug.LogWarning($"[WardrobeManager] Not enough scrap! Need {outfit.scrapCost}, have {currentScrap}");
-            return false;
-        }
-
-        // Deduct scrap and add outfit
-        SaveManager.Instance.CurrentData.TotalScrap -= outfit.scrapCost;
-        SaveManager.Instance.CurrentData.ownedOutfitIDs.Add(outfitID);
-        SaveManager.Instance.SaveGame();
-
-        currentScrap = SaveManager.Instance.CurrentData.TotalScrap;
-
-        Debug.Log($"[WardrobeManager] Purchased {outfit.internalName} for {outfit.scrapCost} scrap. Remaining: {currentScrap}");
-        OnScrapChanged?.Invoke();
-        OnOutfitPurchased?.Invoke();
-
-        return true;
-    }
-
-    #endregion
-
-    #region Equip System
-
-    /// <summary>
-    /// Equips an outfit. Returns true if successful.
-    /// </summary>
-    public bool EquipOutfit(int outfitID)
-    {
-        if (SaveManager.Instance == null)
-        {
-            Debug.LogError("[WardrobeManager] SaveManager not available!");
-            return false;
-        }
-
-        // ID = 0 means unequip (no outfit)
-        if (outfitID == 0)
-        {
-            equippedOutfitID = 0;
-            SaveManager.Instance.CurrentData.equippedOutfitID = 0;
-            SaveManager.Instance.SaveGame();
-            Debug.Log("[WardrobeManager] Outfit unequipped.");
-            OnOutfitEquipped?.Invoke();
-            return true;
-        }
-
-        if (!OwnsOutfit(outfitID))
-        {
-            Debug.LogWarning($"[WardrobeManager] Cannot equip outfit {outfitID} - not owned!");
-            return false;
-        }
-
-        equippedOutfitID = outfitID;
-        SaveManager.Instance.CurrentData.equippedOutfitID = outfitID;
-        SaveManager.Instance.SaveGame();
-
-        Debug.Log($"[WardrobeManager] Equipped outfit ID {outfitID}");
-        OnOutfitEquipped?.Invoke();
-
-        return true;
-    }
-
-    /// <summary>
-    /// Unequips current outfit.
-    /// </summary>
-    public void UnequipOutfit() => EquipOutfit(0);
-
-    #endregion
-
-    #region Stat Application
-
-    /// <summary>
-    /// Gets the stat bonus from the currently equipped outfit.
-    /// Returns (statType, value) tuple. Use for applying bonuses at run start.
-    /// </summary>
-    public (OutfitStatType statType, float value) GetEquippedStatBonus()
-    {
-        OutfitData outfit = EquippedOutfit;
-        if (outfit == null) return (OutfitStatType.BatteryStart, 0f);
-
-        return (outfit.statType, outfit.statValue);
-    }
-
-    /// <summary>
-    /// Applies outfit stat bonuses to managers. Call at start of run.
-    /// </summary>
-    public void ApplyOutfitBonuses()
-    {
-        var (statType, value) = GetEquippedStatBonus();
-
-        if (value == 0) return;
-
-        ApplyStatBonus(statType, value);
-    }
-
-    /// <summary>
-    /// Applies a specific stat bonus immediately.
-    /// Called by UnifiedHubManager when player equips outfit during a run.
-    /// </summary>
-    public void ApplyStatBonus(OutfitStatType statType, float value)
-    {
-        if (value == 0) return;
-
-        switch (statType)
-        {
-            case OutfitStatType.BatteryStart:
-                if (MeterManager.Instance != null)
-                {
-                    MeterManager.Instance.ModifyBattery(value);
-                    Debug.Log($"[Wardrobe] Outfit bonus: Battery +{value}%");
-                }
-                break;
-
-            case OutfitStatType.StomachResist:
-                if (MeterManager.Instance != null)
-                {
-                    // Apply stomach fill rate reduction (value is negative, e.g., -10 = 10% reduction)
-                    float reduction = Mathf.Abs(value) / 100f;
-                    MeterManager.Instance.ReduceStomachFillRate(reduction);
-                    Debug.Log($"[Wardrobe] Outfit bonus: Stomach fill rate -{Mathf.Abs(value)}%");
-                }
-                break;
-
-            case OutfitStatType.TimerExtension:
-                // Applied in SwipeEncounterManager (future implementation)
-                Debug.Log($"[Wardrobe] Outfit bonus: Timer extension +{value}s");
-                break;
-        }
-    }
-
-    #endregion
-
-    #region Inspector Test Buttons
-
-    [Button("Parse CSV")]
-    private void TestParse() => ParseOutfitsCSV();
-
-    [Button("Add 50 Scrap")]
-    private void TestAddScrap()
-    {
-        if (SaveManager.Instance != null)
-        {
-            SaveManager.Instance.CurrentData.TotalScrap += 50;
-            SaveManager.Instance.SaveGame();
-            currentScrap = SaveManager.Instance.CurrentData.TotalScrap;
             OnScrapChanged?.Invoke();
         }
     }
 
-    [Button("Purchase Outfit 1")]
-    private void TestPurchase1() => PurchaseOutfit(1);
-
-    [Button("Purchase Outfit 2")]
-    private void TestPurchase2() => PurchaseOutfit(2);
-
-    [Button("Purchase Outfit 3")]
-    private void TestPurchase3() => PurchaseOutfit(3);
-
-    [Button("Equip Outfit 1")]
-    private void TestEquip1() => EquipOutfit(1);
-
-    [Button("Equip Outfit 2")]
-    private void TestEquip2() => EquipOutfit(2);
-
-    [Button("Equip Outfit 3")]
-    private void TestEquip3() => EquipOutfit(3);
-
-    [Button("Unequip")]
-    private void TestUnequip() => UnequipOutfit();
-
-    [Button("Show Stats")]
-    private void TestShowStats()
+    public bool OwnsOutfit(int id)
     {
-        var (statType, value) = GetEquippedStatBonus();
-        Debug.Log($"[Wardrobe] Equipped Stat: {statType} = {value}");
+        if (id == 0) return true; // Default skin always owned
+        if (SaveManager.Instance == null) return false;
+
+        // If ID 1 or 2, they should be marked isLocked = 0 in CSV
+        OutfitData data = allOutfits.Find(o => o.ID == id);
+        if (data != null && !data.isLocked) return true;
+
+        return SaveManager.Instance.CurrentData.ownedOutfitIDs.Contains(id);
     }
 
-    #endregion
+    public bool UnlockOutfit(int id)
+    {
+        if (SaveManager.Instance == null) return false;
+        OutfitData outfit = allOutfits.Find(o => o.ID == id);
+        if (outfit == null || !outfit.isLocked || OwnsOutfit(id)) return false;
+
+        if (currentScrap < outfit.scrapCost) return false;
+
+        SaveManager.Instance.CurrentData.TotalScrap -= outfit.scrapCost;
+        SaveManager.Instance.CurrentData.ownedOutfitIDs.Add(id);
+        SaveManager.Instance.SaveGame();
+
+        currentScrap = SaveManager.Instance.CurrentData.TotalScrap;
+        OnScrapChanged?.Invoke();
+        OnOutfitPurchased?.Invoke();
+        return true;
+    }
+
+    public bool EquipOutfit(int id)
+    {
+        if (SaveManager.Instance == null || !OwnsOutfit(id)) return false;
+
+        equippedOutfitID = id;
+        SaveManager.Instance.CurrentData.equippedOutfitID = id;
+        SaveManager.Instance.SaveGame();
+        OnOutfitEquipped?.Invoke();
+        return true;
+    }
 }

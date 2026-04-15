@@ -15,38 +15,29 @@ MonoBehaviour:
   HouseLevel: 4
   Sequence:
   - Type: 1
-    ElementID: House4_Intro
+    ElementID: House_Intro 4
     DesignerNote: 
   - Type: 0
-    ElementID: Q4_1
+    ElementID: Q20
     DesignerNote: 
   - Type: 0
-    ElementID: Q4_2
-    DesignerNote: 
-  - Type: 0
-    ElementID: Q4_3
+    ElementID: Q21
     DesignerNote: 
   - Type: 2
-    ElementID: SHAKE_Cup_4
+    ElementID: TAP_Fast_4
     DesignerNote: 
   - Type: 0
-    ElementID: Q4_4
-    DesignerNote: 
-  - Type: 1
-    ElementID: House4_Coffee
-    DesignerNote: 
-  - Type: 0
-    ElementID: Q4_5
-    DesignerNote: 
-  - Type: 0
-    ElementID: Q4_6
+    ElementID: Q22
     DesignerNote: 
   - Type: 2
-    ElementID: SHAKE_Cup_4
+    ElementID: SHAKE_Insane_4
     DesignerNote: 
   - Type: 0
-    ElementID: Q4_7
+    ElementID: Q23
+    DesignerNote: 
+  - Type: 2
+    ElementID: HOLD_Strong_4
     DesignerNote: 
   - Type: 1
-    ElementID: House4_Outro
+    ElementID: House_Outro 4
     DesignerNote: 

@@ -6,12 +6,16 @@ using System.Text.RegularExpressions;
 using System.Globalization;
 
 /// <summary>
-/// PHASE 15: Parses CSV files into data pools.
+/// PHASE 17: Parses CSV files into data pools.
 ///
 /// CSV FILES:
-/// 1. Questions.csv (14 columns): ID, HouseLevel, Speaker, CardName, SpriteName, Question, OptionCorrect, OptionWrong, CorrectSide,
+/// 1. Questions2.csv (13 columns): ID, HouseLevel, Speaker, SpriteName, Question, OptionCorrect, OptionWrong, CorrectSide,
 ///    CorrectFB, IncorrectFB, CorrectBat, IncorrectBat, BaseEid
 /// 2. Interactions.csv (12 columns): ID, HouseLevel, InteractionType, PromptTextAR, Duration, Threshold, CorrectBat, IncorrectBat, CorrectStomach, IncorrectStomach, CorrectEid, IncorrectEid
+///
+/// CHANGES FROM PHASE 15:
+/// - Removed CardName column from Questions CSV (now uses Speaker as CardName)
+/// - Updated column indices: 14 columns → 13 columns
 ///
 /// CINEMATICS:
 /// - Cinematics are NOT loaded from CSV — they are defined in Unity (Timeline assets) or via DOTween
@@ -24,7 +28,7 @@ public class DataManager : MonoBehaviour
     public static DataManager Instance { get; private set; }
 
     [Header("CSV Files")]
-    [Tooltip("Questions CSV (Questions.csv)")]
+    [Tooltip("Questions CSV (Questions2.csv)")]
     public TextAsset questionsCSV;
 
     [Tooltip("Interactions CSV (Interactions.csv)")]
@@ -47,22 +51,21 @@ public class DataManager : MonoBehaviour
     [Tooltip("Interactions pooled by HouseLevel")]
     public Dictionary<int, List<InteractionData>> interactionPoolsByHouse = new Dictionary<int, List<InteractionData>>();
 
-    // Questions CSV Column indices (14 columns)
+    // Questions CSV Column indices (13 columns)
     private const int Q_COL_ID = 0;
     private const int Q_COL_HOUSE_LEVEL = 1;
     private const int Q_COL_SPEAKER = 2;
-    private const int Q_COL_CARD_NAME = 3;
-    private const int Q_COL_SPRITE_NAME = 4;
-    private const int Q_COL_QUESTION = 5;
-    private const int Q_COL_OPTION_CORRECT = 6;
-    private const int Q_COL_OPTION_WRONG = 7;
-    private const int Q_COL_CORRECT_SIDE = 8;
-    private const int Q_COL_CORRECT_FB = 9;
-    private const int Q_COL_INCORRECT_FB = 10;
-    private const int Q_COL_CORRECT_BAT = 11;
-    private const int Q_COL_INCORRECT_BAT = 12;
-    private const int Q_COL_BASE_EID = 13;
-    private const int Q_TOTAL_COLS = 14;
+    private const int Q_COL_SPRITE_NAME = 3;
+    private const int Q_COL_QUESTION = 4;
+    private const int Q_COL_OPTION_CORRECT = 5;
+    private const int Q_COL_OPTION_WRONG = 6;
+    private const int Q_COL_CORRECT_SIDE = 7;
+    private const int Q_COL_CORRECT_FB = 8;
+    private const int Q_COL_INCORRECT_FB = 9;
+    private const int Q_COL_CORRECT_BAT = 10;
+    private const int Q_COL_INCORRECT_BAT = 11;
+    private const int Q_COL_BASE_EID = 12;
+    private const int Q_TOTAL_COLS = 13;
 
     // Interactions CSV Column indices (12 columns - PHASE 14 updated with stomach)
     private const int INT_COL_ID = 0;
@@ -287,7 +290,7 @@ public class DataManager : MonoBehaviour
             ID = id,
             HouseLevel = ParseInt(SafeField(fields, Q_COL_HOUSE_LEVEL)),
             Speaker = SafeField(fields, Q_COL_SPEAKER),
-            CardName = SafeField(fields, Q_COL_CARD_NAME),
+            CardName = SafeField(fields, Q_COL_SPEAKER), // Use Speaker as CardName
             SpriteName = SafeField(fields, Q_COL_SPRITE_NAME),
             QuestionAR = question,
             OptionCorrectAR = SafeField(fields, Q_COL_OPTION_CORRECT),

@@ -14,24 +14,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   HouseLevel: 1
   Sequence:
+  - Type: 1
+    ElementID: House_Intro 1
+    DesignerNote: 
   - Type: 0
     ElementID: Q1
-    DesignerNote: 
-  - Type: 1
-    ElementID: House1_Intro
     DesignerNote: 
   - Type: 0
     ElementID: Q2
     DesignerNote: 
-  - Type: 0
-    ElementID: Q3
-    DesignerNote: 
   - Type: 2
     ElementID: SHAKE_Cup_1
-    DesignerNote: 
-  - Type: 0
-    ElementID: Q4
-    DesignerNote: 
-  - Type: 1
-    ElementID: House1_Outro
     DesignerNote: 

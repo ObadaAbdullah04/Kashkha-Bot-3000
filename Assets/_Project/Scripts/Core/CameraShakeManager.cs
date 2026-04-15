@@ -84,7 +84,11 @@ public class CameraShakeManager : MonoBehaviour
     [Button("Test Explosion")]
     public void ShakeMaamoulExplosion() => Shake(explosionStrength, 1.2f);
 
-    private void Shake(float strength, float duration)
+    /// <summary>
+    /// Trigger camera shake with specified strength and duration.
+    /// Uses Cinemachine Impulse if available, otherwise DOTween fallback.
+    /// </summary>
+    public void Shake(float strength, float duration)
     {
         if (debugLogging)
             Debug.Log($"[CameraShake] Shake called: strength={strength}, duration={duration}s");

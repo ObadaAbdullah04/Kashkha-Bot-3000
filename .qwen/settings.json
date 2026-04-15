@@ -6,7 +6,8 @@
       "Bash(findstr *)",
       "Bash(mkdir *)",
       "Bash(dir *)",
-      "Bash(powershell *)"
+      "Bash(powershell *)",
+      "Bash(copy *)"
     ]
   },
   "$version": 3

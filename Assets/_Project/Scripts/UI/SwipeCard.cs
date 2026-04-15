@@ -80,6 +80,9 @@ public class SwipeCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
     [Tooltip("Feedback text display duration (seconds)")]
     [SerializeField] private float feedbackTextDuration = 1.5f;
 
+    [Tooltip("If true, shows feedback text directly on the card. Usually disabled if using UIManager feedback panel.")]
+    [SerializeField] private bool showLocalFeedbackText = false;
+
     #endregion
 
     #region Events
@@ -314,15 +317,16 @@ public class SwipeCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
     {
         Color flashColor = wasCorrect ? correctFlashColor : incorrectFlashColor;
 
-        // Flash background color
+        // Flash background color (good visual juice!)
         if (backgroundImage != null)
         {
+            backgroundImage.DOKill(); // Clean up current tweens
             backgroundImage.DOColor(flashColor, 0.2f)
                 .OnComplete(() => backgroundImage.DOColor(Color.white, 0.4f));
         }
 
-        // Show feedback text with fade-in and fade-out
-        if (feedbackText != null)
+        // ONLY show feedback text if enabled
+        if (showLocalFeedbackText && feedbackText != null)
         {
             feedbackText.text = feedback;
             feedbackText.color = flashColor;

@@ -77,6 +77,9 @@ public class CatchMiniGame : MonoBehaviour
     [Tooltip("Falling item prefab (Ma'amoul - standard 2D sprite)")]
     [SerializeField] private GameObject fallingBadItemPrefab;
 
+    [Tooltip("Second falling item prefab (Ma'amoul variant - standard 2D sprite)")]
+    [SerializeField] private GameObject fallingBadItemPrefab2;
+
     [Header("Feedback Settings")]
     [SerializeField] private Vector3 catchPunchScale = new Vector3(0.2f, 0.2f, 1f);
     [SerializeField] private float catchPunchDuration = 0.3f;
@@ -118,6 +121,7 @@ public class CatchMiniGame : MonoBehaviour
 
     // Track spawned player basket for cleanup
     private GameObject _spawnedPlayerBasket;
+    private SpriteRenderer _playerSpriteRenderer;
 
     /// <summary>
     /// Enable input action when component is enabled.
@@ -258,6 +262,7 @@ public class CatchMiniGame : MonoBehaviour
             GameObject basketGo = Instantiate(playerBasketPrefab, new Vector3(0, _playerY, 0), Quaternion.identity);
             playerBasket = basketGo.transform;
             _spawnedPlayerBasket = basketGo;
+            _playerSpriteRenderer = basketGo.GetComponentInChildren<SpriteRenderer>();
 #if UNITY_EDITOR
             Debug.Log($"[CatchMiniGame] PlayerBasket spawned at (0, {_playerY}, 0)");
 #endif
@@ -334,8 +339,7 @@ public class CatchMiniGame : MonoBehaviour
         // === MOBILE TOUCH OVERRIDE (Screen Halves) ===
         // Check if touch is actually pressed (not just touchscreen exists)
         if (Touchscreen.current != null &&
-            Touchscreen.current.primaryTouch.press.isPressed &&
-            Touchscreen.current.primaryTouch.phase.ReadValue() == UnityEngine.InputSystem.TouchPhase.Moved)
+            Touchscreen.current.primaryTouch.press.isPressed)
         {
             // Read touch pixel position
             Vector2 touchPos = Touchscreen.current.primaryTouch.position.ReadValue();
@@ -354,6 +358,13 @@ public class CatchMiniGame : MonoBehaviour
         // Clamp input to prevent overflow (-1 to 1)
         moveInput = Mathf.Clamp(moveInput, -1f, 1f);
 
+        // === SPRITE FLIPPING ===
+        if (_playerSpriteRenderer != null)
+        {
+            if (moveInput > 0.01f) _playerSpriteRenderer.flipX = false; // Face Right
+            else if (moveInput < -0.01f) _playerSpriteRenderer.flipX = true; // Face Left (flipped)
+        }
+
         // Early exit if no input
         if (moveInput == 0f) return;
 
@@ -369,7 +380,6 @@ public class CatchMiniGame : MonoBehaviour
 
     /// <summary>
     /// Task 2: Spawn items in World Space.
-    /// </summary>
     private void SpawnItem()
     {
         if (fallingItemPrefab == null && fallingBadItemPrefab == null)
@@ -380,13 +390,39 @@ public class CatchMiniGame : MonoBehaviour
 
         // Random chance: 75% Eidia (good), 25% Ma'amoul (bad)
         bool isEidia = Random.value < eidiaSpawnChance;
-        GameObject prefabToSpawn = isEidia ? fallingItemPrefab : fallingBadItemPrefab;
+        GameObject prefabToSpawn = null;
+
+        if (isEidia)
+        {
+            prefabToSpawn = fallingItemPrefab;
+        }
+        else
+        {
+            // Pick randomly between the two bad item prefabs
+            if (fallingBadItemPrefab2 != null)
+            {
+                float rand = Random.value;
+                prefabToSpawn = rand < 0.5f ? fallingBadItemPrefab : fallingBadItemPrefab2;
+                
+                #if UNITY_EDITOR
+                // Debug.Log($"[CatchMiniGame] Selected Bad Prefab: {(rand < 0.5f ? "1" : "2")}");
+                #endif
+            }
+            else
+            {
+                prefabToSpawn = fallingBadItemPrefab;
+            }
+        }
 
         if (prefabToSpawn == null)
         {
             Debug.LogWarning($"[CatchMiniGame] Prefab to spawn is null! isEidia={isEidia}");
             return;
         }
+
+        #if UNITY_EDITOR
+        // Debug.Log($"[CatchMiniGame] Spawning: {prefabToSpawn.name}");
+        #endif
 
         // Random X between boundaries
         float randomX = Random.Range(_minX, _maxX);

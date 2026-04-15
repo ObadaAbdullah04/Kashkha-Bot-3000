@@ -15,35 +15,32 @@ MonoBehaviour:
   HouseLevel: 3
   Sequence:
   - Type: 1
-    ElementID: House3_Intro
+    ElementID: House_Intro 3
     DesignerNote: 
   - Type: 0
-    ElementID: Q3_1
+    ElementID: Q13
     DesignerNote: 
   - Type: 0
-    ElementID: Q3_2
-    DesignerNote: 
-  - Type: 0
-    ElementID: Q3_3
+    ElementID: Q14
     DesignerNote: 
   - Type: 2
-    ElementID: HOLD_Hand_3
+    ElementID: SHAKE_Hand_3
     DesignerNote: 
   - Type: 0
-    ElementID: Q3_4
-    DesignerNote: 
-  - Type: 1
-    ElementID: House3_Coffee
+    ElementID: Q15
     DesignerNote: 
   - Type: 0
-    ElementID: Q3_5
-    DesignerNote: 
-  - Type: 0
-    ElementID: Q3_6
+    ElementID: Q16
     DesignerNote: 
   - Type: 2
-    ElementID: HOLD_Hand_3
+    ElementID: HOLD_Gift_3
+    DesignerNote: 
+  - Type: 0
+    ElementID: Q17
+    DesignerNote: 
+  - Type: 0
+    ElementID: Q18
     DesignerNote: 
   - Type: 1
-    ElementID: House3_Outro
+    ElementID: House_Outro 3
     DesignerNote: 

@@ -179,9 +179,6 @@ public class MeterManager : MonoBehaviour
         // Reset upgrade modifiers first
         ResetUpgradeModifiers();
 
-        // Apply outfit bonuses
-        ApplyOutfitBonuses();
-
         _suppressEvents = true;
         currentBattery = Mathf.Clamp(100f + outfitBatteryBonus, 0f, maxBattery);
         currentStomach = 0f;
@@ -225,26 +222,6 @@ public class MeterManager : MonoBehaviour
         stomachFillMultiplier = Mathf.Max(stomachFillMultiplier - reduction, 0.1f); // Min 0.1
         upgradeStomachReduction += reduction;
         Debug.Log($"[Meter] Stomach Fill Rate Multiplier: {stomachFillMultiplier:F2} (Reduction: -{upgradeStomachReduction:P1})");
-    }
-
-    /// <summary>
-    /// Applies outfit stat bonuses from WardrobeManager.
-    /// </summary>
-    public void ApplyOutfitBonuses()
-    {
-        if (WardrobeManager.Instance == null) return;
-
-        var (statType, value) = WardrobeManager.Instance.GetEquippedStatBonus();
-
-        switch (statType)
-        {
-            case OutfitStatType.BatteryStart:
-                outfitBatteryBonus = value;
-                break;
-            case OutfitStatType.StomachResist:
-                outfitStomachResist = value;
-                break;
-        }
     }
 
     /// <summary>

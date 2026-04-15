@@ -111,11 +111,8 @@ public class UnifiedHubManager : MonoBehaviour
     [SerializeField] private GameObject house4Lock;
 
     [Header("Wardrobe Tab UI")]
-    [Tooltip("Scrap counter text")]
-    [SerializeField] private RTLTextMeshPro scrapCounterText;
-
-    [Tooltip("Outfit slot UI components")]
-    [SerializeField] private OutfitSlot[] outfitSlots;
+    [Tooltip("Reference to WardrobeUI component (new simplified system)")]
+    [SerializeField] private WardrobeUI wardrobeUI;
 
     [Header("Upgrades Tab UI")]
     [Tooltip("Button for Recharge Battery upgrade")]
@@ -308,7 +305,7 @@ public class UnifiedHubManager : MonoBehaviour
     private void InitializeArrays()
     {
         houseButtons = new[] { house1Button, house2Button, house3Button, house4Button };
-        houseLocks = new[] { null, house2Lock, house3Lock, house4Lock };
+        houseLocks = new[] { null, null, house2Lock, house3Lock, house4Lock }; // Index 2 = House 2
         houseCheckmarks = new[] { null, house1Checkmark, house2Checkmark, house3Checkmark, house4Checkmark };
         miniGameButtons = new[] { miniGame1Button, miniGame2Button, miniGame3Button };
     }
@@ -561,37 +558,14 @@ public class UnifiedHubManager : MonoBehaviour
     {
         if (WardrobeManager.Instance == null) return;
 
-        WardrobeManager.Instance.SyncScrap();
-        int playerScrap = WardrobeManager.Instance.CurrentScrap;
-        int equippedID = WardrobeManager.Instance.EquippedOutfitID;
-
-        // Update scrap counter
-        if (scrapCounterText != null)
-            scrapCounterText.text = $"{playerScrap} خردة";
-
-        // Update outfit slots
-        if (outfitSlots != null && outfitSlots.Length > 0)
+        // Use new WardrobeUI component to refresh
+        if (wardrobeUI != null)
         {
-            for (int i = 0; i < outfitSlots.Length; i++)
-            {
-                if (i < WardrobeManager.Instance.AllOutfits.Count)
-                {
-                    OutfitData outfit = WardrobeManager.Instance.AllOutfits[i];
-                    bool owned = WardrobeManager.Instance.OwnsOutfit(outfit.ID);
-                    bool equipped = equippedID == outfit.ID;
-
-                    outfitSlots[i].gameObject.SetActive(true);
-                    outfitSlots[i].Initialize(outfit, owned, equipped, playerScrap);
-                }
-                else
-                {
-                    outfitSlots[i].gameObject.SetActive(false);
-                }
-            }
+            wardrobeUI.RefreshUI();
         }
         else
         {
-            Debug.LogWarning("[UnifiedHub] No outfit slots assigned in inspector!");
+            Debug.LogWarning("[UnifiedHub] WardrobeUI not assigned in inspector!");
         }
     }
 
@@ -812,17 +786,27 @@ public class UnifiedHubManager : MonoBehaviour
     {
         for (int i = 1; i <= 4; i++)
         {
-            // Update checkmarks
+            // Update checkmarks (1-based index)
             if (i < houseCheckmarks.Length && houseCheckmarks[i] != null)
                 houseCheckmarks[i].SetActive(completedHouses[i]);
 
-            // Update locks
+            // Update locks (1-based index)
             if (i < houseLocks.Length && houseLocks[i] != null)
-                houseLocks[i].SetActive(highestUnlockedHouse < i);
+            {
+                // House i is locked if the highest unlocked house is lower than i
+                bool isLocked = highestUnlockedHouse < i;
+                houseLocks[i].SetActive(isLocked);
+            }
 
             // Update buttons (array is 0-indexed)
             if (i <= houseButtons.Length && houseButtons[i - 1] != null)
-                houseButtons[i - 1].interactable = !completedHouses[i] && highestUnlockedHouse >= i && i == nextHouseLevelToPlay;
+            {
+                bool isUnlocked = highestUnlockedHouse >= i;
+                bool isCurrentTarget = i == nextHouseLevelToPlay;
+                bool alreadyDone = completedHouses[i];
+                
+                houseButtons[i - 1].interactable = isUnlocked && isCurrentTarget && !alreadyDone;
+            }
         }
     }
 

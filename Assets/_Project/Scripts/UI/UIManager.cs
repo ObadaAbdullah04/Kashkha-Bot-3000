@@ -37,10 +37,18 @@ public class UIManager : MonoBehaviour
     [SerializeField] private GameObject feedbackPanel;
 
     [Header("Meter UI")]
+    [Tooltip("Battery slider (shows current social battery)")]
     [SerializeField] private Slider batterySlider;
+    [Tooltip("Stomach slider (shows current stomach fullness)")]
     [SerializeField] private Slider stomachSlider;
+    [Tooltip("Timer slider (shows per-card timer countdown)")]
+    [SerializeField] private Slider timerSlider;
 
     [Header("Game State Panels")]
+    [Tooltip("Main menu start screen panel")]
+    [SerializeField] private GameObject mainMenuPanel;
+    [Tooltip("Start button on the main menu")]
+    [SerializeField] private Button startBtn;
     [Tooltip("Swipe encounter panel (PHASE 16+ active swipe UI)")]
     [SerializeField] private GameObject swipeEncounterPanel;
     [SerializeField] private GameObject gameOverPanel;
@@ -93,6 +101,15 @@ public class UIManager : MonoBehaviour
                 _feedbackCanvasGroup = feedbackPanel.AddComponent<CanvasGroup>();
         }
 
+        // Setup Start Button
+        if (startBtn != null)
+        {
+            startBtn.onClick.AddListener(() => {
+                if (GameManager.Instance != null)
+                    GameManager.Instance.StartRun();
+            });
+        }
+
         // Handle initial state
         HandleInitialState();
     }
@@ -109,8 +126,12 @@ public class UIManager : MonoBehaviour
             GameState initialState = GameManager.Instance.CurrentState;
             Debug.Log($"[UIManager] Initial state: {initialState}");
 
-            // Show unified hub for Wardrobe or HouseHub states
-            if (initialState == GameState.Wardrobe || initialState == GameState.HouseHub)
+            // Show appropriate panel based on initial state
+            if (initialState == GameState.MainMenu)
+            {
+                if (mainMenuPanel != null) mainMenuPanel.SetActive(true);
+            }
+            else if (initialState == GameState.Wardrobe || initialState == GameState.HouseHub)
             {
                 ShowUnifiedHub();
             }
@@ -326,6 +347,7 @@ public class UIManager : MonoBehaviour
 
     private void HideAllPanels()
     {
+        if (mainMenuPanel != null) mainMenuPanel.SetActive(false);
         gameOverPanel.SetActive(false);
         winPanel.SetActive(false);
         feedbackPanel.SetActive(false);
@@ -350,8 +372,30 @@ public class UIManager : MonoBehaviour
             unifiedHubPanel.SetActive(true);
         }
 
+        // Hide HUD meters when in hub (no battery/stomach/timer visible)
+        SetHUDEnabled(false);
+
 #if UNITY_EDITOR
         Debug.Log("[UIManager] Unified Hub panel shown.");
+#endif
+    }
+
+    /// <summary>
+    /// Shows the unified hub panel WITHOUT hiding other panels.
+    /// Used for Game Over / Win states where both hub and result panel should show.
+    /// </summary>
+    private void ShowUnifiedHubWithoutHidingOthers()
+    {
+        if (unifiedHubPanel != null)
+        {
+            unifiedHubPanel.SetActive(true);
+        }
+
+        // Hide HUD meters when in hub (no battery/stomach/timer visible)
+        SetHUDEnabled(false);
+
+#if UNITY_EDITOR
+        Debug.Log("[UIManager] Unified Hub panel shown (overlay mode).");
 #endif
     }
 
@@ -370,39 +414,51 @@ public class UIManager : MonoBehaviour
 
     private void HandleStateChanged(GameState newState)
     {
-        HideAllPanels();
-
         switch (newState)
         {
+            case GameState.MainMenu:
+                HideAllPanels();
+                if (mainMenuPanel != null) mainMenuPanel.SetActive(true);
+                SetHUDEnabled(false);
+                break;
             case GameState.Wardrobe:
             case GameState.HouseHub:
+                HideAllPanels();
                 // Both shown via unified hub - manager controls display
                 // Hide HUD meters when in hub
                 SetHUDEnabled(false);
                 break;
             case GameState.Encounter:
+                HideAllPanels();
                 swipeEncounterPanel.SetActive(true);
                 // Show HUD meters and force refresh when entering a house
                 SetHUDEnabled(true);
                 RefreshMeters();
                 break;
             case GameState.InterHouseMiniGame:
+                HideAllPanels();
                 // All panels hidden - mini-game prefab handles its own UI
                 SetHUDEnabled(false);
                 break;
             case GameState.GameOver:
+                HideAllPanels();
                 gameOverPanel.SetActive(true);
                 SetHUDEnabled(false);
+                // Show hub panel so player can navigate (try again, wardrobe, etc.)
+                ShowUnifiedHubWithoutHidingOthers();
                 break;
             case GameState.Win:
+                HideAllPanels();
                 winPanel.SetActive(true);
                 SetHUDEnabled(false);
+                // Show hub panel so player can navigate (try again, wardrobe, etc.)
+                ShowUnifiedHubWithoutHidingOthers();
                 break;
         }
     }
 
     /// <summary>
-    /// Shows or hides the HUD meters (battery/stomach sliders).
+    /// Shows or hides the HUD meters (battery/stomach/timer sliders).
     /// </summary>
     private void SetHUDEnabled(bool enabled)
     {
@@ -411,6 +467,9 @@ public class UIManager : MonoBehaviour
 
         if (stomachSlider != null)
             stomachSlider.gameObject.SetActive(enabled);
+
+        if (timerSlider != null)
+            timerSlider.gameObject.SetActive(enabled);
     }
 
     /// <summary>
@@ -425,7 +484,7 @@ public class UIManager : MonoBehaviour
         {
             float maxBattery = MeterManager.Instance.MaxBattery;
             float currentBattery = MeterManager.Instance.CurrentBattery;
-            
+
             batterySlider.minValue = 0f;
             batterySlider.maxValue = maxBattery;
             batterySlider.value = currentBattery;
@@ -434,12 +493,17 @@ public class UIManager : MonoBehaviour
         if (stomachSlider != null)
         {
             float currentStomach = MeterManager.Instance.CurrentStomach;
-            
+
             stomachSlider.minValue = 0f;
             stomachSlider.maxValue = 100f;
             stomachSlider.value = currentStomach;
         }
     }
+
+    /// <summary>
+    /// Public wrapper for RefreshMeters - called from GameManager when entering a house.
+    /// </summary>
+    public void RefreshMetersPublic() => RefreshMeters();
 
     private void HandleMetersChanged(float battery, float stomach)
     {

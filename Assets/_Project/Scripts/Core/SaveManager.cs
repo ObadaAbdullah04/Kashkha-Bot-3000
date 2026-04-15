@@ -2,6 +2,7 @@ using UnityEngine;
 using System.IO;
 using System;
 using NaughtyAttributes;
+using Unity.Barracuda;
 
 /// <summary>
 /// Simple save manager using JSON.
@@ -113,4 +114,11 @@ public class SaveManager : MonoBehaviour
         SaveGame();
         Debug.Log("[Save] Progress reset.");
     }
+
+    [Button("Add 100 Scrap")]
+    public void AddTempScrap()
+    {
+        AddScrap(100);    
+    }
+
 }

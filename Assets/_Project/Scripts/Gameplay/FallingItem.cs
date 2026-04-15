@@ -1,4 +1,5 @@
 using UnityEngine;
+using DG.Tweening;
 
 /// <summary>
 /// Attached to falling Eidia/Ma'amoul prefabs (World Space 2D sprites).
@@ -19,6 +20,8 @@ public class FallingItem : MonoBehaviour
     [Header("Movement")]
     [Tooltip("How fast this item falls (world units per second)")]
     [SerializeField] private float fallSpeed = 8f;
+    [Tooltip("How fast this item rotates (degrees per second)")]
+    [SerializeField] private float rotationSpeed = 90f;
 
     [Header("References")]
     [Tooltip("Cached BoxCollider2D for performance")]
@@ -26,6 +29,7 @@ public class FallingItem : MonoBehaviour
 
     private bool _isCaught = false;
     private float _bottomY = -10f;
+    private float _actualRotationDirection = 1f;
 
     private void Awake()
     {
@@ -34,6 +38,20 @@ public class FallingItem : MonoBehaviour
 
     private void Start()
     {
+        // Randomize rotation direction and speed slightly
+        _actualRotationDirection = Random.Range(0, 2) == 0 ? 1f : -1f;
+        float finalRotationSpeed = rotationSpeed * Random.Range(0.8f, 1.5f);
+
+        // Use DOTween for a smooth, infinite rotation
+        // 360 degrees / degrees per second = time for one full rotation
+        if (finalRotationSpeed > 0)
+        {
+            float duration = 360f / finalRotationSpeed;
+            transform.DOLocalRotate(new Vector3(0, 0, 360f * _actualRotationDirection), duration, RotateMode.FastBeyond360)
+                .SetLoops(-1, LoopType.Incremental)
+                .SetEase(Ease.Linear);
+        }
+
         // Cache bottom boundary once to avoid ViewportToWorldPoint every frame
         if (Camera.main != null)
         {
@@ -76,14 +94,19 @@ public class FallingItem : MonoBehaviour
     /// </summary>
     private void Update()
     {
-        // Move item down in world space
-        transform.Translate(Vector3.down * fallSpeed * Time.deltaTime);
+        // Move item down in world space (Space.World prevents rotation from affecting direction)
+        transform.Translate(Vector3.down * fallSpeed * Time.deltaTime, Space.World);
 
         // Check if item has fallen below camera bounds
         if (transform.position.y < _bottomY)
         {
             Destroy(gameObject);
         }
+    }
+
+    private void OnDestroy()
+    {
+        transform.DOKill();
     }
 
     /// <summary>

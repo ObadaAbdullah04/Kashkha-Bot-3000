@@ -56,7 +56,7 @@ public class GameManager : MonoBehaviour
 
     #region State
 
-    [SerializeField] private GameState currentState = GameState.Wardrobe;
+    [SerializeField] private GameState currentState = GameState.MainMenu;
     [SerializeField] private int currentHouseLevel = 1;
     [SerializeField] private bool isHouse4Active = false;
     [SerializeField] private int currentRunSeed = 0;
@@ -122,7 +122,7 @@ public class GameManager : MonoBehaviour
 
     public void StartRun()
     {
-        currentHouseLevel = 1;
+        currentHouseLevel = 0; // Reset to 0 so next house is 1
         isHouse4Active = false;
         accumulatedEidia = 0;
         encounterStreakBonus = 0;
@@ -134,12 +134,8 @@ public class GameManager : MonoBehaviour
         FloatingTextManager.Instance?.gameObject.SetActive(true);
         MeterManager.Instance?.ResetMeters();
 
-        // Apply equipped outfit stats at run start
-        if (WardrobeManager.Instance != null)
-            WardrobeManager.Instance.ApplyOutfitBonuses();
-
         OnRunStarted?.Invoke();
-        
+
         // Show unified hub (Houses tab) to start the run
         ShowUnifiedHub();
     }
@@ -159,6 +155,9 @@ public class GameManager : MonoBehaviour
         MeterManager.Instance?.ResetHouseCounters();
 
         Debug.Log($"[GameManager] Starting House {currentHouseLevel}!");
+
+        // REFRESH HUD BEFORE ANYTHING HAPPENS (ensure meters show correct values)
+        UIManager.Instance?.RefreshMetersPublic();
 
         if (TransitionPlayer.Instance != null)
         {
@@ -343,8 +342,9 @@ public class GameManager : MonoBehaviour
 
     public void OnMiniGameComplete(int eidiaEarned)
     {
+        Debug.Log($"[GameManager] === OnMiniGameComplete === Eidia earned: {eidiaEarned}");
         accumulatedEidia += eidiaEarned;
-        Debug.Log($"[GameManager] Mini-game: +{eidiaEarned} Eidia");
+        Debug.Log($"[GameManager] Accumulated Eidia: {accumulatedEidia}");
         ShowUnifiedHub();
     }
 
@@ -400,11 +400,10 @@ public class GameManager : MonoBehaviour
 
     private void HandleOutfitEquipped(int outfitID)
     {
-        Debug.Log($"[GameManager] Outfit equipped (ID: {outfitID}). Applying stats...");
-        
-        // Apply the outfit's stat bonus immediately
-        if (WardrobeManager.Instance != null)
-            WardrobeManager.Instance.ApplyOutfitBonuses();
+        Debug.Log($"[GameManager] Outfit equipped (ID: {outfitID}).");
+
+        // For now, outfits are cosmetic only
+        // Stat bonuses will be re-added later when needed
     }
 
     private void OnTransitionFinished()
@@ -442,9 +441,6 @@ public class GameManager : MonoBehaviour
 
         Debug.Log($"[GameManager] {msg}");
         SaveManager.Instance?.AddRunRewards(accumulatedEidia);
-
-        // Hide the hub panel before showing win state
-        UIManager.Instance?.HideUnifiedHub();
 
         ChangeState(GameState.Win);
     }
