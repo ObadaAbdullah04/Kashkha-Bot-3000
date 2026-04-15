@@ -1,5 +1,5 @@
-ID,internalName,displayNameAR,spriteName,scrapCost,isLocked
-0,DefaultSkin,"الشكل الافتراضي","Default",0,0
-1,FormalSuit,"بدلة رسمية","Character_Formal",0,0
-2,CasualWear,"لبس كاجوال","Character_Casual",0,0
-3,Tuxedo,"توكسيدو فاخر","Character_Tuxedo",100,1
+﻿ID,internalName,displayNameAR,spriteName,scrapCost,isLocked
+0,DefaultSkin,افتراضي,Default,0,0
+1,FormalSuit,ثوب,Character_Formal,0,0
+2,Pijama,بيجامة,Character_Casual,0,0
+3,Tuxedo,توكسيدو,Character_Tuxedo,100,1

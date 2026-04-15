@@ -24,5 +24,11 @@ MonoBehaviour:
     ElementID: Q2
     DesignerNote: 
   - Type: 2
-    ElementID: SHAKE_Cup_1
+    ElementID: SHAKE_Qahwa_1
+    DesignerNote: 
+  - Type: 2
+    ElementID: HOLD_Maamoul_1
+    DesignerNote: 
+  - Type: 1
+    ElementID: House_Outro 1
     DesignerNote: 
