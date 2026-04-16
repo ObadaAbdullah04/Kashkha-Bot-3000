@@ -20,6 +20,12 @@ public class HouseBackgroundController : MonoBehaviour
     private void OnEnable()
     {
         HouseFlowController.OnHouseStarted += UpdateBackground;
+        
+        // Fallback: If enabled but house level is already set, update now
+        if (GameManager.Instance != null && GameManager.Instance.CurrentHouseLevel > 0)
+        {
+            UpdateBackground(GameManager.Instance.CurrentHouseLevel);
+        }
     }
 
     private void OnDisable()
@@ -29,6 +35,12 @@ public class HouseBackgroundController : MonoBehaviour
 
     private void UpdateBackground(int houseLevel)
     {
+        if (houseLevel <= 0)
+        {
+            if (defaultBackground != null) _backgroundImage.sprite = defaultBackground;
+            return;
+        }
+
         // Path: Resources/Backgrounds/House1_BG, House2_BG, etc.
         string resourceName = $"{backgroundsPath}/House{houseLevel}_BG";
         Sprite newBg = Resources.Load<Sprite>(resourceName);
@@ -36,12 +48,15 @@ public class HouseBackgroundController : MonoBehaviour
         if (newBg != null)
         {
             _backgroundImage.sprite = newBg;
+#if UNITY_EDITOR
+            Debug.Log($"[HouseBackground] Loaded background for House {houseLevel}: {resourceName}");
+#endif
         }
         else if (defaultBackground != null)
         {
             _backgroundImage.sprite = defaultBackground;
 #if UNITY_EDITOR
-            Debug.LogWarning($"[Background] Resource {resourceName} not found at Resources/{backgroundsPath}/. Using default.");
+            Debug.LogWarning($"[HouseBackground] Resource {resourceName} not found. Using default.");
 #endif
         }
     }

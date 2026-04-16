@@ -41,29 +41,45 @@ public class SaveManager : MonoBehaviour
 
     public void AddRunRewards(int eidia)
     {
+        if (eidia == 0) return;
+
         currentSaveData.TotalEidia += eidia;
         if (eidia > currentSaveData.HighScore)
             currentSaveData.HighScore = eidia;
 
         SaveGame();
-        Debug.Log($"[Save] Saved! Eidia: {currentSaveData.TotalEidia}");
+        
+        // PHASE 18: Notify that Currency has changed (UI uses OnScrapChanged as the event)
+        OnScrapChanged?.Invoke(currentSaveData.TotalEidia);
+        
+        Debug.Log($"[Save] Currency added: +{eidia}. Total Eidia: {currentSaveData.TotalEidia}");
     }
 
     /// <summary>
-    /// Adds scrap to the global save data and persists immediately.
-    /// Called when mini-games complete to ensure scrap persists across runs.
+    /// Redirects to AddRunRewards to maintain unified currency (Eidia).
     /// </summary>
     public void AddScrap(int amount)
     {
-        if (amount <= 0) return;
+        AddRunRewards(amount);
+    }
 
-        currentSaveData.TotalScrap += amount;
+    /// <summary>
+    /// Deducts Eidia if player can afford it.
+    /// Returns true if successful.
+    /// </summary>
+    public bool SpendScrap(int amount)
+    {
+        if (amount <= 0) return true;
+        if (currentSaveData.TotalEidia < amount) return false;
+
+        currentSaveData.TotalEidia -= amount;
         SaveGame();
-        
-        // Fire event to notify UI updates
-        OnScrapChanged?.Invoke(currentSaveData.TotalScrap);
-        
-        Debug.Log($"[Save] Scrap added: +{amount}. Total: {currentSaveData.TotalScrap}");
+
+        // Fire event to notify UI updates (Wardrobe, Upgrades, etc.)
+        OnScrapChanged?.Invoke(currentSaveData.TotalEidia);
+
+        Debug.Log($"[Save] Currency spent: -{amount}. Remaining Eidia: {currentSaveData.TotalEidia}");
+        return true;
     }
 
     [Button("Save")]
@@ -91,7 +107,7 @@ public class SaveManager : MonoBehaviour
             {
                 string json = File.ReadAllText(SavePath);
                 currentSaveData = JsonUtility.FromJson<SaveData>(json);
-                Debug.Log($"[Save] Loaded. Scrap: {currentSaveData.TotalScrap}");
+                Debug.Log($"[Save] Loaded. Total Eidia: {currentSaveData.TotalEidia}");
             }
             catch (System.Exception e)
             {

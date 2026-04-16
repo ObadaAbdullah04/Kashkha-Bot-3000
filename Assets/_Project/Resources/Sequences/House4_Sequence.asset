@@ -14,30 +14,33 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   HouseLevel: 4
   Sequence:
+  - Type: 0
+    ElementID: Q19
+    DesignerNote: 
   - Type: 1
-    ElementID: House_Intro 4
+    ElementID: C_PRE_HOLD_BigPlate_4
+    DesignerNote: 
+  - Type: 2
+    ElementID: HOLD_BigPlate_4
     DesignerNote: 
   - Type: 0
     ElementID: Q20
     DesignerNote: 
+  - Type: 1
+    ElementID: C_PRE_TAP_ForceEat_4
+    DesignerNote: 
+  - Type: 2
+    ElementID: TAP_ForceEat_4
+    DesignerNote: 
   - Type: 0
     ElementID: Q21
     DesignerNote: 
+  - Type: 1
+    ElementID: C_PRE_SHAKE_Dessert_4
+    DesignerNote: 
   - Type: 2
-    ElementID: TAP_Fast_4
+    ElementID: SHAKE_Dessert_4
     DesignerNote: 
   - Type: 0
     ElementID: Q22
-    DesignerNote: 
-  - Type: 2
-    ElementID: SHAKE_Insane_4
-    DesignerNote: 
-  - Type: 0
-    ElementID: Q23
-    DesignerNote: 
-  - Type: 2
-    ElementID: HOLD_Strong_4
-    DesignerNote: 
-  - Type: 1
-    ElementID: House_Outro 4
     DesignerNote: 

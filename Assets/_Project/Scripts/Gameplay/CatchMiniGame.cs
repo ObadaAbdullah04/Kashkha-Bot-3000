@@ -99,10 +99,6 @@ public class CatchMiniGame : MonoBehaviour
     [SerializeField] private RTLTMPro.RTLTextMeshPro timerText;
     [SerializeField] private RTLTMPro.RTLTextMeshPro scoreText;
 
-    [Header("Audio")]
-    [SerializeField] private AudioClip catchSound;
-    [SerializeField] private AudioClip avoidSound;
-
     // World space boundaries (calculated at runtime)
     private float _minX;
     private float _maxX;
@@ -483,9 +479,8 @@ public class CatchMiniGame : MonoBehaviour
                 playerBasket.DOPunchScale(catchPunchScale, catchPunchDuration).SetUpdate(true);
             }
 
-            // Play catch sound
-            if (catchSound != null && AudioManager.Instance != null)
-                AudioManager.Instance.PlaySFX(catchSound);
+            // Play catch sound (use enum-based system)
+            AudioManager.Instance?.PlaySFX(AudioManager.SFXType.CatchGood);
 
 #if UNITY_EDITOR
             Debug.Log($"[CatchMiniGame] Eidia caught! Score: {_score}");
@@ -504,9 +499,8 @@ public class CatchMiniGame : MonoBehaviour
                 playerBasket.DOShakeScale(avoidShakeDuration, avoidShakeStrength, avoidShakeVibrato, avoidShakeRandomness).SetUpdate(true);
             }
 
-            // Play avoid sound
-            if (avoidSound != null && AudioManager.Instance != null)
-                AudioManager.Instance.PlaySFX(avoidSound);
+            // Play avoid sound (use enum-based system)
+            AudioManager.Instance?.PlaySFX(AudioManager.SFXType.CatchBad);
 
 #if UNITY_EDITOR
             Debug.Log($"[CatchMiniGame] Ma'amoul caught! Score: {_score}");
@@ -529,11 +523,7 @@ public class CatchMiniGame : MonoBehaviour
         // Balancing: 1 Eidia per score
         int scrapReward = _score > 0 ? Mathf.Max(1, Mathf.FloorToInt(_score * scrapPerPoint)) : 0;
 
-        if (GameManager.Instance != null)
-        {
-            GameManager.Instance.OnMiniGameComplete(_score);
-        }
-
+        // Return to MiniGameManager - this will handle GameManager.OnMiniGameComplete
         if (MiniGameManager.Instance != null)
             MiniGameManager.Instance.EndMiniGame(_score, scrapReward);
 

@@ -184,6 +184,13 @@ public class SwipeEncounterManager : MonoBehaviour
 
         if (activeCard.transform != null)
         {
+            // CRITICAL: Force position zero right before entrance animation
+            activeCard.transform.localPosition = Vector3.zero;
+            if (activeCard.TryGetComponent<RectTransform>(out var rect))
+            {
+                rect.anchoredPosition = Vector2.zero;
+            }
+
             activeCard.transform.localScale = Vector3.zero;
             activeCard.transform.DOScale(Vector3.one, cardEntranceDuration)
                 .SetEase(Ease.OutBack);
@@ -207,6 +214,7 @@ public class SwipeEncounterManager : MonoBehaviour
 
             MeterManager.Instance?.ModifyBattery(batteryDelta);
             CameraShakeManager.Instance?.ShakeWrongAnswer();
+            AudioManager.Instance?.PlaySFX(AudioManager.SFXType.WrongAnswer);
 
             activeCard?.ShowResultFeedback(false, timeoutFeedbackText);
             
@@ -244,11 +252,20 @@ public class SwipeEncounterManager : MonoBehaviour
             {
                 currentStreak++;
                 int bonus = CalculateStreakBonus(currentStreak);
-                if (bonus > 0) streakBonusTotal += bonus;
+                if (bonus > 0)
+                {
+                    streakBonusTotal += bonus;
+                    AudioManager.Instance?.PlaySFXCombo(AudioManager.SFXType.CorrectAnswer, AudioManager.SFXType.StreakBonus);
+                }
+                else
+                {
+                    AudioManager.Instance?.PlaySFX(AudioManager.SFXType.CorrectAnswer);
+                }
             }
             else
             {
                 currentStreak = 0;
+                AudioManager.Instance?.PlaySFX(AudioManager.SFXType.WrongAnswer);
             }
 
             MeterManager.Instance?.ModifyBattery(batteryDelta);
@@ -330,20 +347,37 @@ public class SwipeEncounterManager : MonoBehaviour
     /// </summary>
     private SwipeCard GetCardFromPool()
     {
+        SwipeCard card;
         if (cardPool.Count > 0)
         {
-            SwipeCard card = cardPool[0];
+            card = cardPool[0];
             cardPool.RemoveAt(0);
-            card.gameObject.SetActive(true);
-            card.transform.SetParent(cardParent);
-            card.transform.localPosition = Vector3.zero;
-            card.transform.localScale = Vector3.one;
-            card.transform.localRotation = Quaternion.identity;
-            return card;
         }
-        
-        // Pool empty, create new
-        return Instantiate(swipeCardPrefab, cardParent);
+        else
+        {
+            // Pool empty, create new
+            card = Instantiate(swipeCardPrefab, cardParent);
+        }
+
+        card.gameObject.SetActive(true);
+
+        // FIX: Use false for worldPositionStays to avoid position shift when reparenting
+        card.transform.SetParent(cardParent, false);
+
+        // CRITICAL FIX: Force position/anchoredPosition to zero (handles both Transform and RectTransform)
+        card.transform.localPosition = Vector3.zero;
+        card.transform.localScale = Vector3.one;
+        card.transform.localRotation = Quaternion.identity;
+
+        if (card.TryGetComponent<RectTransform>(out var rect))
+        {
+            rect.anchoredPosition = Vector2.zero;
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+        }
+
+        return card;
     }
 
     /// <summary>

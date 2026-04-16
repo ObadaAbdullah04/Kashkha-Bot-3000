@@ -127,8 +127,12 @@ public class SwipeCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
         cardIndex = index;
         totalCards = total;
 
-        // Load character sprite
-        if (characterImage != null && !string.IsNullOrEmpty(data.SpriteName))
+        // Check if persistent portrait is already showing this character
+        bool isAlreadyShowingNPC = CinematicController.Instance != null && 
+                                  CinematicController.Instance.IsShowingCharacter(data.Speaker);
+
+        // Load character sprite - HIDE if persistent portrait is already active
+        if (characterImage != null && !string.IsNullOrEmpty(data.SpriteName) && !isAlreadyShowingNPC)
         {
             Sprite sprite = Resources.Load<Sprite>("CharacterSprites/" + data.SpriteName);
 
@@ -152,7 +156,7 @@ public class SwipeCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
         }
         else if (characterImage != null)
         {
-            // No sprite name provided, hide character image
+            // NPC is already in the background or no sprite provided
             characterImage.enabled = false;
         }
 
@@ -192,10 +196,30 @@ public class SwipeCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
     /// </summary>
     public void ResetCard()
     {
+        // CRITICAL: Kill all tweens BEFORE resetting position to prevent race conditions
+        _feedbackSequence?.Kill();
+        DOTween.Kill(transform);
+        if (canvasGroup != null)
+            DOTween.Kill(canvasGroup);
+        if (backgroundImage != null)
+            DOTween.Kill(backgroundImage);
+
         isSwiped = false;
         _hasTriggeredHaptic = false; // Reset haptic flag
-        originalPosition = transform.localPosition;
-        originalRotation = transform.localRotation;
+
+        // CRITICAL FIX: Force position using BOTH Transform and RectTransform
+        transform.localPosition = Vector3.zero;
+        transform.localRotation = Quaternion.identity;
+        originalPosition = Vector3.zero;
+        originalRotation = Quaternion.identity;
+
+        if (TryGetComponent<RectTransform>(out var rect))
+        {
+            rect.anchoredPosition = Vector2.zero;
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+        }
 
         if (canvasGroup != null)
             canvasGroup.alpha = 1f;
@@ -352,10 +376,12 @@ public class SwipeCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
         if (isSwiped) return;
         isSwiped = true;
 
+        // Play swipe whoosh sound
+        AudioManager.Instance?.PlaySFX(AudioManager.SFXType.SwipeWhoosh);
+
         // Calculate target position (off-screen)
-        Vector3 targetPos = transform.localPosition;
-        targetPos.x = originalPosition.x + (swipeAwayDistance * direction);
-        targetPos.y += direction * 50f; // Slight arc
+        Vector3 targetPos = Vector3.zero;
+        targetPos.x = swipeAwayDistance * direction;
 
         // Animate swipe away
         Sequence swipeSeq = DOTween.Sequence();
@@ -377,6 +403,8 @@ public class SwipeCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
     /// </summary>
     private void SnapBack()
     {
+        AudioManager.Instance?.PlaySFX(AudioManager.SFXType.SnapBack);
+
         Sequence snapSeq = DOTween.Sequence();
         snapSeq.Append(transform.DOLocalMove(originalPosition, snapBackDuration).SetEase(Ease.OutBack));
         snapSeq.Join(transform.DOLocalRotateQuaternion(originalRotation, snapBackDuration));

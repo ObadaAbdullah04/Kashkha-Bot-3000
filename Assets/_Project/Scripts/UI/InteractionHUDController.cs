@@ -97,6 +97,16 @@ public class InteractionHUDController : MonoBehaviour
     private Sequence iconShakeTween;
     private float lastShakeCount = 0f;
 
+    /// <summary>
+    /// Fires when an interaction finishes. (interactionData, succeeded)
+    /// </summary>
+    public static Action<InteractionData, bool> OnInteractionFinished;
+
+    /// <summary>
+    /// Fires when Eidia is earned from an interaction. (amount)
+    /// </summary>
+    public static Action<int> OnEidiaEarned;
+
     #endregion
 
     #region Lifecycle
@@ -174,6 +184,26 @@ public class InteractionHUDController : MonoBehaviour
 
         if (debugLogging)
             Debug.Log($"[InteractionHUDController] Starting: {data.ID} | Type:{data.InteractionType} | Duration:{data.Duration}s | Threshold:{data.Threshold}");
+    }
+
+    /// <summary>
+    /// Immediately hides the HUD without completing any active interaction.
+    /// Called before house transitions to prevent stale content showing.
+    /// </summary>
+    public void HideHUD()
+    {
+        isActive = false;
+        entranceTween?.Kill();
+        exitTween?.Kill();
+        iconShakeTween?.Kill();
+
+        if (hudPanel != null)
+        {
+            hudPanel.gameObject.SetActive(false);
+            CanvasGroup canvasGroup = hudPanel.GetComponent<CanvasGroup>();
+            if (canvasGroup != null) canvasGroup.alpha = 1f;
+            hudPanel.localScale = Vector3.one;
+        }
     }
 
     #endregion
@@ -370,13 +400,32 @@ public class InteractionHUDController : MonoBehaviour
         if (debugLogging)
             Debug.Log($"[InteractionHUDController] {(succeeded ? "SUCCESS" : "FAILED")}: {currentInteraction.ID} | Battery:{batteryDelta} | Stomach:{stomachDelta} | Eid:{eidiaReward}");
 
+        // Play success or fail sound
+        AudioManager.Instance?.PlaySFX(succeeded
+            ? AudioManager.SFXType.InteractionSuccess
+            : AudioManager.SFXType.InteractionFail);
+
+        // Play shake rumble for shake-type interactions
+        if (succeeded && currentInteraction.InteractionType == InteractionType.Shake)
+        {
+            AudioManager.Instance?.PlaySFX(AudioManager.SFXType.InteractionShakeRumble);
+        }
+
+        // Fire global event for character expression updates
+        OnInteractionFinished?.Invoke(currentInteraction, succeeded);
+
         // Show feedback flash
         FlashResult(succeeded, () =>
         {
             // Update meters (both battery AND stomach)
             MeterManager.Instance?.ModifyBattery(batteryDelta);
             MeterManager.Instance?.ModifyStomach(stomachDelta);
-            SaveManager.Instance?.AddRunRewards(eidiaReward);
+            
+            if (eidiaReward > 0)
+            {
+                OnEidiaEarned?.Invoke(eidiaReward);
+                FloatingTextManager.Instance?.SpawnEidiaReward(eidiaReward);
+            }
 
             // Hide panel
             HidePanel(() =>

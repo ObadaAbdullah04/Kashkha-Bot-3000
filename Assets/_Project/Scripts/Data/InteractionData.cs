@@ -35,6 +35,16 @@ public class InteractionData
     public float Threshold;                  // Required input count/value (shake count, hold seconds, tap count)
                                              // For Draw type: unused (path completion determines success)
 
+    [Header("Expressions (Optional)")]
+    [Tooltip("The character whose expression should change after the interaction.")]
+    public string SpeakerName;               // Name of character to update
+
+    [Tooltip("The expression to show on success (e.g., 'Happy')")]
+    public string SuccessExpression;         
+
+    [Tooltip("The expression to show on failure/ignore (e.g., 'Sad')")]
+    public string FailureExpression;         
+
     #endregion
 
     #region Rewards/Penalties

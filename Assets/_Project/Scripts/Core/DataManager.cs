@@ -34,7 +34,13 @@ public class DataManager : MonoBehaviour
     [Tooltip("Interactions CSV (Interactions.csv)")]
     public TextAsset interactionsCSV;
 
+    [Tooltip("Cinematics CSV (Cinematics.csv)")]
+    public TextAsset cinematicsCSV;
+
     [Header("Cinematics (Unity Timeline / DOTween)")]
+    [Tooltip("Character data pool for looking up speakers in cinematics")]
+    [SerializeField] private List<CharacterExpressionSO> characterDataPool = new List<CharacterExpressionSO>();
+
     [Tooltip("Pre-defined cinematics (optional — can also be loaded from Resources)")]
     [SerializeField] private CinematicData[] preDefinedCinematics;
 
@@ -80,7 +86,23 @@ public class DataManager : MonoBehaviour
     private const int INT_COL_INCORRECT_STOMACH = 9;
     private const int INT_COL_CORRECT_EID = 10;
     private const int INT_COL_INCORRECT_EID = 11;
-    private const int INT_TOTAL_COLS = 12;
+    private const int INT_COL_SPEAKER = 12;
+    private const int INT_COL_SUCCESS_EXPR = 13;
+    private const int INT_COL_FAILURE_EXPR = 14;
+    private const int INT_TOTAL_COLS = 15;
+
+    // Cinematics CSV Column indices (10 columns)
+    private const int C_COL_ID = 0;
+    private const int C_COL_HOUSE_LEVEL = 1;
+    private const int C_COL_TYPE = 2; // 0=Timeline, 1=DOTween
+    private const int C_COL_TIMELINE = 3;
+    private const int C_COL_DURATION = 4;
+    private const int C_COL_TEXT = 5;
+    private const int C_COL_ANIMATION = 6;
+    private const int C_COL_SPEAKER = 7;
+    private const int C_COL_EXPRESSION = 8;
+    private const int C_COL_RESOURCE = 9;
+    private const int C_TOTAL_COLS = 10;
 
     private void Awake()
     {
@@ -89,11 +111,33 @@ public class DataManager : MonoBehaviour
             Instance = this;
             transform.SetParent(null);
             DontDestroyOnLoad(gameObject);
+            
+            // Automatically find character data if pool is empty
+            if (characterDataPool == null || characterDataPool.Count == 0)
+            {
+                LoadCharactersFromResources();
+            }
+            
             ParseAllCSVs();
         }
         else
         {
             Destroy(gameObject);
+        }
+    }
+
+    private void LoadCharactersFromResources()
+    {
+        characterDataPool.Clear();
+        var characters = Resources.LoadAll<CharacterExpressionSO>("Characters");
+        if (characters != null && characters.Length > 0)
+        {
+            characterDataPool.AddRange(characters);
+            Debug.Log($"[DataManager] Auto-loaded {characters.Length} characters from Resources/Characters/");
+        }
+        else
+        {
+            Debug.LogWarning("[DataManager] No characters found in Resources/Characters/!");
         }
     }
 
@@ -106,10 +150,97 @@ public class DataManager : MonoBehaviour
 
         ParseQuestionsCSV();
         LoadCinematics();
+        ParseCinematicsCSV(); // New CSV loader
         ParseInteractionsCSV();
 
         Debug.Log("[DataManager] All CSVs parsed!");
         PrintSummary();
+    }
+
+    [Button("Parse Cinematics CSV")]
+    private void ParseCinematicsCSV()
+    {
+        if (cinematicsCSV == null)
+        {
+            Debug.Log("[DataManager] No Cinematics CSV assigned. Skipping.");
+            return;
+        }
+
+        string[] lines = cinematicsCSV.text.Split('\n');
+        int parsed = 0;
+
+        for (int i = 1; i < lines.Length; i++)
+        {
+            if (string.IsNullOrWhiteSpace(lines[i])) continue;
+
+            string[] fields = Regex.Split(lines[i].Trim(), ",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
+            if (fields.Length < C_TOTAL_COLS) continue;
+
+            CinematicData cinematic = ParseCinematic(fields, i + 1);
+            if (cinematic != null)
+            {
+                cinematicByID[cinematic.ID] = cinematic;
+                parsed++;
+            }
+        }
+
+        Debug.Log($"[DataManager] ✅ Cinematics CSV: {parsed} parsed from file");
+    }
+
+    private CinematicData ParseCinematic(string[] fields, int line)
+    {
+        try
+        {
+            string id = fields[C_COL_ID].Trim();
+            if (string.IsNullOrEmpty(id)) return null;
+
+            CinematicData data = new CinematicData();
+            data.ID = id;
+            data.HouseLevel = int.Parse(fields[C_COL_HOUSE_LEVEL], CultureInfo.InvariantCulture);
+            
+            // Type: 0=Timeline, 1=DOTween
+            int typeInt = int.Parse(fields[C_COL_TYPE], CultureInfo.InvariantCulture);
+            data.Type = (CinematicType)typeInt;
+
+            data.TimelineAssetName = fields[C_COL_TIMELINE].Trim();
+            data.Duration = float.Parse(fields[C_COL_DURATION], CultureInfo.InvariantCulture);
+            data.TextAR = fields[C_COL_TEXT].Trim().Replace("\"", "");
+
+            // Animation enum
+            if (int.TryParse(fields[C_COL_ANIMATION], out int animInt))
+                data.Animation = (AnimationType)animInt;
+
+            // Speaker lookup
+            string speakerName = fields[C_COL_SPEAKER].Trim();
+            if (!string.IsNullOrEmpty(speakerName))
+                data.Speaker = GetSpeakerByName(speakerName);
+
+            data.Expression = fields[C_COL_EXPRESSION].Trim();
+            data.ResourceImageName = fields[C_COL_RESOURCE].Trim();
+
+            return data;
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[DataManager] Error parsing cinematic at line {line}: {e.Message}");
+            return null;
+        }
+    }
+
+    public CharacterExpressionSO GetSpeakerByName(string name)
+    {
+        if (characterDataPool == null || characterDataPool.Count == 0)
+        {
+            // Try emergency load if pool is empty
+            LoadCharactersFromResources();
+        }
+
+        if (characterDataPool == null) return null;
+
+        return characterDataPool.Find(s => s != null && 
+            (s.characterName.Equals(name, StringComparison.OrdinalIgnoreCase) || 
+             s.name.Equals(name, StringComparison.OrdinalIgnoreCase) ||
+             s.name.EndsWith(name, StringComparison.OrdinalIgnoreCase)));
     }
 
     [Button("Parse Questions")]
@@ -359,7 +490,10 @@ public class DataManager : MonoBehaviour
             CorrectStomachDelta = ParseFloat(SafeField(fields, INT_COL_CORRECT_STOMACH)),
             IncorrectStomachDelta = ParseFloat(SafeField(fields, INT_COL_INCORRECT_STOMACH)),
             CorrectEid = ParseInt(SafeField(fields, INT_COL_CORRECT_EID)),
-            IncorrectEid = ParseInt(SafeField(fields, INT_COL_INCORRECT_EID))
+            IncorrectEid = ParseInt(SafeField(fields, INT_COL_INCORRECT_EID)),
+            SpeakerName = SafeField(fields, INT_COL_SPEAKER),
+            SuccessExpression = SafeField(fields, INT_COL_SUCCESS_EXPR),
+            FailureExpression = SafeField(fields, INT_COL_FAILURE_EXPR)
         };
     }
 

@@ -183,15 +183,20 @@ public class HouseFlowController : MonoBehaviour
                 yield return new WaitForSeconds(pauseBetweenElements);
             }
         }
+// All elements done
+if (debugLogging)
+    Debug.Log($"[HouseFlowController] === House {houseLevel} Complete! All {currentSequence.Count} elements processed. ===");
 
-        // All elements done
-        if (debugLogging)
-            Debug.Log($"[HouseFlowController] === House {houseLevel} Complete! All {currentSequence.Count} elements processed. ===");
+// PHASE 17: Clean up cinematic UI and restore gameplay HUD
+if (cinematicController != null)
+{
+    cinematicController.HideCutsceneUI();
+    // Restoring gameplay UI is now handled by HouseFlowController finishing or transition to next house
+}
 
-        isSequencePlaying = false;
-        OnHouseCompleted?.Invoke(houseLevel);
-    }
-
+isSequencePlaying = false;
+OnHouseCompleted?.Invoke(houseLevel);
+}
     /// <summary>
     /// Cancels the currently playing sequence.
     /// </summary>
@@ -200,10 +205,15 @@ public class HouseFlowController : MonoBehaviour
         if (!isSequencePlaying) return;
 
         if (debugLogging)
-            Debug.Log("[HouseFlowController] Sequence cancelled externally.");
+            Debug.Log("[HouseFlowController] Sequence cancelled externally. Stopping all coroutines.");
+
+        // Actually stop the coroutines
+        StopAllCoroutines();
 
         isSequencePlaying = false;
-        OnHouseCompleted?.Invoke(currentHouseLevel);
+        
+        // Ensure cinematic UI is hidden if we cancel mid-cinematic
+        if (cinematicController != null) cinematicController.HideCutsceneUI();
     }
 
     #endregion

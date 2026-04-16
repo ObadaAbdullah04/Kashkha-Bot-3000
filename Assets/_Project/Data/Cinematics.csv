@@ -1,0 +1,23 @@
+﻿ID,HouseLevel,Type,TimelineName,Duration,TextAR,Animation,SpeakerName,Expression,ResourceImageName
+C_INTRO_1,1,0,House1_Intro,0,,0,,,
+C_PRE_SHAKE_Qahwa_1,1,1,,3,تفضل اشرب القهوة يا عزيزي! ما يصير تكسر الخاطر!,1,خالة,Happy,Aunt_Happy
+C_PRE_HOLD_Maamoul_1,1,1,,3,كلّ معمولة يا حبيبي.. طبختها بإيدي من الصبح!,1,خالة,Happy,Aunt_Happy
+C_PRE_TAP_Tamer_1,1,1,,3,خذ تمرة يا بني.. حلوة زيّك!,1,خالة,Happy,Aunt_Happy
+C_OUTRO_1,1,0,House1_Outro,0,,0,,,
+C_INTRO_2,2,0,House2_Intro,0,,0,,,
+C_PRE_SHAKE_Aaseer_2,2,1,,3,هيه! اشرب العصير! ما رح تقوم قبل ما تخلصه!,1,عمو,Happy,Uncle_Happy
+C_PRE_HOLD_Sahoon_2,2,1,,3,امسك الصحن يلا! لازم تاكل زي الجماعة!,1,عمو,Happy,Uncle_Happy
+C_PRE_TAP_Baklawa_2,2,1,,3,بقلاوة جبتها من الشام! كلها ولا تقول لا!,1,عمو,Happy,Uncle_Happy
+C_OUTRO_2,2,0,House2_Outro,0,,0,,,
+C_INTRO_3,3,0,House3_Intro,0,,0,,,
+C_PRE_HOLD_Mansaf_3,3,1,,4,اتفضل على المنسف يا بني.. ما في عذر والله!,1,جدو,Default,Grandpa_Default
+C_PRE_SHAKE_Knafeh_3,3,1,,3,كنافة نابلسية طازة! هيه يلا لازم تاكل!,1,جدو,Happy,Grandpa_Happy
+C_PRE_TAP_Halawiyyat_3,3,1,,3,حلويات من أبو عفيفة! خذ واكل ولا تخجّلنا!,1,جدو,Happy,Grandpa_Happy
+C_PRE_DRAW_Path_3,3,1,,3,وين رايح؟! المطبخ من هون تعال نحضّر أكثر!,1,جدو,Happy,Grandpa_Happy
+C_OUTRO_3,3,0,House3_Outro,0,,0,,,
+C_INTRO_4,4,0,House4_Intro,0,,0,,,
+C_PRE_HOLD_BigPlate_4,4,1,,3,كل!! كل كل كل! ما في كلمة لا عندي!!,1,ابن العم,Happy,Cousin_Happy
+C_PRE_TAP_ForceEat_4,4,1,,3,اقبل أو راح تزعّلني! قرار نهائي!!,1,ابن العم,Happy,Cousin_Happy
+C_PRE_SHAKE_Dessert_4,4,1,,3,حلويات يا بطل! الكل شايف والكل ينتظر!,1,ابن العم,Happy,Cousin_Happy
+C_PRE_DRAW_Escape_4,4,1,,3,وين تهرب؟! ارسم طريقك للمطبخ أو راح آكلك!,1,ابن العم,Happy,Cousin_Happy
+C_OUTRO_4,4,0,House4_Outro,0,,0,,,

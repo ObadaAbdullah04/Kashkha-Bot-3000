@@ -71,9 +71,23 @@ public class PathDrawingGame : MonoBehaviour
     [Tooltip("Distance between collision check points (smaller = more accurate but slower)")]
     [SerializeField] private float collisionCheckInterval = 0.2f;
 
+    [Header("Obstacles (Randomization)")]
+    [Tooltip("Prefabs to use for random obstacles")]
+    [SerializeField] private GameObject[] obstaclePrefabs;
+
+    [Tooltip("How many obstacles to spawn randomly")]
+    [SerializeField] private int randomObstacleCount = 5;
+
+    [Tooltip("Min/Max range for spawning (as % of screen, 0 to 1)")]
+    [SerializeField] private Vector2 spawnRangeX = new Vector2(0.1f, 0.9f);
+    [SerializeField] private Vector2 spawnRangeY = new Vector2(0.2f, 0.8f);
+
+    [Tooltip("Minimum distance between any two obstacles")]
+    [SerializeField] private float minDistanceBetweenObstacles = 2.0f;
+
     [Header("Obstacles (Manually Placed)")]
     [Tooltip("Array of obstacle Transforms (place manually in scene, then drag here)")]
-    [SerializeField] private Transform[] obstacles = new Transform[0];
+    [SerializeField] private List<Transform> obstacles = new List<Transform>();
 
     [Header("UI References")]
     [SerializeField] private RTLTextMeshPro timerText;
@@ -118,15 +132,28 @@ public class PathDrawingGame : MonoBehaviour
         mainCam = Camera.main;
         if (mainCam == null)
         {
-            mainCam = Camera.allCameras[0];
+            mainCam = Camera.allCameras.Length > 0 ? Camera.allCameras[0] : null;
         }
 
         // FIX #1: Auto-configure Canvas for proper rendering
         ConfigureCanvas();
 
-        // Enable input action (handled by OnEnable, not needed here)
-        // drawAction.action.Enable(); // Moved to OnEnable for proper lifecycle handling
+        // Enable input action (handled by OnEnable)
+        
+        // If not initialized yet, use default values
+        if (!gameEnded && timeRemaining <= 0)
+        {
+            InitializeGame();
+        }
+    }
 
+    /// <summary>
+    /// PHASE 5C (REVISED): Initialize the mini-game with specific time limit.
+    /// Called by MiniGameManager.
+    /// </summary>
+    public void Initialize(float customTimeLimit)
+    {
+        timeLimit = customTimeLimit;
         InitializeGame();
     }
 
@@ -195,11 +222,6 @@ public class PathDrawingGame : MonoBehaviour
 
         // Update holding state for next frame
         isHolding = isPressing;
-    }
-
-    private void OnDestroy()
-    {
-        CancelInvoke();
     }
 
     #endregion
@@ -282,6 +304,9 @@ public class PathDrawingGame : MonoBehaviour
     {
         isHolding = true;
         Vector3 inputPos = GetInputPosition();
+
+        // Play draw start sound
+        AudioManager.Instance?.PlaySFX(AudioManager.SFXType.PathDrawStart);
 
         // FIX #2: Start drawing from ANYWHERE - no validation
         linePoints.Clear();
@@ -419,7 +444,7 @@ public class PathDrawingGame : MonoBehaviour
     /// </summary>
     private bool IsObstacleCollider(Collider2D collider)
     {
-        if (obstacles == null || obstacles.Length == 0)
+        if (obstacles == null || obstacles.Count == 0)
             return false;
 
         // Check if collider is on any obstacle Transform
@@ -490,6 +515,9 @@ public class PathDrawingGame : MonoBehaviour
     {
         if (gameEnded) return;
 
+        // Play collision sound
+        AudioManager.Instance?.PlaySFX(AudioManager.SFXType.PathDrawCollision);
+
         // Apply time penalty
         timeRemaining -= collisionPenalty;
 
@@ -532,12 +560,27 @@ public class PathDrawingGame : MonoBehaviour
 
     #region Game Logic
 
+    private List<GameObject> _spawnedObstacles = new List<GameObject>();
+
     private void InitializeGame()
     {
         gameEnded = false;
         timeRemaining = timeLimit;
         linePoints.Clear();
         alreadyHitObstacles.Clear();
+
+        // Clean up any null references from previous runs
+        obstacles.RemoveAll(t => t == null);
+
+        // Clear previous random obstacles
+        foreach (var obj in _spawnedObstacles)
+        {
+            if (obj != null) Destroy(obj);
+        }
+        _spawnedObstacles.Clear();
+
+        // Spawn new random obstacles
+        SpawnRandomObstacles();
 
         // Setup line renderer
         if (pathLine != null)
@@ -555,10 +598,87 @@ public class PathDrawingGame : MonoBehaviour
             resultPanel.SetActive(false);
 
 #if UNITY_EDITOR
-        Debug.Log($"[PathGame] Game initialized! Time: {timeLimit}s, Obstacles: {obstacles.Length}");
+        Debug.Log($"[PathGame] Game initialized! Time: {timeLimit}s, Manual: {obstacles.Count}, Random: {randomObstacleCount}");
         Debug.Log($"[PathGame] START: {startPoint.position} | END: {endPoint.position}");
         Debug.Log("[PathGame] Draw ANYWHERE but must pass through Start and reach End to win!");
 #endif
+    }
+
+    private void SpawnRandomObstacles()
+    {
+        if (obstaclePrefabs == null || obstaclePrefabs.Length == 0 || randomObstacleCount <= 0) return;
+
+        int spawnedCount = 0;
+        int maxGlobalAttempts = randomObstacleCount * 10;
+        int globalAttempts = 0;
+
+        while (spawnedCount < randomObstacleCount && globalAttempts < maxGlobalAttempts)
+        {
+            globalAttempts++;
+            
+            GameObject prefab = obstaclePrefabs[Random.Range(0, obstaclePrefabs.Length)];
+            if (prefab == null) continue;
+
+            // Calculate random world position based on screen range
+            Vector3 spawnPos = GetRandomWorldPosition();
+
+            // 1. Check distance to critical game points
+            float distToStart = Vector2.Distance(spawnPos, startPoint.position);
+            float distToEnd = Vector2.Distance(spawnPos, endPoint.position);
+
+            if (distToStart < startRadius + 1f || distToEnd < goalDistance + 1f)
+            {
+                continue;
+            }
+
+            // 2. Check distance to other obstacles
+            bool tooCloseToOther = false;
+            foreach (var existing in obstacles)
+            {
+                if (existing == null) continue;
+                if (Vector2.Distance(spawnPos, existing.position) < minDistanceBetweenObstacles)
+                {
+                    tooCloseToOther = true;
+                    break;
+                }
+            }
+
+            if (tooCloseToOther) continue;
+
+            // All checks passed - Instantiate
+            GameObject instance = Instantiate(prefab, spawnPos, Quaternion.identity);
+            instance.name = $"Obstacle_{spawnedCount}";
+            
+            _spawnedObstacles.Add(instance);
+            
+            // Add to the tracking list for collision detection
+            if (!obstacles.Contains(instance.transform))
+            {
+                obstacles.Add(instance.transform);
+            }
+
+            spawnedCount++;
+        }
+
+        if (spawnedCount < randomObstacleCount)
+        {
+            Debug.LogWarning($"[PathGame] Only spawned {spawnedCount}/{randomObstacleCount} obstacles due to space constraints.");
+        }
+    }
+
+    private Vector3 GetRandomWorldPosition()
+    {
+        if (mainCam == null) return Vector3.zero;
+
+        // Use Viewport coordinates (0,0 to 1,1) for more reliable mapping
+        float randomX = Random.Range(spawnRangeX.x, spawnRangeX.y);
+        float randomY = Random.Range(spawnRangeY.x, spawnRangeY.y);
+
+        // Convert viewport point to world point
+        // Use a Z distance that matches where we want them in the world
+        Vector3 worldPos = mainCam.ViewportToWorldPoint(new Vector3(randomX, randomY, 10f));
+        worldPos.z = 0; // Ensure they are on the 2D plane
+        return worldPos;
     }
 
     private void EndGame(bool success)
@@ -567,6 +687,11 @@ public class PathDrawingGame : MonoBehaviour
 
         gameEnded = true;
         isHolding = false;
+
+        // Play success or fail sound
+        AudioManager.Instance?.PlaySFX(success
+            ? AudioManager.SFXType.PathDrawSuccess
+            : AudioManager.SFXType.PathDrawFail);
 
         if (resultPanel != null)
             resultPanel.SetActive(true);
@@ -577,33 +702,12 @@ public class PathDrawingGame : MonoBehaviour
             resultText.color = success ? Color.green : Color.red;
         }
 
+#if UNITY_EDITOR
         if (success)
-        {
-#if UNITY_EDITOR
             Debug.Log($"[PathGame] Success! Remaining time: {timeRemaining:F1}s");
-#endif
-
-            // Calculate rewards based on remaining time
-            int eidiaReward = Mathf.CeilToInt(timeRemaining);
-            int scrapReward = Mathf.Max(1, Mathf.CeilToInt(timeRemaining / 3));
-
-            if (GameManager.Instance != null)
-            {
-                GameManager.Instance.OnMiniGameComplete(eidiaReward);
-            }
-        }
         else
-        {
-#if UNITY_EDITOR
             Debug.Log("[PathGame] Failed - Time ran out!");
 #endif
-
-            // Partial rewards (consolation)
-            if (GameManager.Instance != null)
-            {
-                GameManager.Instance.OnMiniGameComplete(0);
-            }
-        }
 
         // Cleanup after delay
         Invoke(nameof(Cleanup), 2f);
@@ -615,13 +719,28 @@ public class PathDrawingGame : MonoBehaviour
         int eidiaReward = gameEnded && timeRemaining > 0 ? Mathf.CeilToInt(timeRemaining) : 0;
         int scrapReward = gameEnded && timeRemaining > 0 ? Mathf.Max(1, Mathf.CeilToInt(timeRemaining / 3f)) : 0; // No scrap on failure
 
-        // Return to MiniGameManager
+        // Return to MiniGameManager - this will handle GameManager.OnMiniGameComplete
         if (MiniGameManager.Instance != null)
         {
             MiniGameManager.Instance.EndMiniGame(eidiaReward, scrapReward);
         }
 
         Destroy(gameObject);
+    }
+
+    private void OnDestroy()
+    {
+        CancelInvoke();
+
+        // CRITICAL: Ensure obstacles are destroyed even if Cleanup wasn't called (e.g. forced destruction by manager)
+        if (_spawnedObstacles != null)
+        {
+            foreach (var obj in _spawnedObstacles)
+            {
+                if (obj != null) Destroy(obj);
+            }
+            _spawnedObstacles.Clear();
+        }
     }
 
     #endregion

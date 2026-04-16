@@ -91,7 +91,7 @@ public class WardrobeUI : MonoBehaviour
 
             if (i < costTexts.Length && costTexts[i] != null)
             {
-                costTexts[i].text = (shouldShowLock && data.scrapCost > 0) ? $"{data.scrapCost} خردة" : "";
+                costTexts[i].text = (shouldShowLock && data.scrapCost > 0) ? $"{data.scrapCost} عيدية" : "";
             }
 
             // Update button sprite automatically

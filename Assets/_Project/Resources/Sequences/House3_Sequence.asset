@@ -14,17 +14,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   HouseLevel: 3
   Sequence:
-  - Type: 1
-    ElementID: House_Intro 3
-    DesignerNote: 
   - Type: 0
     ElementID: Q13
     DesignerNote: 
   - Type: 0
     ElementID: Q14
     DesignerNote: 
+  - Type: 1
+    ElementID: C_PRE_TAP_Halawiyyat_3
+    DesignerNote: 
   - Type: 2
-    ElementID: SHAKE_Hand_3
+    ElementID: TAP_Halawiyyat_3
     DesignerNote: 
   - Type: 0
     ElementID: Q15
@@ -32,15 +32,15 @@ MonoBehaviour:
   - Type: 0
     ElementID: Q16
     DesignerNote: 
+  - Type: 1
+    ElementID: C_PRE_SHAKE_Knafeh_3
+    DesignerNote: 
   - Type: 2
-    ElementID: HOLD_Gift_3
+    ElementID: SHAKE_Knafeh_3
     DesignerNote: 
   - Type: 0
     ElementID: Q17
     DesignerNote: 
   - Type: 0
     ElementID: Q18
-    DesignerNote: 
-  - Type: 1
-    ElementID: House_Outro 3
     DesignerNote: 

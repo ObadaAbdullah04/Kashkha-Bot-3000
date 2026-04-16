@@ -112,7 +112,10 @@ public class MeterManager : MonoBehaviour
 #endif
 
         if (currentBattery <= 0f && previous > 0f)
+        {
+            AudioManager.Instance?.PlaySFX(AudioManager.SFXType.BatteryDrained);
             OnBatteryDrained?.Invoke();
+        }
 
         OnMetersChanged?.Invoke(currentBattery, currentStomach);
 
@@ -158,7 +161,10 @@ public class MeterManager : MonoBehaviour
         Debug.Log($"[Meter] Stomach: {previous:F0} → {currentStomach:F0} ({(modifiedAmount > 0 ? "+" : "")}{modifiedAmount:F0})");
 
         if (currentStomach >= 100f && previous < 100f)
+        {
+            AudioManager.Instance?.PlaySFX(AudioManager.SFXType.StomachFull);
             OnStomachFull?.Invoke();
+        }
 
         OnMetersChanged?.Invoke(currentBattery, currentStomach);
 

@@ -142,13 +142,6 @@ public class UnifiedHubManager : MonoBehaviour
     [Tooltip("Level display text for Titanium Stomach")]
     [SerializeField] private RTLTextMeshPro titaniumLevelText;
 
-    [Header("Celebration Panel")]
-    [Tooltip("Panel shown after completing all 4 houses")]
-    [SerializeField] private GameObject celebrationPanel;
-
-    [Tooltip("'Play Again' button shown after full run completion")]
-    [SerializeField] private Button playAgainButton;
-
     [Header("Mini-Game Replay Settings")]
     [Tooltip("Allow replaying mini-games after they've been unlocked")]
     [SerializeField] private bool allowMiniGameReplay = true;
@@ -344,9 +337,6 @@ public class UnifiedHubManager : MonoBehaviour
 
         // Action button
         if (actionButton != null) actionButton.onClick.AddListener(OnActionButtonClicked);
-
-        // Play again button
-        if (playAgainButton != null) playAgainButton.onClick.AddListener(OnPlayAgainClicked);
     }
 
     private void UnregisterButtonListeners()
@@ -365,7 +355,6 @@ public class UnifiedHubManager : MonoBehaviour
         if (expandBatteryButton != null) expandBatteryButton.onClick.RemoveAllListeners();
         if (titaniumStomachButton != null) titaniumStomachButton.onClick.RemoveAllListeners();
         if (actionButton != null) actionButton.onClick.RemoveAllListeners();
-        if (playAgainButton != null) playAgainButton.onClick.RemoveAllListeners();
     }
 
     #endregion
@@ -452,6 +441,84 @@ public class UnifiedHubManager : MonoBehaviour
 
     #endregion
 
+    #region Post-Game Modes
+
+    /// <summary>
+    /// Puts the hub into Game Over mode: disables all house/mini-game/action buttons.
+    /// Player can still view Wardrobe/Upgrades tabs, but cannot continue the run.
+    /// </summary>
+    public void EnterGameOverMode()
+    {
+        nextHouseLevelToPlay = 5; // Sentinel > 4 (no more houses)
+
+        // Disable all house buttons
+        foreach (var btn in houseButtons)
+        {
+            if (btn != null) btn.interactable = false;
+        }
+
+        // Disable all mini-game buttons
+        foreach (var btn in miniGameButtons)
+        {
+            if (btn != null) btn.interactable = false;
+        }
+
+        // Hide action button (no next house to play)
+        if (actionButton != null) actionButton.gameObject.SetActive(false);
+
+        // Hide lock icons
+        foreach (var lockIcon in houseLocks)
+        {
+            if (lockIcon != null) lockIcon.SetActive(false);
+        }
+
+        // Switch to Houses tab to show the disabled state
+        SwitchTab(HubTab.Houses);
+
+#if UNITY_EDITOR
+        Debug.Log("[UnifiedHub] Entered Game Over mode. All navigation disabled.");
+#endif
+    }
+
+    /// <summary>
+    /// Puts the hub into Win mode: disables navigation. Visuals handled by UIManager.
+    /// </summary>
+    public void EnterWinMode()
+    {
+        isFullRunComplete = true;
+        nextHouseLevelToPlay = 5; // Sentinel > 4
+
+        // Disable all house buttons
+        foreach (var btn in houseButtons)
+        {
+            if (btn != null) btn.interactable = false;
+        }
+
+        // Disable all mini-game buttons
+        foreach (var btn in miniGameButtons)
+        {
+            if (btn != null) btn.interactable = false;
+        }
+
+        // Hide action button
+        if (actionButton != null) actionButton.gameObject.SetActive(false);
+
+        // Hide lock icons
+        foreach (var lockIcon in houseLocks)
+        {
+            if (lockIcon != null) lockIcon.SetActive(false);
+        }
+
+        // Switch to Houses tab
+        SwitchTab(HubTab.Houses);
+
+#if UNITY_EDITOR
+        Debug.Log("[UnifiedHub] Entered Win mode. Navigation disabled.");
+#endif
+    }
+
+    #endregion
+
     #region Tab Management
 
     /// <summary>
@@ -497,6 +564,9 @@ public class UnifiedHubManager : MonoBehaviour
             return;
         }
 
+        // DEBOUNCE: Disable all buttons immediately to prevent double-click during transition
+        DisableAllNavigation();
+
         OnStartNextHouse?.Invoke(houseLevel);
     }
 
@@ -511,10 +581,27 @@ public class UnifiedHubManager : MonoBehaviour
         if (!completedHouses[previousHouse]) return;
 
         // For non-replay: validate next house isn't already complete
-        // For replay mode: allow even if next house is complete
         if (!allowMiniGameReplay && completedHouses[nextHouse]) return;
 
+        // DEBOUNCE: Disable all buttons immediately to prevent double-click during transition
+        DisableAllNavigation();
+
         OnStartMiniGame?.Invoke(miniGameIndex);
+    }
+
+    /// <summary>
+    /// Helper to disable all navigation buttons during transitions.
+    /// </summary>
+    private void DisableAllNavigation()
+    {
+        foreach (var btn in houseButtons) if (btn != null) btn.interactable = false;
+        foreach (var btn in miniGameButtons) if (btn != null) btn.interactable = false;
+        if (actionButton != null) actionButton.interactable = false;
+        
+        // Also disable tab switching
+        if (housesTabButton != null) housesTabButton.interactable = false;
+        if (wardrobeTabButton != null) wardrobeTabButton.interactable = false;
+        if (upgradesTabButton != null) upgradesTabButton.interactable = false;
     }
 
     #endregion
@@ -540,19 +627,19 @@ public class UnifiedHubManager : MonoBehaviour
         }
     }
 
-    private void OnPlayAgainClicked()
-    {
-        OnPlayAgain?.Invoke();
-    }
-
     #endregion
 
     #region Wardrobe Tab
 
     /// <summary>
-    /// Wrapper for SaveManager.OnScrapChanged (Action<int>) to match RefreshWardrobeUI (Action).
+    /// Wrapper for SaveManager.OnScrapChanged (Action<int>) to match refresh requirements.
+    /// Updates both Wardrobe and Upgrades tabs to reflect new scrap totals.
     /// </summary>
-    private void OnScrapChangedFromSaveManager(int newScrapTotal) => RefreshWardrobeUI();
+    private void OnScrapChangedFromSaveManager(int newScrapTotal)
+    {
+        RefreshWardrobeUI();
+        RefreshUpgradeUI();
+    }
 
     private void RefreshWardrobeUI()
     {
@@ -594,14 +681,14 @@ public class UnifiedHubManager : MonoBehaviour
 
     private void RefreshUpgradeUI()
     {
-        int playerScrap = SaveManager.Instance != null ? SaveManager.Instance.CurrentData.TotalScrap : 0;
+        int playerEidia = SaveManager.Instance != null ? SaveManager.Instance.CurrentData.TotalEidia : 0;
 
         UpdateUpgradeUI(
             UpgradeType.RechargeBattery,
             rechargeBatteryButton,
             rechargeCostText,
             rechargeLevelText,
-            playerScrap,
+            playerEidia,
             maxRechargePurchases
         );
 
@@ -610,7 +697,7 @@ public class UnifiedHubManager : MonoBehaviour
             expandBatteryButton,
             expandCostText,
             expandLevelText,
-            playerScrap,
+            playerEidia,
             maxExpandPurchases
         );
 
@@ -619,17 +706,17 @@ public class UnifiedHubManager : MonoBehaviour
             titaniumStomachButton,
             titaniumCostText,
             titaniumLevelText,
-            playerScrap,
+            playerEidia,
             maxTitaniumPurchases
         );
     }
 
     private void UpdateUpgradeUI(
-        UpgradeType type,
-        Button button,
-        RTLTextMeshPro costText,
-        RTLTextMeshPro levelText,
-        int playerScrap,
+        UpgradeType type, 
+        Button button, 
+        RTLTextMeshPro costText, 
+        RTLTextMeshPro levelText, 
+        int playerCurrency, 
         int maxPurchases)
     {
         if (button == null || costText == null || levelText == null) return;
@@ -639,15 +726,14 @@ public class UnifiedHubManager : MonoBehaviour
         bool isMaxed = level >= maxPurchases;
 
         // Update cost text
-        costText.text = isMaxed ? "الحد الأقصى" : $"{currentCost} خردة";
+        costText.text = isMaxed ? "الحد الأقصى" : $"{currentCost} عيدية";
 
         // Update level text
         levelText.text = isMaxed ? $"MAX ({maxPurchases}/{maxPurchases})" : $"{level}/{maxPurchases}";
 
         // Button interactability
-        bool canAfford = playerScrap >= currentCost && !isMaxed;
+        bool canAfford = playerCurrency >= currentCost && !isMaxed;
         button.interactable = canAfford;
-
         // Color feedback
         if (isMaxed)
         {
@@ -677,17 +763,20 @@ public class UnifiedHubManager : MonoBehaviour
         }
 
         int currentCost = GetCurrentCost(upgradeType);
-        int playerScrap = SaveManager.Instance != null ? SaveManager.Instance.CurrentData.TotalScrap : 0;
+        int playerEidia = SaveManager.Instance != null ? SaveManager.Instance.CurrentData.TotalEidia : 0;
 
-        if (playerScrap < currentCost)
+        if (playerEidia < currentCost)
         {
-            Debug.LogWarning($"[UnifiedHub] Can't afford {upgradeType}. Need {currentCost}, have {playerScrap}");
+            Debug.LogWarning($"[UnifiedHub] Can't afford {upgradeType}. Need {currentCost}, have {playerEidia}");
             return;
         }
 
-        // Deduct scrap
-        SaveManager.Instance.CurrentData.TotalScrap -= currentCost;
-        SaveManager.Instance.SaveGame();
+        // Deduct scrap using the new SpendScrap method to ensure consistency and event firing
+        if (!SaveManager.Instance.SpendScrap(currentCost))
+        {
+            Debug.LogError($"[UnifiedHub] Failed to spend scrap for {upgradeType} despite afford check!");
+            return;
+        }
 
         // Apply upgrade effect
         ApplyUpgradeEffect(upgradeType);
@@ -779,7 +868,6 @@ public class UnifiedHubManager : MonoBehaviour
         UpdateHousesUI();
         UpdateMiniGameButtons();
         UpdateActionButton();
-        UpdateCelebrationUI();
     }
 
     private void UpdateHousesUI()
@@ -881,15 +969,6 @@ public class UnifiedHubManager : MonoBehaviour
         }
 
         actionButton.interactable = miniGameAvailable || houseAvailable;
-    }
-
-    private void UpdateCelebrationUI()
-    {
-        if (celebrationPanel != null)
-            celebrationPanel.SetActive(isFullRunComplete);
-
-        if (playAgainButton != null)
-            playAgainButton.gameObject.SetActive(isFullRunComplete);
     }
 
     #endregion

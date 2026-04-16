@@ -14,21 +14,33 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   HouseLevel: 1
   Sequence:
-  - Type: 1
-    ElementID: House_Intro 1
-    DesignerNote: 
   - Type: 0
     ElementID: Q1
     DesignerNote: 
   - Type: 0
     ElementID: Q2
     DesignerNote: 
+  - Type: 1
+    ElementID: C_PRE_SHAKE_Qahwa_1
+    DesignerNote: 
   - Type: 2
     ElementID: SHAKE_Qahwa_1
+    DesignerNote: 
+  - Type: 0
+    ElementID: Q3
+    DesignerNote: 
+  - Type: 0
+    ElementID: Q4
+    DesignerNote: 
+  - Type: 1
+    ElementID: C_PRE_HOLD_Maamoul_1
     DesignerNote: 
   - Type: 2
     ElementID: HOLD_Maamoul_1
     DesignerNote: 
-  - Type: 1
-    ElementID: House_Outro 1
+  - Type: 0
+    ElementID: Q5
+    DesignerNote: 
+  - Type: 0
+    ElementID: Q6
     DesignerNote: 

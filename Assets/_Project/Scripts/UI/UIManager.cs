@@ -54,6 +54,20 @@ public class UIManager : MonoBehaviour
     [SerializeField] private GameObject gameOverPanel;
     [SerializeField] private GameObject winPanel;
 
+    [Header("Result Displays")]
+    [SerializeField] private RTLTextMeshPro gameOverEidiaText;
+    [SerializeField] private RTLTextMeshPro winEidiaText;
+
+    [Header("Panel Buttons")]
+    [Tooltip("Exit button on the Game Over panel (returns to main menu)")]
+    [SerializeField] private Button gameOverExitButton;
+    [Tooltip("Play again button on the Game Over panel")]
+    [SerializeField] private Button gameOverPlayAgainButton;
+    [Tooltip("Exit button on the Win panel (returns to main menu)")]
+    [SerializeField] private Button winExitButton;
+    [Tooltip("Play again button on the Win panel")]
+    [SerializeField] private Button winPlayAgainButton;
+
     [Header("Unified Hub Panel (PHASE 10)")]
     [Tooltip("Single unified hub panel with 3 tabs: Houses, Wardrobe, Upgrades")]
     [SerializeField] private GameObject unifiedHubPanel;
@@ -73,6 +87,7 @@ public class UIManager : MonoBehaviour
     [Header("Feedback Colors")]
     [SerializeField] private Color correctFeedbackColor = new Color(0.2f, 0.8f, 0.2f, 1f);
     [SerializeField] private Color wrongFeedbackColor = new Color(0.9f, 0.2f, 0.2f, 1f);
+    [SerializeField] private Color instructionColor = new Color(0.2f, 0.6f, 0.9f, 1f); // Blue-ish
 
     [Header("Animation Settings")]
     [SerializeField] private float feedbackFadeInDuration = 0.22f;
@@ -80,6 +95,8 @@ public class UIManager : MonoBehaviour
     [SerializeField] private float feedbackFadeOutDuration = 0.22f;
 
     [Header("Card Idle Animation")]
+
+    public static Action OnPlayAgain;
 
     #endregion
 
@@ -105,6 +122,7 @@ public class UIManager : MonoBehaviour
         if (startBtn != null)
         {
             startBtn.onClick.AddListener(() => {
+                AudioManager.Instance?.PlaySFX(AudioManager.SFXType.ButtonClick);
                 if (GameManager.Instance != null)
                     GameManager.Instance.StartRun();
             });
@@ -113,6 +131,50 @@ public class UIManager : MonoBehaviour
         // Handle initial state
         HandleInitialState();
     }
+
+    /// <summary>
+    /// Called when the player clicks Play Again on Game Over or Win panel.
+    /// </summary>
+    private void OnPlayAgainClicked()
+    {
+        AudioManager.Instance?.PlaySFX(AudioManager.SFXType.ButtonClick);
+        OnPlayAgain?.Invoke();
+    }
+
+    /// <summary>
+    /// Called when the player clicks Exit on Game Over or Win panel.
+    /// Returns to main menu state.
+    /// </summary>
+    private void OnExitToMainMenu()
+    {
+        AudioManager.Instance?.PlaySFX(AudioManager.SFXType.ButtonClick);
+
+        if (GameManager.Instance != null)
+        {
+            // Reset everything and go back to main menu
+            GameManager.Instance.ChangeState(GameState.MainMenu);
+        }
+    }
+
+    /// <summary>
+    /// Quits the application.
+    /// </summary>
+    public void QuitGame()
+    {
+        AudioManager.Instance?.PlaySFX(AudioManager.SFXType.ButtonClick);
+        
+        Debug.Log("[UIManager] Quitting Game...");
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+        Application.Quit();
+#endif
+    }
+
+    /// <summary>
+    /// Public wrapper for Inspector OnClick event assignment.
+    /// </summary>
+    public void ExitToMainMenu() => OnExitToMainMenu();
 
     /// <summary>
     /// Handles the initial game state on startup.
@@ -130,6 +192,7 @@ public class UIManager : MonoBehaviour
             if (initialState == GameState.MainMenu)
             {
                 if (mainMenuPanel != null) mainMenuPanel.SetActive(true);
+                AudioManager.Instance?.PlayMenuMusic();
             }
             else if (initialState == GameState.Wardrobe || initialState == GameState.HouseHub)
             {
@@ -145,6 +208,14 @@ public class UIManager : MonoBehaviour
         MeterManager.OnMetersChanged += HandleMetersChanged;
         MeterManager.OnBatteryModified += HandleBatteryModified;
         MeterManager.OnStomachModified += HandleStomachModified;
+
+        // Exit buttons
+        if (gameOverExitButton != null) gameOverExitButton.onClick.AddListener(OnExitToMainMenu);
+        if (winExitButton != null) winExitButton.onClick.AddListener(OnExitToMainMenu);
+
+        // Play Again buttons
+        if (gameOverPlayAgainButton != null) gameOverPlayAgainButton.onClick.AddListener(OnPlayAgainClicked);
+        if (winPlayAgainButton != null) winPlayAgainButton.onClick.AddListener(OnPlayAgainClicked);
     }
 
     private void OnDisable()
@@ -155,6 +226,14 @@ public class UIManager : MonoBehaviour
         MeterManager.OnBatteryModified -= HandleBatteryModified;
         MeterManager.OnStomachModified -= HandleStomachModified;
 
+        // Exit buttons
+        if (gameOverExitButton != null) gameOverExitButton.onClick.RemoveListener(OnExitToMainMenu);
+        if (winExitButton != null) winExitButton.onClick.RemoveListener(OnExitToMainMenu);
+
+        // Play Again buttons
+        if (gameOverPlayAgainButton != null) gameOverPlayAgainButton.onClick.RemoveListener(OnPlayAgainClicked);
+        if (winPlayAgainButton != null) winPlayAgainButton.onClick.RemoveListener(OnPlayAgainClicked);
+
         // Kill all active tweens to prevent memory leaks
         _feedbackSequence?.Kill();
 
@@ -164,6 +243,9 @@ public class UIManager : MonoBehaviour
 
     private void HandleRunStarted()
     {
+        // Play gameplay music on run start
+        AudioManager.Instance?.PlayGameplayMusic();
+
         InitializeUI();
         // Feedback panel might be active from a previous game over
         feedbackPanel.SetActive(false);
@@ -238,35 +320,33 @@ public class UIManager : MonoBehaviour
 
         EnsureFeedbackComponents();
 
+        // KILL existing sequence and force reset
+        _feedbackSequence?.Kill();
+        
         Image feedbackImage = feedbackPanel.GetComponent<Image>();
         if (feedbackText != null)
             feedbackText.text = text;
 
         Color targetColor = isCorrect ? correctFeedbackColor : wrongFeedbackColor;
 
+        // Force active and reset alpha
         feedbackPanel.SetActive(true);
-
-        _feedbackSequence?.Kill();
         _feedbackCanvasGroup.alpha = 0f;
         _feedbackCanvasGroup.interactable = false;
         _feedbackCanvasGroup.blocksRaycasts = false;
-        feedbackImage.color = new Color(targetColor.r, targetColor.g, targetColor.b, 0f);
+        
+        if (feedbackImage != null)
+            feedbackImage.color = new Color(targetColor.r, targetColor.g, targetColor.b, 0f);
 
         _feedbackSequence = DOTween.Sequence()
             .Append(_feedbackCanvasGroup.DOFade(1f, feedbackFadeInDuration).SetUpdate(true))
-            .Join(DOTween.To(
-                () => feedbackImage.color,
-                x => feedbackImage.color = x,
-                targetColor,
-                feedbackFadeInDuration
-            ).SetUpdate(true))
+            .Join(feedbackImage.DOFade(targetColor.a, feedbackFadeInDuration).SetUpdate(true))
             .AppendInterval(feedbackDisplayDuration)
             .Append(_feedbackCanvasGroup.DOFade(0f, feedbackFadeOutDuration).SetUpdate(true))
+            .Join(feedbackImage.DOFade(0f, feedbackFadeOutDuration).SetUpdate(true))
             .OnComplete(() =>
             {
                 feedbackPanel.SetActive(false);
-                _feedbackCanvasGroup.interactable = false;
-                _feedbackCanvasGroup.blocksRaycasts = false;
                 onComplete?.Invoke();
             })
             .SetUpdate(true);
@@ -278,12 +358,75 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
+    /// Shows a neutral instruction text (blue color).
+    /// </summary>
+    public void ShowInstruction(string text, Action onComplete = null)
+    {
+        if (feedbackPanel == null) return;
+        EnsureFeedbackComponents();
+
+        _feedbackSequence?.Kill();
+        
+        Image feedbackImage = feedbackPanel.GetComponent<Image>();
+        if (feedbackText != null)
+            feedbackText.text = text;
+
+        feedbackPanel.SetActive(true);
+        _feedbackCanvasGroup.alpha = 0f;
+        
+        if (feedbackImage != null)
+            feedbackImage.color = new Color(instructionColor.r, instructionColor.g, instructionColor.b, 0f);
+
+        _feedbackSequence = DOTween.Sequence()
+            .Append(_feedbackCanvasGroup.DOFade(1f, feedbackFadeInDuration).SetUpdate(true))
+            .Join(feedbackImage.DOFade(instructionColor.a, feedbackFadeInDuration).SetUpdate(true))
+            .AppendInterval(2.5f) // Slightly longer for instructions
+            .Append(_feedbackCanvasGroup.DOFade(0f, feedbackFadeOutDuration).SetUpdate(true))
+            .Join(feedbackImage.DOFade(0f, feedbackFadeOutDuration).SetUpdate(true))
+            .OnComplete(() =>
+            {
+                feedbackPanel.SetActive(false);
+                onComplete?.Invoke();
+            })
+            .SetUpdate(true);
+    }
+
+    /// <summary>
     /// Hides all UI panels during the inter-house mini-game.
     /// Called by MiniGameManager before instantiating the catch game prefab.
     /// </summary>
     public void HideAllPanelsForMiniGame()
     {
         HideAllPanels();
+    }
+
+    /// <summary>
+    /// Hides the swipe encounter panel specifically.
+    /// Called before house transitions to prevent stale content showing.
+    /// </summary>
+    public void HideSwipeEncounter()
+    {
+        if (swipeEncounterPanel != null)
+            swipeEncounterPanel.SetActive(false);
+    }
+
+    /// <summary>
+    /// Shows the swipe encounter panel.
+    /// Called during house transition midpoint (while screen is black).
+    /// </summary>
+    public void ShowSwipeEncounter()
+    {
+        if (swipeEncounterPanel != null)
+            swipeEncounterPanel.SetActive(true);
+    }
+
+    /// <summary>
+    /// Hides the interaction HUD specifically.
+    /// Called before house transitions to prevent stale content showing.
+    /// </summary>
+    public void HideInteractionHUD()
+    {
+        InteractionHUDController.Instance?.HideHUD();
     }
 
     public void ShakeSocialShutdown()
@@ -412,6 +555,30 @@ public class UIManager : MonoBehaviour
 
     #region Event Handlers
 
+    public void ShowGameOver(int totalEidia)
+    {
+        HideAllPanels();
+        gameOverPanel.SetActive(true);
+        if (gameOverEidiaText != null)
+        {
+            gameOverEidiaText.text = $"عيدية مجمعة: {totalEidia}";
+        }
+        SetHUDEnabled(false);
+        ShowUnifiedHubWithoutHidingOthers();
+    }
+
+    public void ShowWin(int totalEidia)
+    {
+        HideAllPanels();
+        winPanel.SetActive(true);
+        if (winEidiaText != null)
+        {
+            winEidiaText.text = $"عيدية مجمعة: {totalEidia}";
+        }
+        SetHUDEnabled(false);
+        ShowUnifiedHubWithoutHidingOthers();
+    }
+
     private void HandleStateChanged(GameState newState)
     {
         switch (newState)
@@ -419,6 +586,7 @@ public class UIManager : MonoBehaviour
             case GameState.MainMenu:
                 HideAllPanels();
                 if (mainMenuPanel != null) mainMenuPanel.SetActive(true);
+                AudioManager.Instance?.PlayMenuMusic();
                 SetHUDEnabled(false);
                 break;
             case GameState.Wardrobe:
@@ -430,7 +598,9 @@ public class UIManager : MonoBehaviour
                 break;
             case GameState.Encounter:
                 HideAllPanels();
-                swipeEncounterPanel.SetActive(true);
+                // CRITICAL FIX: Don't show encounter panel yet - it will be revealed
+                // after the house transition completes (prevents showing behind fade)
+                // HouseFlowController.ShowSingleCard will activate cards when ready
                 // Show HUD meters and force refresh when entering a house
                 SetHUDEnabled(true);
                 RefreshMeters();
@@ -441,18 +611,10 @@ public class UIManager : MonoBehaviour
                 SetHUDEnabled(false);
                 break;
             case GameState.GameOver:
-                HideAllPanels();
-                gameOverPanel.SetActive(true);
-                SetHUDEnabled(false);
-                // Show hub panel so player can navigate (try again, wardrobe, etc.)
-                ShowUnifiedHubWithoutHidingOthers();
+                // Now handled by ShowGameOver
                 break;
             case GameState.Win:
-                HideAllPanels();
-                winPanel.SetActive(true);
-                SetHUDEnabled(false);
-                // Show hub panel so player can navigate (try again, wardrobe, etc.)
-                ShowUnifiedHubWithoutHidingOthers();
+                // Now handled by ShowWin
                 break;
         }
     }

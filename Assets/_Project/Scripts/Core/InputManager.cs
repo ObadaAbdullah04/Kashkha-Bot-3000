@@ -73,6 +73,20 @@ public class InputManager : MonoBehaviour
                 Debug.Log("[InputManager] DeviceControls created programmatically.");
 #endif
             }
+
+            // AUTO-DISABLE simulation on mobile devices
+#if !UNITY_EDITOR
+            useEditorSimulation = false;
+#endif
+
+            // Ensure Accelerometer is enabled (required on some mobile platforms)
+            if (Accelerometer.current != null)
+            {
+                InputSystem.EnableDevice(Accelerometer.current);
+#if UNITY_EDITOR
+                Debug.Log("[InputManager] Accelerometer device enabled.");
+#endif
+            }
         }
         else
         {
@@ -122,7 +136,10 @@ public class InputManager : MonoBehaviour
             case "Draw": device.Draw?.Enable(); break;
             case "TouchPosition": device.TouchPosition?.Enable(); break;
             case "TouchStart": device.TouchStart?.Enable(); break;
-            case "Acceleration": device.Acceleration?.Enable(); break;
+            case "Acceleration": 
+                device.Acceleration?.Enable();
+                if (Accelerometer.current != null) InputSystem.EnableDevice(Accelerometer.current);
+                break;
             case "Tap": device.Tap?.Enable(); break;
             default:
                 Debug.LogWarning($"[InputManager] Unknown action: {actionName}");
@@ -187,9 +204,12 @@ public class InputManager : MonoBehaviour
     /// </summary>
     public bool IsTouching()
     {
-        if (deviceControls?.Device.TouchStart != null)
-            return deviceControls.Device.TouchStart.IsPressed();
-        return false;
+        // Try direct touch start check first
+        if (deviceControls?.Device.TouchStart != null && deviceControls.Device.TouchStart.IsPressed())
+            return true;
+            
+        // Fallback to screen-wide pointer check for reliability
+        return Pointer.current != null && Pointer.current.press.isPressed;
     }
 
     /// <summary>
@@ -197,8 +217,13 @@ public class InputManager : MonoBehaviour
     /// </summary>
     public Vector3 GetAcceleration()
     {
-        if (deviceControls?.Device.Acceleration != null)
+        if (deviceControls?.Device.Acceleration != null && deviceControls.Device.Acceleration.enabled)
             return deviceControls.Device.Acceleration.ReadValue<Vector3>();
+        
+        // Fallback to direct reading if action is disabled but device exists
+        if (Accelerometer.current != null)
+            return Accelerometer.current.acceleration.ReadValue();
+            
         return Vector3.zero;
     }
 
@@ -218,8 +243,14 @@ public class InputManager : MonoBehaviour
     /// </summary>
     public bool IsTapPressed()
     {
-        if (deviceControls?.Device.Tap != null)
-            return deviceControls.Device.Tap.WasPressedThisFrame();
+        // Check tap action
+        if (deviceControls?.Device.Tap != null && deviceControls.Device.Tap.WasPressedThisFrame())
+            return true;
+            
+        // Fallback to touch start
+        if (deviceControls?.Device.TouchStart != null && deviceControls.Device.TouchStart.WasPressedThisFrame())
+            return true;
+
         return false;
     }
 
@@ -238,6 +269,9 @@ public class InputManager : MonoBehaviour
         _isHolding = false;
         _tapCount = 0;
         _lastTapTime = 0f;
+        
+        // Ensure acceleration action is enabled for shake
+        EnableAction("Acceleration");
     }
 
     /// <summary>
@@ -293,6 +327,7 @@ public class InputManager : MonoBehaviour
 
     private void UpdateShakeInput()
     {
+#if UNITY_EDITOR
         if (useEditorSimulation)
         {
             // Editor simulation: Space key presses (New Input System)
@@ -302,63 +337,70 @@ public class InputManager : MonoBehaviour
                 {
                     _shakeCount++;
                     _lastShakeTime = Time.time;
-#if UNITY_EDITOR
-                    Debug.Log($"[InputManager] Shake detected! Count: {_shakeCount}");
-#endif
+                    Debug.Log($"[InputManager] Shake detected (SIM)! Count: {_shakeCount}");
                 }
             }
+            return; // Don't run real accelerometer logic in editor if simulation is on
         }
-        else
+#endif
+
+        // Mobile: accelerometer magnitude threshold
+        // NOTE: We look for spikes ABOVE gravity (9.81 m/s^2)
+        Vector3 accel = GetAcceleration();
+        float magnitude = accel.magnitude;
+        
+        // Threshold should be higher than gravity to count as a "shake"
+        // 13.0f means roughly 1.3g (gravity is 1g)
+        const float SHAKE_THRESHOLD = 13.0f; 
+        
+        if (magnitude >= SHAKE_THRESHOLD && Time.time - _lastShakeTime >= SHAKE_COOLDOWN)
         {
-            // Mobile: accelerometer magnitude threshold
-            Vector3 accel = GetAcceleration();
-            float magnitude = accel.magnitude;
-            const float SHAKE_THRESHOLD = 1.5f; // Adjust based on testing
-            
-            if (magnitude >= SHAKE_THRESHOLD && Time.time - _lastShakeTime >= SHAKE_COOLDOWN)
-            {
-                _shakeCount++;
-                _lastShakeTime = Time.time;
-            }
+            _shakeCount++;
+            _lastShakeTime = Time.time;
+#if UNITY_EDITOR
+            Debug.Log($"[InputManager] Real Shake detected! Magnitude: {magnitude}");
+#endif
         }
     }
 
     private void UpdateHoldInput()
     {
+#if UNITY_EDITOR
         if (useEditorSimulation)
         {
             // Editor simulation: H key held (New Input System)
-            bool isPressed = Keyboard.current != null && Keyboard.current[holdKey].isPressed;
+            bool hPressed = Keyboard.current != null && Keyboard.current[holdKey].isPressed;
             
-            if (isPressed && !_isHolding)
+            if (hPressed && !_isHolding)
             {
                 _isHolding = true;
                 _holdStartTime = Time.time;
             }
-            else if (!isPressed && _isHolding)
+            else if (!hPressed && _isHolding)
             {
                 _isHolding = false;
             }
+            return;
         }
-        else
+#endif
+
+        // Mobile: touch held
+        bool isTouching = IsTouching();
+        
+        if (isTouching && !_isHolding)
         {
-            // Mobile: touch held (use existing IsTouching)
-            bool isTouching = IsTouching();
-            
-            if (isTouching && !_isHolding)
-            {
-                _isHolding = true;
-                _holdStartTime = Time.time;
-            }
-            else if (!isTouching && _isHolding)
-            {
-                _isHolding = false;
-            }
+            _isHolding = true;
+            _holdStartTime = Time.time;
+        }
+        else if (!isTouching && _isHolding)
+        {
+            _isHolding = false;
         }
     }
 
     private void UpdateTapInput()
     {
+#if UNITY_EDITOR
         if (useEditorSimulation)
         {
             // Editor simulation: T key presses (New Input System)
@@ -368,33 +410,30 @@ public class InputManager : MonoBehaviour
                 {
                     _tapCount++;
                     _lastTapTime = Time.time;
-#if UNITY_EDITOR
-                    Debug.Log($"[InputManager] Tap detected! Count: {_tapCount}");
-#endif
+                    Debug.Log($"[InputManager] Tap detected (SIM)! Count: {_tapCount}");
                 }
                 else
                 {
-                    // Too slow, reset counter
                     _tapCount = 1;
                     _lastTapTime = Time.time;
                 }
             }
+            return;
         }
-        else
+#endif
+
+        // Mobile: touch started
+        if (IsTapPressed())
         {
-            // Mobile: touch started
-            if (deviceControls?.Device.TouchStart != null && deviceControls.Device.TouchStart.WasPressedThisFrame())
+            if (Time.time - _lastTapTime <= TAP_COOLDOWN || _tapCount == 0)
             {
-                if (Time.time - _lastTapTime <= TAP_COOLDOWN || _tapCount == 0)
-                {
-                    _tapCount++;
-                    _lastTapTime = Time.time;
-                }
-                else
-                {
-                    _tapCount = 1;
-                    _lastTapTime = Time.time;
-                }
+                _tapCount++;
+                _lastTapTime = Time.time;
+            }
+            else
+            {
+                _tapCount = 1;
+                _lastTapTime = Time.time;
             }
         }
     }

@@ -14,4 +14,7 @@ using UnityEngine;
 /// </summary>
 public class Obstacle : MonoBehaviour
 {
+    public string obstacleName;
+    public float collisionRadius = 0.5f;
+    public float timePenalty = 5f;
 }

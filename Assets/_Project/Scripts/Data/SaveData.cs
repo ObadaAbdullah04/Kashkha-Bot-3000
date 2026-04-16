@@ -8,8 +8,11 @@ using UnityEngine;
 [Serializable]
 public class SaveData
 {
-    public int TotalScrap = 0;
+    // CURRENCY MERGE (Phase 18): We now only use TotalEidia for everything.
+    // TotalScrap is kept for backward compatibility during the transition but should be ignored.
+    public int TotalScrap = 0; 
     public int TotalEidia = 0;
+    
     public int HighScore = 0;
     public string LastSaveDate = "";
 

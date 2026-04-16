@@ -94,8 +94,8 @@ public class WardrobeManager : MonoBehaviour
     {
         if (SaveManager.Instance != null)
         {
-            currentScrap = SaveManager.Instance.CurrentData.TotalScrap;
-            Debug.Log($"[WardrobeManager] Scrap synced: {currentScrap}");
+            currentScrap = SaveManager.Instance.CurrentData.TotalEidia;
+            Debug.Log($"[WardrobeManager] Currency (Eidia) synced: {currentScrap}");
             OnScrapChanged?.Invoke();
         }
     }
@@ -120,11 +120,13 @@ public class WardrobeManager : MonoBehaviour
 
         if (currentScrap < outfit.scrapCost) return false;
 
-        SaveManager.Instance.CurrentData.TotalScrap -= outfit.scrapCost;
+        if (!SaveManager.Instance.SpendScrap(outfit.scrapCost)) return false;
+
         SaveManager.Instance.CurrentData.ownedOutfitIDs.Add(id);
         SaveManager.Instance.SaveGame();
 
-        currentScrap = SaveManager.Instance.CurrentData.TotalScrap;
+        // Sync local scrap after purchase
+        currentScrap = SaveManager.Instance.CurrentData.TotalEidia;
         OnScrapChanged?.Invoke();
         OnOutfitPurchased?.Invoke();
         return true;

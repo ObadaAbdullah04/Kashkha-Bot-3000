@@ -36,6 +36,16 @@ public class CinematicData
     public string TextAR;                     // Arabic text to display
     public AnimationType Animation;           // DOTween animation style
 
+    [Header("Visuals (DOTween Only)")]
+    [Tooltip("If assigned, shows the character's face.")]
+    public CharacterExpressionSO Speaker;     // The character speaking
+
+    [Tooltip("The expression to show (e.g., 'Happy', 'Sad')")]
+    public string Expression = "Neutral";     // Expression name
+
+    [Tooltip("If assigned, loads this image from Resources/InteractionIcons/ (e.g. 'Coffee')")]
+    public string ResourceImageName;          // Sprite name in Resources
+
     #endregion
 
     public override string ToString()

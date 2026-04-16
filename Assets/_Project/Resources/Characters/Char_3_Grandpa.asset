@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8e3eb7c40a6583d49ad7e904ed46e504, type: 3}
+  m_Name: Char_3_Grandpa
+  m_EditorClassIdentifier: 
+  characterName: "\u062C\u062F\u0648"
+  defaultSprite: {fileID: 21300000, guid: 675af71c1240aa24da584d29b7b602be, type: 3}
+  expressions:
+  - name: Default
+    sprite: {fileID: 21300000, guid: 675af71c1240aa24da584d29b7b602be, type: 3}
+  - name: Happy
+    sprite: {fileID: 21300000, guid: 9cbc2d267e0c15e44922ba19aa3d3bcf, type: 3}
+  - name: Sad
+    sprite: {fileID: 21300000, guid: ce08447943ea9514d89112bcf6655a37, type: 3}
+  - name: Angry
+    sprite: {fileID: 21300000, guid: 67bad671be18ef34b917cb2cbb9d18dd, type: 3}
+  - name: Surprised
+    sprite: {fileID: 21300000, guid: 4cc0a58256b9ead4d93a7143ec62055f, type: 3}

@@ -248,18 +248,18 @@ public class FloatingTextManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Spawns floating text for Scrap rewards (centered, bronze).
+    /// Spawns floating text for Scrap (now Eidia) rewards (centered, gold).
     /// </summary>
     public void SpawnScrapReward(int amount)
     {
         FloatingText ft = GetFromPool();
         if (ft == null) return;
 
-        string content = $"+{amount} خردة";
+        string content = $"+{amount} عيدية";
 
         ft.transform.localPosition = rewardOffset;
         ft.gameObject.SetActive(true);
-        ft.Spawn(content, scrapColor, floatDistance, animationDuration);
+        ft.Spawn(content, eidiaColor, floatDistance, animationDuration);
     }
 
     /// <summary>
