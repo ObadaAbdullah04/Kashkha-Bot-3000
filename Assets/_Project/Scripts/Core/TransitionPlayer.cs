@@ -137,7 +137,7 @@ public class TransitionPlayer : MonoBehaviour
         // Force kill any existing transition WITHOUT completing it (to avoid callback flashes)
         if (_activeSequence != null && _activeSequence.IsActive())
         {
-            Debug.Log("[TransitionPlayer] Killing active transition to start new one.");
+            // Debug.Log("[TransitionPlayer] Killing active transition to start new one.");
             _activeSequence.Kill(false); 
         }
 
@@ -150,8 +150,7 @@ public class TransitionPlayer : MonoBehaviour
 
         float duration = overrideTextDuration > 0f ? overrideTextDuration : textDuration;
 
-        if (debugLogging)
-            Debug.Log($"[TransitionPlayer] Starting transition: '{destinationTextAR}' | Duration: {duration}s");
+        // // if (debugLogging) {} // Debug.Log($"[TransitionPlayer] Starting transition: '{destinationTextAR}' | Duration: {duration}s");
 
         // Start fade in sequence
         PlayFadeSequence(onMidpoint, duration, onReady);
@@ -216,7 +215,7 @@ public class TransitionPlayer : MonoBehaviour
         // Step 3: MID-POINT CALLBACK (Screen is black here!)
         _activeSequence.AppendCallback(() => 
         {
-            if (debugLogging) Debug.Log("[TransitionPlayer] Mid-point reached. Firing update callback.");
+            // if (debugLogging) {} // Debug.Log("[TransitionPlayer] Mid-point reached. Firing update callback.");
             midPointAction?.Invoke();
         });
 
@@ -226,7 +225,7 @@ public class TransitionPlayer : MonoBehaviour
         // Step 5: READY CALLBACK (Wait is over, about to fade out)
         _activeSequence.AppendCallback(() =>
         {
-            if (debugLogging) Debug.Log("[TransitionPlayer] Wait complete. Firing ready callback.");
+            // if (debugLogging) {} // Debug.Log("[TransitionPlayer] Wait complete. Firing ready callback.");
             readyAction?.Invoke();
         });
 
@@ -260,7 +259,7 @@ public class TransitionPlayer : MonoBehaviour
 
             OnTransitionComplete?.Invoke();
 
-            if (debugLogging) Debug.Log("[TransitionPlayer] Transition sequence complete!");
+            // if (debugLogging) {} // Debug.Log("[TransitionPlayer] Transition sequence complete!");
         });
         
         _activeSequence.SetUpdate(true); // Ensure it works even if time is paused
@@ -268,12 +267,6 @@ public class TransitionPlayer : MonoBehaviour
 
     #endregion
 
-    #region Debug
-
-    [Header("Debug")]
-    [SerializeField] private bool debugLogging = false;
-
-    #endregion
 
     #region Inspector Test Buttons
 
@@ -282,7 +275,7 @@ public class TransitionPlayer : MonoBehaviour
     {
         PlayTransition("السفر إلى بيت خالة أم محمد...", () =>
         {
-            Debug.Log("[TransitionPlayer] Callback: Ready for House 2!");
+            // Debug.Log("[TransitionPlayer] Callback: Ready for House 2!");
         });
     }
 
@@ -291,7 +284,7 @@ public class TransitionPlayer : MonoBehaviour
     {
         PlayTransition("الذهاب إلى بيت جدو الحاج...", () =>
         {
-            Debug.Log("[TransitionPlayer] Callback: Ready for House 3!");
+            // Debug.Log("[TransitionPlayer] Callback: Ready for House 3!");
         });
     }
 

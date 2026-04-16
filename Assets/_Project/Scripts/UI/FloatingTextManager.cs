@@ -87,7 +87,7 @@ public class FloatingTextManager : MonoBehaviour
 
         if (prefab == null)
         {
-            Debug.LogError("[FloatingTextManager] Prefab not assigned!");
+            // Debug.LogError("[FloatingTextManager] Prefab not assigned!");
             return;
         }
 
@@ -103,7 +103,7 @@ public class FloatingTextManager : MonoBehaviour
             if (canvasParent == null)
             {
                 canvasParent = FindObjectOfType<Canvas>()?.transform;
-                Debug.LogWarning("[FloatingTextManager] canvasParent not assigned and no tagged canvas found. Using arbitrary canvas. Please assign in inspector or tag main canvas as 'MainCanvas'.");
+                // Debug.LogWarning("[FloatingTextManager] canvasParent not assigned and no tagged canvas found. Using arbitrary canvas. Please assign in inspector or tag main canvas as 'MainCanvas'.");
             }
         }
 
@@ -116,7 +116,7 @@ public class FloatingTextManager : MonoBehaviour
         }
 
         _isPoolInitialized = true;
-        Debug.Log($"[FloatingTextManager] Pool initialized with {poolSize} objects.");
+        // Debug.Log($"[FloatingTextManager] Pool initialized with {poolSize} objects.");
     }
 
     private void OnEnable()
@@ -156,7 +156,7 @@ public class FloatingTextManager : MonoBehaviour
     {
         if (!_isPoolInitialized)
         {
-            Debug.LogWarning("[FloatingTextManager] Pool not initialized! Check prefab assignment.");
+            // Debug.LogWarning("[FloatingTextManager] Pool not initialized! Check prefab assignment.");
             return;
         }
         if (Mathf.Abs(delta) < 0.1f) return;
@@ -170,7 +170,7 @@ public class FloatingTextManager : MonoBehaviour
     {
         if (!_isPoolInitialized)
         {
-            Debug.LogWarning("[FloatingTextManager] Pool not initialized! Check prefab assignment.");
+            // Debug.LogWarning("[FloatingTextManager] Pool not initialized! Check prefab assignment.");
             return;
         }
         if (Mathf.Abs(delta) < 0.1f) return;
@@ -219,7 +219,7 @@ public class FloatingTextManager : MonoBehaviour
         FloatingText ft = GetFromPool();
         if (ft == null)
         {
-            Debug.LogWarning("[FloatingTextManager] Pool exhausted! Consider increasing poolSize.");
+            // Debug.LogWarning("[FloatingTextManager] Pool exhausted! Consider increasing poolSize.");
             return;
         }
 

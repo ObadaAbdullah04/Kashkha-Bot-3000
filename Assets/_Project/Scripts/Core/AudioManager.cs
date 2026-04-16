@@ -251,14 +251,14 @@ public class AudioManager : MonoBehaviour
         {
             if (kvp.Value == null)
             {
-                Debug.LogWarning($"[AudioManager] Missing SFX: {kvp.Key} (assign in inspector). Using synthesized fallback.");
+                // Debug.LogWarning($"[AudioManager] Missing SFX: {kvp.Key} (assign in inspector). Using synthesized fallback.");
                 missingCount++;
             }
         }
-        if (menuMusic == null) Debug.LogWarning("[AudioManager] Menu Music not assigned. No menu music will play.");
-        if (gameplayMusic == null) Debug.LogWarning("[AudioManager] Gameplay Music not assigned. No gameplay music will play.");
-        if (missingCount > 0) Debug.Log($"[AudioManager] {missingCount} SFX clips unassigned. Synthesized fallbacks will be used.");
-        else Debug.Log("[AudioManager] All SFX clips assigned. Ready!");
+        if (menuMusic == null) {} // Debug.LogWarning("[AudioManager] Menu Music not assigned. No menu music will play.");
+        if (gameplayMusic == null) {} // Debug.LogWarning("[AudioManager] Gameplay Music not assigned. No gameplay music will play.");
+        if (missingCount > 0) {} // Debug.Log($"[AudioManager] {missingCount} SFX clips unassigned. Synthesized fallbacks will be used.");
+        // else // Debug.Log("[AudioManager] All SFX clips assigned. Ready!");
 #endif
 
         clipsMapped = true;

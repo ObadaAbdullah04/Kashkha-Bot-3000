@@ -77,7 +77,7 @@ public class InteractionHUDController : MonoBehaviour
     [SerializeField] private float exitDuration = 0.2f;
 
     [Header("Debug")]
-    [SerializeField] private bool debugLogging = false;
+    // [SerializeField] private bool debugLogging = false;
 
     #endregion
 
@@ -119,7 +119,7 @@ public class InteractionHUDController : MonoBehaviour
         }
         else
         {
-            Debug.LogError("[InteractionHUDController] Duplicate instance! Destroying.");
+            // Debug.LogError("[InteractionHUDController] Duplicate instance! Destroying.");
             Destroy(gameObject);
             return;
         }
@@ -161,7 +161,7 @@ public class InteractionHUDController : MonoBehaviour
     {
         if (data == null)
         {
-            Debug.LogError("[InteractionHUDController] Null InteractionData!");
+            // Debug.LogError("[InteractionHUDController] Null InteractionData!");
             onComplete?.Invoke(false, 0, 0);
             return;
         }
@@ -182,8 +182,7 @@ public class InteractionHUDController : MonoBehaviour
         // Show panel with entrance animation
         ShowPanel();
 
-        if (debugLogging)
-            Debug.Log($"[InteractionHUDController] Starting: {data.ID} | Type:{data.InteractionType} | Duration:{data.Duration}s | Threshold:{data.Threshold}");
+        // // if (debugLogging) {} // Debug.Log($"[InteractionHUDController] Starting: {data.ID} | Type:{data.InteractionType} | Duration:{data.Duration}s | Threshold:{data.Threshold}");
     }
 
     /// <summary>
@@ -235,7 +234,7 @@ public class InteractionHUDController : MonoBehaviour
             }
             else
             {
-                Debug.LogWarning($"[InteractionHUDController] Icon sprite not found: {spriteName}. Using fallback.");
+                // Debug.LogWarning($"[InteractionHUDController] Icon sprite not found: {spriteName}. Using fallback.");
                 iconImage.enabled = false;
             }
         }
@@ -364,6 +363,15 @@ public class InteractionHUDController : MonoBehaviour
         else
         {
             counterText.text = $"{label}: {Mathf.FloorToInt(currentValue)}/{Mathf.FloorToInt(currentInteraction.Threshold)}";
+            
+            // JUICE: Punch scale on update
+            counterText.transform.DOPunchScale(Vector3.one * 0.1f, 0.2f);
+        }
+        
+        // JUICE: Icon pulse
+        if (iconImage != null)
+        {
+            iconImage.transform.DOPunchScale(Vector3.one * 0.05f, 0.15f);
         }
     }
 
@@ -397,8 +405,7 @@ public class InteractionHUDController : MonoBehaviour
         float stomachDelta = currentInteraction.GetStomachDelta(succeeded);
         int eidiaReward = currentInteraction.GetEidReward(succeeded);
 
-        if (debugLogging)
-            Debug.Log($"[InteractionHUDController] {(succeeded ? "SUCCESS" : "FAILED")}: {currentInteraction.ID} | Battery:{batteryDelta} | Stomach:{stomachDelta} | Eid:{eidiaReward}");
+        // // if (debugLogging) {} // Debug.Log($"[InteractionHUDController] {(succeeded ? "SUCCESS" : "FAILED")}: {currentInteraction.ID} | Battery:{batteryDelta} | Stomach:{stomachDelta} | Eid:{eidiaReward}");
 
         // Play success or fail sound
         AudioManager.Instance?.PlaySFX(succeeded

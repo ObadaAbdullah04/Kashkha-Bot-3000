@@ -241,7 +241,7 @@ public class PathDrawingGame : MonoBehaviour
         gameCanvas = GetComponentInChildren<Canvas>();
         if (gameCanvas == null)
         {
-            Debug.LogError("[PathDrawingGame] No Canvas found on this GameObject or children!");
+            // Debug.LogError("[PathDrawingGame] No Canvas found on this GameObject or children!");
             return;
         }
 
@@ -262,12 +262,12 @@ public class PathDrawingGame : MonoBehaviour
             gameCanvas.worldCamera = mainCam;
             gameCanvas.planeDistance = 100f;
 
-            Debug.Log($"[PathDrawingGame] Canvas configured with camera: {mainCam.gameObject.name}, Scale: {rectTransform?.localScale}");
+            // Debug.Log($"[PathDrawingGame] Canvas configured with camera: {mainCam.gameObject.name}, Scale: {rectTransform?.localScale}");
         }
         else
         {
             gameCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            Debug.LogWarning("[PathDrawingGame] No camera found! Using ScreenSpaceOverlay.");
+            // Debug.LogWarning("[PathDrawingGame] No camera found! Using ScreenSpaceOverlay.");
         }
     }
 
@@ -313,7 +313,7 @@ public class PathDrawingGame : MonoBehaviour
         linePoints.Add(inputPos);
 
 #if UNITY_EDITOR
-        Debug.Log($"[PathGame] Drawing started at {inputPos}");
+        // Debug.Log($"[PathGame] Drawing started at {inputPos}");
 #endif
     }
 
@@ -504,7 +504,7 @@ public class PathDrawingGame : MonoBehaviour
 #if UNITY_EDITOR
         if (winCondition)
         {
-            Debug.Log($"[PathGame] Win condition met! Start: {passedThroughStart}, End: {reachedEnd}");
+            // Debug.Log($"[PathGame] Win condition met! Start: {passedThroughStart}, End: {reachedEnd}");
         }
 #endif
 
@@ -543,7 +543,7 @@ public class PathDrawingGame : MonoBehaviour
         }
 
 #if UNITY_EDITOR
-        Debug.Log($"[PathGame] HIT OBSTACLE! -{collisionPenalty}s - Line cleared!");
+        // Debug.Log($"[PathGame] HIT OBSTACLE! -{collisionPenalty}s - Line cleared!");
 #endif
     }
 
@@ -599,9 +599,9 @@ public class PathDrawingGame : MonoBehaviour
             resultPanel.SetActive(false);
 
 #if UNITY_EDITOR
-        Debug.Log($"[PathGame] Game initialized! Time: {timeLimit}s, Manual: {obstacles.Count}, Random: {randomObstacleCount}");
-        Debug.Log($"[PathGame] START: {startPoint.position} | END: {endPoint.position}");
-        Debug.Log("[PathGame] Draw ANYWHERE but must pass through Start and reach End to win!");
+        // Debug.Log($"[PathGame] Game initialized! Time: {timeLimit}s, Manual: {obstacles.Count}, Random: {randomObstacleCount}");
+        // Debug.Log($"[PathGame] START: {startPoint.position} | END: {endPoint.position}");
+        // Debug.Log("[PathGame] Draw ANYWHERE but must pass through Start and reach End to win!");
 #endif
     }
 
@@ -609,11 +609,11 @@ public class PathDrawingGame : MonoBehaviour
     {
         if (obstaclePrefabs == null || obstaclePrefabs.Length == 0 || randomObstacleCount <= 0)
         {
-            Debug.LogError($"[PathGame] Cannot spawn obstacles! prefabs: {obstaclePrefabs?.Length ?? -1}, count: {randomObstacleCount}");
+            // Debug.LogError($"[PathGame] Cannot spawn obstacles! prefabs: {obstaclePrefabs?.Length ?? -1}, count: {randomObstacleCount}");
             return;
         }
 
-        Debug.Log($"[PathGame] Starting obstacle spawn: {randomObstacleCount} obstacles, {obstaclePrefabs.Length} prefab types");
+        // Debug.Log($"[PathGame] Starting obstacle spawn: {randomObstacleCount} obstacles, {obstaclePrefabs.Length} prefab types");
 
         int spawnedCount = 0;
         int maxGlobalAttempts = randomObstacleCount * 10;
@@ -630,7 +630,7 @@ public class PathDrawingGame : MonoBehaviour
             
             if (spawnPos == Vector3.zero && mainCam == null)
             {
-                Debug.LogError("[PathGame] mainCam is null! Cannot spawn obstacles at valid positions.");
+                // Debug.LogError("[PathGame] mainCam is null! Cannot spawn obstacles at valid positions.");
                 return;
             }
 
@@ -666,17 +666,17 @@ public class PathDrawingGame : MonoBehaviour
             }
 
             spawnedCount++;
-            Debug.Log($"[PathGame] Spawned obstacle {spawnedCount} at world pos: {spawnPos}");
+            // Debug.Log($"[PathGame] Spawned obstacle {spawnedCount} at world pos: {spawnPos}");
         }
 
-        Debug.Log($"[PathGame] Obstacle spawn complete! Spawned: {spawnedCount}/{randomObstacleCount}, Total in list: {obstacles.Count}");
+        // Debug.Log($"[PathGame] Obstacle spawn complete! Spawned: {spawnedCount}/{randomObstacleCount}, Total in list: {obstacles.Count}");
     }
 
     private Vector3 GetRandomWorldPosition()
     {
         if (mainCam == null)
         {
-            Debug.LogError("[PathGame] mainCam is null in GetRandomWorldPosition!");
+            // Debug.LogError("[PathGame] mainCam is null in GetRandomWorldPosition!");
             return Vector3.zero;
         }
 
@@ -712,10 +712,9 @@ public class PathDrawingGame : MonoBehaviour
         }
 
 #if UNITY_EDITOR
-        if (success)
-            Debug.Log($"[PathGame] Success! Remaining time: {timeRemaining:F1}s");
-        else
-            Debug.Log("[PathGame] Failed - Time ran out!");
+        // if (success) {} // // Debug.Log($"[PathGame] Success! Remaining time: {timeRemaining:F1}s");
+        // else
+            // // Debug.Log("[PathGame] Failed - Time ran out!");
 #endif
 
         // Cleanup after delay

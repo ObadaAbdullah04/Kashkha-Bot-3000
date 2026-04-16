@@ -23,7 +23,7 @@ public class CameraShakeManager : MonoBehaviour
 
     [Header("Debug")]
     [Tooltip("Enable debug logging (disable in production)")]
-    [SerializeField] private bool debugLogging = false;
+    // [SerializeField] private bool debugLogging = false;
 
     private Tween _shakeTween;
     private Vector3 _originalCameraPos;
@@ -59,12 +59,12 @@ public class CameraShakeManager : MonoBehaviour
     {
         if (impulseSource == null)
         {
-            Debug.LogWarning("[CameraShakeManager] CinemachineImpulseSource not assigned! Will use DOTween fallback.");
+            // Debug.LogWarning("[CameraShakeManager] CinemachineImpulseSource not assigned! Will use DOTween fallback.");
         }
 
         if (targetCamera == null)
         {
-            Debug.LogError("[CameraShakeManager] Target camera not assigned!");
+            // Debug.LogError("[CameraShakeManager] Target camera not assigned!");
         }
     }
 
@@ -90,24 +90,21 @@ public class CameraShakeManager : MonoBehaviour
     /// </summary>
     public void Shake(float strength, float duration)
     {
-        if (debugLogging)
-            Debug.Log($"[CameraShake] Shake called: strength={strength}, duration={duration}s");
+        // // if (debugLogging) {} // Debug.Log($"[CameraShake] Shake called: strength={strength}, duration={duration}s");
 
         if (impulseSource != null)
         {
             impulseSource.m_ImpulseDefinition.m_ImpulseDuration = duration;
             impulseSource.GenerateImpulse(strength);
-            if (debugLogging)
-                Debug.Log($"[CameraShake] Impulse fired: {strength}, {duration}s");
+            // // if (debugLogging) {} // Debug.Log($"[CameraShake] Impulse fired: {strength}, {duration}s");
             return;
         }
 
-        if (debugLogging)
-            Debug.LogWarning("[CameraShakeManager] No CinemachineImpulseSource, using DOTween fallback");
+        // // if (debugLogging) {} // Debug.LogWarning("[CameraShakeManager] No CinemachineImpulseSource, using DOTween fallback");
 
         if (targetCamera == null)
         {
-            Debug.LogError("[CameraShake] No camera assigned!");
+            // Debug.LogError("[CameraShake] No camera assigned!");
             return;
         }
 
@@ -119,7 +116,6 @@ public class CameraShakeManager : MonoBehaviour
             .SetUpdate(true)
             .OnComplete(() => targetCamera.transform.position = _originalCameraPos);
 
-        if (debugLogging)
-            Debug.Log($"[CameraShake] DOTween fallback started");
+        // // if (debugLogging) {} // Debug.Log($"[CameraShake] DOTween fallback started");
     }
 }

@@ -48,20 +48,20 @@ public class URPPostProcessing : MonoBehaviour
 
         if (globalVolume == null)
         {
-            Debug.LogWarning("[URP] No Global Volume assigned in Inspector! Searching...");
+            // Debug.LogWarning("[URP] No Global Volume assigned in Inspector! Searching...");
             globalVolume = FindObjectOfType<Volume>();
         }
 
         if (globalVolume == null)
         {
-            Debug.LogError("[URP] FATAL: No Global Volume found in scene! Post-processing disabled.");
+            // Debug.LogError("[URP] FATAL: No Global Volume found in scene! Post-processing disabled.");
             return;
         }
 
         profile = globalVolume.profile;
         if (profile == null)
         {
-            Debug.LogError("[URP] Volume has no profile assigned!");
+            // Debug.LogError("[URP] Volume has no profile assigned!");
             return;
         }
 
@@ -71,7 +71,7 @@ public class URPPostProcessing : MonoBehaviour
 
         ResetEffects();
         isInitialized = true;
-        Debug.Log($"[URP] Initialized successfully. Profile: {profile.name}");
+        // Debug.Log($"[URP] Initialized successfully. Profile: {profile.name}");
     }
 
     public void EnablePanicMode()
@@ -148,7 +148,7 @@ public class URPPostProcessing : MonoBehaviour
             ).SetEase(Ease.OutQuad).SetUpdate(true);
         }
 
-        Debug.Log("[URP] Game over effects enabled!");
+        // Debug.Log("[URP] Game over effects enabled!");
     }
 
     public void ResetEffects()

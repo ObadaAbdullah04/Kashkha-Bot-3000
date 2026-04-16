@@ -70,7 +70,7 @@ public class InputManager : MonoBehaviour
             {
                 deviceControls = new DeviceControls();
 #if UNITY_EDITOR
-                Debug.Log("[InputManager] DeviceControls created programmatically.");
+                // Debug.Log("[InputManager] DeviceControls created programmatically.");
 #endif
             }
 
@@ -84,7 +84,7 @@ public class InputManager : MonoBehaviour
             {
                 InputSystem.EnableDevice(Accelerometer.current);
 #if UNITY_EDITOR
-                Debug.Log("[InputManager] Accelerometer device enabled.");
+                // Debug.Log("[InputManager] Accelerometer device enabled.");
 #endif
             }
         }
@@ -100,7 +100,7 @@ public class InputManager : MonoBehaviour
         // Enable DeviceControls asset
         deviceControls?.Enable();
 #if UNITY_EDITOR
-        Debug.Log("[InputManager] DeviceControls enabled.");
+        // Debug.Log("[InputManager] DeviceControls enabled.");
 #endif
     }
 
@@ -109,7 +109,7 @@ public class InputManager : MonoBehaviour
         // Disable DeviceControls asset
         deviceControls?.Disable();
 #if UNITY_EDITOR
-        Debug.Log("[InputManager] DeviceControls disabled.");
+        // Debug.Log("[InputManager] DeviceControls disabled.");
 #endif
     }
 
@@ -125,7 +125,7 @@ public class InputManager : MonoBehaviour
     {
         if (deviceControls?.Device == null)
         {
-            Debug.LogWarning("[InputManager] DeviceControls not initialized!");
+            // Debug.LogWarning("[InputManager] DeviceControls not initialized!");
             return;
         }
 
@@ -142,7 +142,7 @@ public class InputManager : MonoBehaviour
                 break;
             case "Tap": device.Tap?.Enable(); break;
             default:
-                Debug.LogWarning($"[InputManager] Unknown action: {actionName}");
+                // Debug.LogWarning($"[InputManager] Unknown action: {actionName}");
                 break;
         }
     }
@@ -155,7 +155,7 @@ public class InputManager : MonoBehaviour
     {
         if (deviceControls?.Device == null)
         {
-            Debug.LogWarning("[InputManager] DeviceControls not initialized!");
+            // Debug.LogWarning("[InputManager] DeviceControls not initialized!");
             return;
         }
 
@@ -169,7 +169,7 @@ public class InputManager : MonoBehaviour
             case "Acceleration": device.Acceleration?.Disable(); break;
             case "Tap": device.Tap?.Disable(); break;
             default:
-                Debug.LogWarning($"[InputManager] Unknown action: {actionName}");
+                // Debug.LogWarning($"[InputManager] Unknown action: {actionName}");
                 break;
         }
     }
@@ -337,7 +337,7 @@ public class InputManager : MonoBehaviour
                 {
                     _shakeCount++;
                     _lastShakeTime = Time.time;
-                    Debug.Log($"[InputManager] Shake detected (SIM)! Count: {_shakeCount}");
+                    // Debug.Log($"[InputManager] Shake detected (SIM)! Count: {_shakeCount}");
                 }
             }
             return; // Don't run real accelerometer logic in editor if simulation is on
@@ -358,7 +358,7 @@ public class InputManager : MonoBehaviour
             _shakeCount++;
             _lastShakeTime = Time.time;
 #if UNITY_EDITOR
-            Debug.Log($"[InputManager] Real Shake detected! Magnitude: {magnitude}");
+            // Debug.Log($"[InputManager] Real Shake detected! Magnitude: {magnitude}");
 #endif
         }
     }
@@ -410,7 +410,7 @@ public class InputManager : MonoBehaviour
                 {
                     _tapCount++;
                     _lastTapTime = Time.time;
-                    Debug.Log($"[InputManager] Tap detected (SIM)! Count: {_tapCount}");
+                    // Debug.Log($"[InputManager] Tap detected (SIM)! Count: {_tapCount}");
                 }
                 else
                 {
@@ -447,31 +447,31 @@ public class InputManager : MonoBehaviour
     {
         if (deviceControls?.Device == null)
         {
-            Debug.LogWarning("[InputManager] DeviceControls not assigned!");
+            // Debug.LogWarning("[InputManager] DeviceControls not assigned!");
             return;
         }
 
         var device = deviceControls.Device;
-        Debug.Log("=== [InputManager] All DeviceControls Actions ===");
-        Debug.Log($"  - MoveHorizontal: {device.MoveHorizontal}");
-        Debug.Log($"  - Draw: {device.Draw}");
-        Debug.Log($"  - TouchPosition: {device.TouchPosition}");
-        Debug.Log($"  - TouchStart: {device.TouchStart}");
-        Debug.Log($"  - Acceleration: {device.Acceleration}");
-        Debug.Log($"  - Tap: {device.Tap}");
-        Debug.Log("===============================================");
+        // Debug.Log("=== [InputManager] All DeviceControls Actions ===");
+        // Debug.Log($"  - MoveHorizontal: {device.MoveHorizontal}");
+        // Debug.Log($"  - Draw: {device.Draw}");
+        // Debug.Log($"  - TouchPosition: {device.TouchPosition}");
+        // Debug.Log($"  - TouchStart: {device.TouchStart}");
+        // Debug.Log($"  - Acceleration: {device.Acceleration}");
+        // Debug.Log($"  - Tap: {device.Tap}");
+        // Debug.Log("===============================================");
     }
 
     [Button("Test: Check Touch Input")]
     private void TestTouchInput()
     {
-        Debug.Log($"[InputManager] IsTouching: {IsTouching()}, TouchPosition: {GetTouchPosition()}");
+        // Debug.Log($"[InputManager] IsTouching: {IsTouching()}, TouchPosition: {GetTouchPosition()}");
     }
 
     [Button("Test: Check MoveHorizontal Input")]
     private void TestMoveInput()
     {
-        Debug.Log($"[InputManager] MoveHorizontal: {GetMoveHorizontalValue()}");
+        // Debug.Log($"[InputManager] MoveHorizontal: {GetMoveHorizontalValue()}");
     }
 
     #endregion

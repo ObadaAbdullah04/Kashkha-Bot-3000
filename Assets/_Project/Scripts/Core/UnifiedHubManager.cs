@@ -402,7 +402,7 @@ public class UnifiedHubManager : MonoBehaviour
         UpdateAllUI();
 
 #if UNITY_EDITOR
-        Debug.Log($"[UnifiedHub] Hub initialized. Next house: {nextHouseLevelToPlay}, Unlocked: {highestUnlockedHouse}");
+        // Debug.Log($"[UnifiedHub] Hub initialized. Next house: {nextHouseLevelToPlay}, Unlocked: {highestUnlockedHouse}");
 #endif
     }
 
@@ -414,7 +414,7 @@ public class UnifiedHubManager : MonoBehaviour
         // Validate house level to prevent indexing errors
         if (houseLevel < 1 || houseLevel > 4)
         {
-            Debug.LogWarning($"[UnifiedHub] Invalid house level: {houseLevel}");
+            // Debug.LogWarning($"[UnifiedHub] Invalid house level: {houseLevel}");
             return;
         }
 
@@ -428,14 +428,14 @@ public class UnifiedHubManager : MonoBehaviour
         {
             highestUnlockedHouse = 4;
 #if UNITY_EDITOR
-            Debug.Log("[UnifiedHub] House 4 unlocked!");
+            // Debug.Log("[UnifiedHub] House 4 unlocked!");
 #endif
         }
 
         UpdateAllUI();
 
 #if UNITY_EDITOR
-        Debug.Log($"[UnifiedHub] House {houseLevel} marked complete. Next: {nextHouseLevelToPlay}, Unlocked: {highestUnlockedHouse}");
+        // Debug.Log($"[UnifiedHub] House {houseLevel} marked complete. Next: {nextHouseLevelToPlay}, Unlocked: {highestUnlockedHouse}");
 #endif
     }
 
@@ -476,7 +476,7 @@ public class UnifiedHubManager : MonoBehaviour
         SwitchTab(HubTab.Houses);
 
 #if UNITY_EDITOR
-        Debug.Log("[UnifiedHub] Entered Game Over mode. All navigation disabled.");
+        // Debug.Log("[UnifiedHub] Entered Game Over mode. All navigation disabled.");
 #endif
     }
 
@@ -513,7 +513,7 @@ public class UnifiedHubManager : MonoBehaviour
         SwitchTab(HubTab.Houses);
 
 #if UNITY_EDITOR
-        Debug.Log("[UnifiedHub] Entered Win mode. Navigation disabled.");
+        // Debug.Log("[UnifiedHub] Entered Win mode. Navigation disabled.");
 #endif
     }
 
@@ -543,7 +543,7 @@ public class UnifiedHubManager : MonoBehaviour
         if (tab == HubTab.Upgrades) RefreshUpgradeUI();
 
 #if UNITY_EDITOR
-        Debug.Log($"[UnifiedHub] Switched to {tab} tab");
+        // Debug.Log($"[UnifiedHub] Switched to {tab} tab");
 #endif
     }
 
@@ -560,7 +560,7 @@ public class UnifiedHubManager : MonoBehaviour
         // Validate sequential order
         if (houseLevel != nextHouseLevelToPlay)
         {
-            Debug.LogWarning($"[UnifiedHub] Must complete House {nextHouseLevelToPlay} first!");
+            // Debug.LogWarning($"[UnifiedHub] Must complete House {nextHouseLevelToPlay} first!");
             return;
         }
 
@@ -652,7 +652,7 @@ public class UnifiedHubManager : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("[UnifiedHub] WardrobeUI not assigned in inspector!");
+            // Debug.LogWarning("[UnifiedHub] WardrobeUI not assigned in inspector!");
         }
     }
 
@@ -667,7 +667,7 @@ public class UnifiedHubManager : MonoBehaviour
             if (outfit != null) outfitName = outfit.displayNameAR;
         }
 
-        Debug.Log($"[UnifiedHub] Outfit equipped: ID={outfitID}, Name={outfitName}");
+        // Debug.Log($"[UnifiedHub] Outfit equipped: ID={outfitID}, Name={outfitName}");
 
         RefreshWardrobeUI();
 
@@ -758,7 +758,7 @@ public class UnifiedHubManager : MonoBehaviour
 
         if (upgradePurchaseCounts[upgradeType] >= maxPurchases)
         {
-            Debug.LogWarning($"[UnifiedHub] Upgrade {upgradeType} is MAXED!");
+            // Debug.LogWarning($"[UnifiedHub] Upgrade {upgradeType} is MAXED!");
             return;
         }
 
@@ -767,14 +767,14 @@ public class UnifiedHubManager : MonoBehaviour
 
         if (playerEidia < currentCost)
         {
-            Debug.LogWarning($"[UnifiedHub] Can't afford {upgradeType}. Need {currentCost}, have {playerEidia}");
+            // Debug.LogWarning($"[UnifiedHub] Can't afford {upgradeType}. Need {currentCost}, have {playerEidia}");
             return;
         }
 
         // Deduct scrap using the new SpendScrap method to ensure consistency and event firing
         if (!SaveManager.Instance.SpendScrap(currentCost))
         {
-            Debug.LogError($"[UnifiedHub] Failed to spend scrap for {upgradeType} despite afford check!");
+            // Debug.LogError($"[UnifiedHub] Failed to spend scrap for {upgradeType} despite afford check!");
             return;
         }
 
@@ -791,7 +791,7 @@ public class UnifiedHubManager : MonoBehaviour
         RefreshUpgradeUI();
 
 #if UNITY_EDITOR
-        Debug.Log($"[UnifiedHub] Purchased {upgradeType} for {currentCost}. Level: {upgradePurchaseCounts[upgradeType]}/{maxPurchases}");
+        // Debug.Log($"[UnifiedHub] Purchased {upgradeType} for {currentCost}. Level: {upgradePurchaseCounts[upgradeType]}/{maxPurchases}");
 #endif
     }
 

@@ -45,8 +45,8 @@ public class InteractionSignalEmitter : SignalEmitter
         // Validate InteractionID format in editor
         if (string.IsNullOrEmpty(InteractionID))
         {
-            Debug.LogWarning("[InteractionSignalEmitter] InteractionID is empty! " +
-                "Set this to an ID from Interactions.csv (e.g., 'SHAKE_Cup_1')");
+            // // Debug.LogWarning("[InteractionSignalEmitter] InteractionID is empty! " +
+            //     "Set this to an ID from Interactions.csv (e.g., 'SHAKE_Cup_1')");
         }
     }
 #endif
@@ -61,12 +61,12 @@ public class InteractionSignalEmitter : SignalEmitter
     {
         if (string.IsNullOrEmpty(InteractionID))
         {
-            Debug.LogWarning("[InteractionSignalEmitter] No InteractionID set! Skipping.");
+            // Debug.LogWarning("[InteractionSignalEmitter] No InteractionID set! Skipping.");
             return;
         }
 
 #if UNITY_EDITOR
-        Debug.Log($"[InteractionSignalEmitter] Triggering interaction: {InteractionID}");
+        // Debug.Log($"[InteractionSignalEmitter] Triggering interaction: {InteractionID}");
 #endif
 
         // Fire event for HouseFlowController to handle

@@ -80,7 +80,7 @@ public class MiniGameBackgroundLoader : MonoBehaviour
             if (_uiImage.gameObject.GetComponent<GraphicRaycaster>() == null)
                 _uiImage.gameObject.AddComponent<GraphicRaycaster>();
 
-            Debug.Log($"[BackgroundLoader] Image Background configured with SortingOrder 40");
+            // Debug.Log($"[BackgroundLoader] Image Background configured with SortingOrder 40");
         }
         
         if (_spriteRenderer != null)

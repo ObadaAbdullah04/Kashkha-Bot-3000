@@ -95,7 +95,7 @@ public class WardrobeManager : MonoBehaviour
         if (SaveManager.Instance != null)
         {
             currentScrap = SaveManager.Instance.CurrentData.TotalEidia;
-            Debug.Log($"[WardrobeManager] Currency (Eidia) synced: {currentScrap}");
+            // Debug.Log($"[WardrobeManager] Currency (Eidia) synced: {currentScrap}");
             OnScrapChanged?.Invoke();
         }
     }

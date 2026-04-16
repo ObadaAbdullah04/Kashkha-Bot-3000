@@ -49,7 +49,7 @@ public class CharacterExpressionSO : ScriptableObject
             }
         }
 
-        Debug.LogWarning($"[CharacterExpressionSO] Expression '{expressionName}' not found for '{characterName}'. Using default.");
+        // Debug.LogWarning($"[CharacterExpressionSO] Expression '{expressionName}' not found for '{characterName}'. Using default.");
         return defaultSprite;
     }
 

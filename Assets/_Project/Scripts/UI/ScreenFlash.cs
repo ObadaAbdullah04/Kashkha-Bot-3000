@@ -113,7 +113,7 @@ public class ScreenFlash : MonoBehaviour
     {
         if (flashImage == null || canvasGroup == null)
         {
-            Debug.LogWarning("[ScreenFlash] Missing references!");
+            // Debug.LogWarning("[ScreenFlash] Missing references!");
             return;
         }
 

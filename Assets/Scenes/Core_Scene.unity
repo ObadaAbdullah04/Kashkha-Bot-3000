@@ -1785,7 +1785,6 @@ MonoBehaviour:
   normalTextColor: {r: 0.4156863, g: 0.14901961, b: 0.19215688, a: 1}
   emphasizedTextColor: {r: 1, g: 0.85, b: 0, a: 1}
   testCinematicID: C_PRE_SHAKE_Qahwa_1
-  debugLogging: 0
 --- !u!1 &238231954
 GameObject:
   m_ObjectHideFlags: 0
@@ -2256,7 +2255,6 @@ MonoBehaviour:
   textDuration: 2
   fadeOutDuration: 0.5
   fadeColor: {r: 0, g: 0, b: 0, a: 1}
-  debugLogging: 0
 --- !u!1 &325253843
 GameObject:
   m_ObjectHideFlags: 0
@@ -2305,7 +2303,6 @@ MonoBehaviour:
   cinematicController: {fileID: 236990579}
   interactionHUDController: {fileID: 1851272409}
   pauseBetweenElements: 0.5
-  debugLogging: 1
 --- !u!1 &327422421
 GameObject:
   m_ObjectHideFlags: 0
@@ -10664,7 +10661,6 @@ MonoBehaviour:
   gameOverStrength: 0.8
   explosionStrength: 1.1
   targetCamera: {fileID: 519420031}
-  debugLogging: 0
 --- !u!1 &1401768262
 GameObject:
   m_ObjectHideFlags: 0
@@ -13034,7 +13030,6 @@ MonoBehaviour:
   failureColor: {r: 1, g: 0, b: 0, a: 1}
   entranceDuration: 0.3
   exitDuration: 0.2
-  debugLogging: 0
 --- !u!1 &1855256218
 GameObject:
   m_ObjectHideFlags: 0

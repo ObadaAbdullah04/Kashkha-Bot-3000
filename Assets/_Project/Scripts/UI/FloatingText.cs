@@ -93,7 +93,7 @@ public class FloatingText : MonoBehaviour
     {
         if (textMesh == null || canvasGroup == null)
         {
-            Debug.LogError("[FloatingText] Missing references!");
+            // Debug.LogError("[FloatingText] Missing references!");
             return;
         }
 

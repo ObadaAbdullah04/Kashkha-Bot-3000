@@ -104,7 +104,7 @@ public class MiniGameManager : MonoBehaviour
     {
         if (slotIndex < 0 || slotIndex > 2)
         {
-            Debug.LogError($"[MiniGameManager] Invalid slot index: {slotIndex}. Must be 0-2.");
+            // Debug.LogError($"[MiniGameManager] Invalid slot index: {slotIndex}. Must be 0-2.");
             return;
         }
 
@@ -119,7 +119,7 @@ public class MiniGameManager : MonoBehaviour
         // House level for difficulty scaling (use slotIndex + 1)
         int houseLevel = slotIndex + 1;
 
-        Debug.Log($"[MiniGameManager] Starting assigned mini-game: Slot {slotIndex + 1}, Type: {gameType}, House: {houseLevel}");
+        // Debug.Log($"[MiniGameManager] Starting assigned mini-game: Slot {slotIndex + 1}, Type: {gameType}, House: {houseLevel}");
 
         StartMiniGame(gameType, houseLevel);
     }
@@ -159,7 +159,7 @@ public class MiniGameManager : MonoBehaviour
                 break;
 
             default:
-                Debug.LogWarning($"[MiniGameManager] Unknown mini-game type: {type}. Defaulting to CatchGame.");
+                // Debug.LogWarning($"[MiniGameManager] Unknown mini-game type: {type}. Defaulting to CatchGame.");
                 StartCatchGame(houseLevel);
                 break;
         }
@@ -173,7 +173,7 @@ public class MiniGameManager : MonoBehaviour
     {
         if (catchGamePrefab == null)
         {
-            Debug.LogError("[MiniGameManager] catchGamePrefab not assigned!");
+            // Debug.LogError("[MiniGameManager] catchGamePrefab not assigned!");
             FallbackToNextHouse();
             return;
         }
@@ -195,7 +195,7 @@ public class MiniGameManager : MonoBehaviour
     {
         if (pathDrawingPrefab == null)
         {
-            Debug.LogError("[MiniGameManager] pathDrawingPrefab not assigned! Fallback to Catch game.");
+            // Debug.LogError("[MiniGameManager] pathDrawingPrefab not assigned! Fallback to Catch game.");
             StartCatchGame(houseLevel);
             return;
         }
@@ -217,7 +217,7 @@ public class MiniGameManager : MonoBehaviour
     {
         if (memorySwapPrefab == null)
         {
-            Debug.LogError("[MiniGameManager] memorySwapPrefab not assigned!");
+            // Debug.LogError("[MiniGameManager] memorySwapPrefab not assigned!");
             FallbackToNextHouse();
             return;
         }
@@ -230,7 +230,7 @@ public class MiniGameManager : MonoBehaviour
     /// </summary>
     public void EndMiniGame(int eidiaEarned, int scrapEarned)
     {
-        Debug.Log($"[MiniGameManager] === EndMiniGame === Eidia: {eidiaEarned}, Scrap: {scrapEarned}");
+        // Debug.Log($"[MiniGameManager] === EndMiniGame === Eidia: {eidiaEarned}, Scrap: {scrapEarned}");
 
         if (scrapEarned > 0 && SaveManager.Instance != null)
         {

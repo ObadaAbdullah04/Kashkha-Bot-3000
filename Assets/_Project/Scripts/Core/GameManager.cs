@@ -22,6 +22,9 @@ public class GameManager : MonoBehaviour
 
     private void Awake()
     {
+        // Optimization: Cap frame rate at 60 for mobile performance
+        Application.targetFrameRate = 60;
+
         DOTween.Init(recycleAllByDefault: true, useSafeMode: false, logBehaviour: LogBehaviour.ErrorsOnly)
                .SetCapacity(200, 50);
 
@@ -123,7 +126,7 @@ public class GameManager : MonoBehaviour
     {
         GameState previous = currentState;
         currentState = newState;
-        Debug.Log($"[GameManager] State: {previous} → {currentState}");
+        // Debug.Log($"[GameManager] State: {previous} → {currentState}");
         OnStateChanged?.Invoke(currentState);
     }
 
@@ -140,7 +143,7 @@ public class GameManager : MonoBehaviour
         // Persist lifetime Eidia immediately (delta only)
         SaveManager.Instance?.AddRunRewards(amount);
         
-        Debug.Log($"[GameManager] Eidia Earned: +{amount}. Run Total: {accumulatedEidia}");
+        // Debug.Log($"[GameManager] Eidia Earned: +{amount}. Run Total: {accumulatedEidia}");
     }
 
     private void HandleCardProcessed(float batteryDelta, int eidia, bool wasCorrect)
@@ -155,7 +158,7 @@ public class GameManager : MonoBehaviour
 
         PlayFeedbackEffects(wasCorrect);
 
-        Debug.Log($"[GameManager] Card: {(wasCorrect ? "CORRECT" : "INCORRECT")} | +{eidia} Eidia");
+        // Debug.Log($"[GameManager] Card: {(wasCorrect ? "CORRECT" : "INCORRECT")} | +{eidia} Eidia");
     }
 
     #endregion
@@ -175,7 +178,7 @@ public class GameManager : MonoBehaviour
         completedHouses = new bool[5];
         currentRunSeed = UnityEngine.Random.Range(int.MinValue, int.MaxValue);
 
-        Debug.Log($"[GameManager] Run Seed: {currentRunSeed}");
+        // Debug.Log($"[GameManager] Run Seed: {currentRunSeed}");
 
         // SYNC SCRAP at start of run so wardrobe shows correct values
         WardrobeManager.Instance?.SyncScrap();
@@ -207,7 +210,7 @@ public class GameManager : MonoBehaviour
         eidiaAtStartOfHouse = accumulatedEidia; // Capture for scrap delta
         MeterManager.Instance?.ResetHouseCounters();
 
-        Debug.Log($"[GameManager] Starting House {currentHouseLevel}!");
+        // Debug.Log($"[GameManager] Starting House {currentHouseLevel}!");
 
         // REFRESH HUD BEFORE ANYTHING HAPPENS (ensure meters show correct values)
         UIManager.Instance?.RefreshMetersPublic();
@@ -254,7 +257,7 @@ public class GameManager : MonoBehaviour
     {
         if (HouseFlowController.Instance == null)
         {
-            Debug.LogError("[GameManager] HouseFlowController not available! Cannot start house.");
+            // Debug.LogError("[GameManager] HouseFlowController not available! Cannot start house.");
             EndHouse();
             return;
         }
@@ -263,7 +266,7 @@ public class GameManager : MonoBehaviour
 
         if (sequence == null || sequence.Sequence == null || sequence.Sequence.Count == 0)
         {
-            Debug.LogError($"[GameManager] No sequence data for House {houseLevel}!");
+            // Debug.LogError($"[GameManager] No sequence data for House {houseLevel}!");
             EndHouse();
             return;
         }
@@ -285,7 +288,7 @@ public class GameManager : MonoBehaviour
 
         if (sequence == null)
         {
-            Debug.LogWarning($"[GameManager] HouseSequenceData not found at '{path}'. Generating test sequence.");
+            // Debug.LogWarning($"[GameManager] HouseSequenceData not found at '{path}'. Generating test sequence.");
             sequence = ScriptableObject.CreateInstance<HouseSequenceData>();
             sequence.name = $"House{houseLevel}_Test";
             sequence.HouseLevel = houseLevel;
@@ -315,7 +318,7 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning($"[GameManager] No questions in CSV for House {houseLevel}!");
+            // Debug.LogWarning($"[GameManager] No questions in CSV for House {houseLevel}!");
             // Add a dummy element so the sequence isn't empty
             elements.Add(new SequenceElement(ElementType.Question, "Q1"));
         }
@@ -344,7 +347,7 @@ public class GameManager : MonoBehaviour
     /// </summary>
     private void HandleHouseFlowCompleted(int houseLevel)
     {
-        Debug.Log($"[GameManager] House {houseLevel} flow completed!");
+        // Debug.Log($"[GameManager] House {houseLevel} flow completed!");
         
         // Get streak bonus if applicable
         if (SwipeEncounterManager.Instance != null)
@@ -354,7 +357,7 @@ public class GameManager : MonoBehaviour
             {
                 // Use centralized handler to track run total and persist lifetime total
                 HandleEidiaEarned(encounterStreakBonus);
-                Debug.Log($"[GameManager] Streak bonus: +{encounterStreakBonus} Eidia!");
+                // Debug.Log($"[GameManager] Streak bonus: +{encounterStreakBonus} Eidia!");
             }
         }
 
@@ -377,21 +380,21 @@ public class GameManager : MonoBehaviour
         // House 4 completion - trigger win immediately (no hub shown)
         if (currentHouseLevel == 4)
         {
-            Debug.Log("[GameManager] House 4 completed! Triggering win...");
+            // Debug.Log("[GameManager] House 4 completed! Triggering win...");
             if (isHouse4Active)
             {
-                Debug.Log("[GameManager] INSANE MODE COMPLETE!");
+                // Debug.Log("[GameManager] INSANE MODE COMPLETE!");
                 WinGame(isHouse4Clear: true);
             }
             else
             {
-                Debug.Log("[GameManager] Normal House 4 complete - winning!");
+                // Debug.Log("[GameManager] Normal House 4 complete - winning!");
                 WinGame(isHouse4Clear: false);
             }
             return;
         }
 
-        Debug.Log($"[GameManager] House {currentHouseLevel} complete! Going to Hub...");
+        // Debug.Log($"[GameManager] House {currentHouseLevel} complete! Going to Hub...");
 
         // Mark this house as complete in the Unified Hub
         UnifiedHubManager.Instance?.MarkHouseComplete(currentHouseLevel);
@@ -402,14 +405,14 @@ public class GameManager : MonoBehaviour
 
     public void OnMiniGameComplete(int eidiaEarned)
     {
-        Debug.Log($"[GameManager] === OnMiniGameComplete === Eidia earned: {eidiaEarned}");
+        // Debug.Log($"[GameManager] === OnMiniGameComplete === Eidia earned: {eidiaEarned}");
         
         // Use centralized handler
         HandleEidiaEarned(eidiaEarned);
 
         // NOTE: Scrap is already awarded by MiniGameManager.EndMiniGame using the specific scrapEarned calculation.
 
-        Debug.Log($"[GameManager] Accumulated Eidia: {accumulatedEidia}");
+        // Debug.Log($"[GameManager] Accumulated Eidia: {accumulatedEidia}");
         ShowUnifiedHub();
     }
 
@@ -448,14 +451,14 @@ public class GameManager : MonoBehaviour
             UIManager.Instance?.ShowUnifiedHub();
         }
 
-        Debug.Log($"[GameManager] Unified Hub. Next: {currentHouseLevel + 1}");
+        // Debug.Log($"[GameManager] Unified Hub. Next: {currentHouseLevel + 1}");
     }
 
     private void EnterHouse(int houseLevel)
     {
         if (houseLevel > currentHouseLevel + 1 && !completedHouses[houseLevel - 1])
         {
-            Debug.LogWarning($"[GameManager] Cannot enter House {houseLevel} - previous not complete!");
+            // Debug.LogWarning($"[GameManager] Cannot enter House {houseLevel} - previous not complete!");
             return;
         }
 
@@ -465,7 +468,7 @@ public class GameManager : MonoBehaviour
 
     private void HandleMiniGameSelected(int miniGameIndex)
     {
-        Debug.Log($"[GameManager] Mini-game {miniGameIndex + 1} selected from Hub.");
+        // Debug.Log($"[GameManager] Mini-game {miniGameIndex + 1} selected from Hub.");
 
         if (TransitionPlayer.Instance != null)
         {
@@ -513,7 +516,7 @@ public class GameManager : MonoBehaviour
 
     private void HandlePlayAgain()
     {
-        Debug.Log("[GameManager] Play Again!");
+        // Debug.Log("[GameManager] Play Again!");
         
         if (TransitionPlayer.Instance != null)
         {
@@ -532,7 +535,7 @@ public class GameManager : MonoBehaviour
 
     private void HandleOutfitEquipped(int outfitID)
     {
-        Debug.Log($"[GameManager] Outfit equipped (ID: {outfitID}).");
+        // Debug.Log($"[GameManager] Outfit equipped (ID: {outfitID}).");
 
         // For now, outfits are cosmetic only
         // Stat bonuses will be re-added later when needed
@@ -541,7 +544,7 @@ public class GameManager : MonoBehaviour
     private void OnTransitionFinished()
     {
 #if UNITY_EDITOR
-        Debug.Log("[GameManager] Transition finished.");
+        // Debug.Log("[GameManager] Transition finished.");
 #endif
     }
 
@@ -561,7 +564,7 @@ public class GameManager : MonoBehaviour
             _ => "Game Over!"
         };
 
-        Debug.Log($"[GameManager] {msg}");
+        // Debug.Log($"[GameManager] {msg}");
         AudioManager.Instance?.PlaySFX(AudioManager.SFXType.GameOver);
         PlayGameOverEffects(reason);
 
@@ -580,7 +583,7 @@ public class GameManager : MonoBehaviour
             ? "INSANE MODE CLEAR! You survived House 4!"
             : "You survived Eid! Congratulations!";
 
-        Debug.Log($"[GameManager] {msg}");
+        // Debug.Log($"[GameManager] {msg}");
         AudioManager.Instance?.PlaySFX(AudioManager.SFXType.Win);
 
         // CRITICAL FIX: Put hub in win mode BEFORE changing state

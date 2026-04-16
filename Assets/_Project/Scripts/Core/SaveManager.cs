@@ -52,7 +52,7 @@ public class SaveManager : MonoBehaviour
         // PHASE 18: Notify that Currency has changed (UI uses OnScrapChanged as the event)
         OnScrapChanged?.Invoke(currentSaveData.TotalEidia);
         
-        Debug.Log($"[Save] Currency added: +{eidia}. Total Eidia: {currentSaveData.TotalEidia}");
+        // Debug.Log($"[Save] Currency added: +{eidia}. Total Eidia: {currentSaveData.TotalEidia}");
     }
 
     /// <summary>
@@ -78,7 +78,7 @@ public class SaveManager : MonoBehaviour
         // Fire event to notify UI updates (Wardrobe, Upgrades, etc.)
         OnScrapChanged?.Invoke(currentSaveData.TotalEidia);
 
-        Debug.Log($"[Save] Currency spent: -{amount}. Remaining Eidia: {currentSaveData.TotalEidia}");
+        // Debug.Log($"[Save] Currency spent: -{amount}. Remaining Eidia: {currentSaveData.TotalEidia}");
         return true;
     }
 
@@ -90,11 +90,11 @@ public class SaveManager : MonoBehaviour
             currentSaveData.LastSaveDate = System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
             string json = JsonUtility.ToJson(currentSaveData, true);
             File.WriteAllText(SavePath, json);
-            Debug.Log($"[Save] Game saved");
+            // Debug.Log($"[Save] Game saved");
         }
-        catch (System.Exception e)
+        catch (System.Exception)
         {
-            Debug.LogError($"[Save] Failed: {e.Message}");
+            // Debug.LogError($"[Save] Failed: {e.Message}");
         }
     }
 
@@ -107,17 +107,17 @@ public class SaveManager : MonoBehaviour
             {
                 string json = File.ReadAllText(SavePath);
                 currentSaveData = JsonUtility.FromJson<SaveData>(json);
-                Debug.Log($"[Save] Loaded. Total Eidia: {currentSaveData.TotalEidia}");
+                // Debug.Log($"[Save] Loaded. Total Eidia: {currentSaveData.TotalEidia}");
             }
-            catch (System.Exception e)
+            catch (System.Exception)
             {
-                Debug.LogError($"[Save] Load failed: {e.Message}");
+                // Debug.LogError($"[Save] Load failed: {e.Message}");
                 currentSaveData = new SaveData();
             }
         }
         else
         {
-            Debug.Log("[Save] No save file. Creating new.");
+            // Debug.Log("[Save] No save file. Creating new.");
             currentSaveData = new SaveData();
             SaveGame();
         }
@@ -128,7 +128,7 @@ public class SaveManager : MonoBehaviour
     {
         currentSaveData = new SaveData();
         SaveGame();
-        Debug.Log("[Save] Progress reset.");
+        // Debug.Log("[Save] Progress reset.");
     }
 
     [Button("Add 100 Scrap")]

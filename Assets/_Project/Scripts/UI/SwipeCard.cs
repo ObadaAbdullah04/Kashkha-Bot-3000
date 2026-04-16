@@ -146,7 +146,7 @@ public class SwipeCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
                 characterImage.sprite = defaultSprite;
                 characterImage.enabled = true;
 #if UNITY_EDITOR
-                Debug.LogWarning($"[SwipeCard] Sprite not found: 'CharacterSprites/{data.SpriteName}'. Using default.");
+                // Debug.LogWarning($"[SwipeCard] Sprite not found: 'CharacterSprites/{data.SpriteName}'. Using default.");
 #endif
             }
             else
@@ -186,8 +186,12 @@ public class SwipeCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
         // Reset visual state
         ResetCard();
 
+        // JUICE: Elastic entrance
+        transform.localScale = Vector3.one * 0.8f;
+        transform.DOScale(Vector3.one, 0.5f).SetEase(Ease.OutElastic);
+
 #if UNITY_EDITOR
-        Debug.Log($"[SwipeCard] Setup: Card {index + 1}/{total} - Speaker: {data.Speaker}");
+        // Debug.Log($"[SwipeCard] Setup: Card {index + 1}/{total} - Speaker: {data.Speaker}");
 #endif
     }
 
@@ -210,6 +214,7 @@ public class SwipeCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
         // CRITICAL FIX: Force position using BOTH Transform and RectTransform
         transform.localPosition = Vector3.zero;
         transform.localRotation = Quaternion.identity;
+        transform.localScale = Vector3.one;
         originalPosition = Vector3.zero;
         originalRotation = Quaternion.identity;
 
@@ -321,11 +326,14 @@ public class SwipeCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
         if (leftOptionText != null)
             leftOptionText.alpha = Mathf.Clamp01(1f - Mathf.Max(0f, -swipeProgress));
 
-        // Haptic feedback when crossing threshold (commitment point)
+        // Haptic feedback and SCALE PULSE when crossing threshold (commitment point)
         if (!_hasTriggeredHaptic && Mathf.Abs(swipeProgress) >= 0.95f)
         {
             _hasTriggeredHaptic = true;
             HapticFeedback.Instance?.LightTap();
+            
+            // JUICE: Scale pulse on commitment
+            transform.DOPunchScale(Vector3.one * 0.05f, 0.2f, 10, 0.5f);
         }
     }
 
@@ -347,6 +355,9 @@ public class SwipeCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
             backgroundImage.DOKill(); // Clean up current tweens
             backgroundImage.DOColor(flashColor, 0.2f)
                 .OnComplete(() => backgroundImage.DOColor(Color.white, 0.4f));
+            
+            // JUICE: Pulse scale on result
+            transform.DOPunchScale(Vector3.one * 0.1f, 0.3f);
         }
 
         // ONLY show feedback text if enabled
@@ -359,6 +370,7 @@ public class SwipeCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
             _feedbackSequence?.Kill();
             _feedbackSequence = DOTween.Sequence()
                 .Append(feedbackText.DOFade(1f, 0.3f))
+                .Join(feedbackText.transform.DOPunchScale(Vector3.one * 0.2f, 0.3f))
                 .AppendInterval(feedbackTextDuration)
                 .Append(feedbackText.DOFade(0f, 0.3f));
         }
@@ -382,11 +394,12 @@ public class SwipeCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
         // Calculate target position (off-screen)
         Vector3 targetPos = Vector3.zero;
         targetPos.x = swipeAwayDistance * direction;
+        targetPos.y += 100f; // Slight upward arc
 
         // Animate swipe away
         Sequence swipeSeq = DOTween.Sequence();
-        swipeSeq.Append(transform.DOLocalMove(targetPos, swipeAnimDuration).SetEase(Ease.OutBack));
-        swipeSeq.Join(transform.DORotate(new Vector3(0, 0, direction * maxRotationAngle * 2), swipeAnimDuration).SetEase(Ease.OutBack));
+        swipeSeq.Append(transform.DOLocalMove(targetPos, swipeAnimDuration).SetEase(Ease.InCubic));
+        swipeSeq.Join(transform.DORotate(new Vector3(0, 0, direction * maxRotationAngle * 3), swipeAnimDuration).SetEase(Ease.InCubic));
         swipeSeq.Join(canvasGroup != null
             ? canvasGroup.DOFade(0f, swipeAnimDuration)
             : null);
@@ -407,7 +420,8 @@ public class SwipeCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
 
         Sequence snapSeq = DOTween.Sequence();
         snapSeq.Append(transform.DOLocalMove(originalPosition, snapBackDuration).SetEase(Ease.OutBack));
-        snapSeq.Join(transform.DOLocalRotateQuaternion(originalRotation, snapBackDuration));
+        snapSeq.Join(transform.DOLocalRotateQuaternion(originalRotation, snapBackDuration).SetEase(Ease.OutBack));
+        snapSeq.Join(transform.DOScale(Vector3.one, snapBackDuration).SetEase(Ease.OutBack));
 
         // Reset feedback
         if (backgroundImage != null)
@@ -418,7 +432,7 @@ public class SwipeCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
             rightOptionText.DOFade(1f, snapBackDuration);
 
         if (leftOptionText != null)
-            leftOptionText.DOFade(1f, snapBackDuration);
+            leftOptionText.alpha = 1f; // Fix: DOFade(1f, ...) was potentially wrong if it was 0
     }
 
     #endregion

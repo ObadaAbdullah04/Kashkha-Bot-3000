@@ -45,7 +45,7 @@ public class MemorySwapMiniGame : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("[MemorySwapMiniGame] Multiple instances detected! Destroying duplicate.");
+            // Debug.LogWarning("[MemorySwapMiniGame] Multiple instances detected! Destroying duplicate.");
             Destroy(gameObject);
             return;
         }
@@ -116,7 +116,7 @@ public class MemorySwapMiniGame : MonoBehaviour
         // Validate references
         if (Grid == null || _tilePrefab == null || _tiles == null || _tiles.Length == 0)
         {
-            Debug.LogError("[MemorySwapMiniGame] Missing required references! Check Inspector.");
+            // Debug.LogError("[MemorySwapMiniGame] Missing required references! Check Inspector.");
             EndGameEarly();
             return;
         }
@@ -127,7 +127,7 @@ public class MemorySwapMiniGame : MonoBehaviour
         _totalScrapAwarded = 0;
         UpdateScoreText();
 
-        Debug.Log($"[MemorySwapMiniGame] Starting game with {_totalPairs} pairs ({_totalPairs * 2} tiles)");
+        // Debug.Log($"[MemorySwapMiniGame] Starting game with {_totalPairs} pairs ({_totalPairs * 2} tiles)");
 
         // Auto-configure canvas with main camera
         ConfigureCanvas();
@@ -150,7 +150,7 @@ public class MemorySwapMiniGame : MonoBehaviour
         Canvas canvas = GetComponentInChildren<Canvas>();
         if (canvas == null)
         {
-            Debug.LogError("[MemorySwapMiniGame] No Canvas found on this GameObject or children!");
+            // Debug.LogError("[MemorySwapMiniGame] No Canvas found on this GameObject or children!");
             return;
         }
 
@@ -160,12 +160,12 @@ public class MemorySwapMiniGame : MonoBehaviour
             canvas.worldCamera = mainCam;
             canvas.planeDistance = 100f;
 
-            Debug.Log($"[MemorySwapMiniGame] Canvas configured with camera: {mainCam.gameObject.name}");
+            // Debug.Log($"[MemorySwapMiniGame] Canvas configured with camera: {mainCam.gameObject.name}");
         }
         else
         {
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            Debug.LogWarning("[MemorySwapMiniGame] No camera found! Using ScreenSpaceOverlay.");
+            // Debug.LogWarning("[MemorySwapMiniGame] No camera found! Using ScreenSpaceOverlay.");
         }
 
         // Fix RectTransform to fill screen
@@ -328,12 +328,12 @@ public class MemorySwapMiniGame : MonoBehaviour
             // Award Tech Scrap immediately
             AwardScrap(techScrapPerMatch);
 
-            Debug.Log($"[MemorySwapMiniGame] Match found! ({_matchCount}/{_totalPairs}) +{techScrapPerMatch} scrap");
+            // Debug.Log($"[MemorySwapMiniGame] Match found! ({_matchCount}/{_totalPairs}) +{techScrapPerMatch} scrap");
 
             // Check if all pairs matched
             if (_matchCount == _totalPairs)
             {
-                Debug.Log("[MemorySwapMiniGame] All pairs matched! Perfect game bonus!");
+                // Debug.Log("[MemorySwapMiniGame] All pairs matched! Perfect game bonus!");
                 AwardScrap(bonusScrapForPerfect);
                 yield return new WaitForSeconds(0.5f);
                 CompleteGame();
@@ -368,11 +368,11 @@ public class MemorySwapMiniGame : MonoBehaviour
         if (SaveManager.Instance != null)
         {
             SaveManager.Instance.AddScrap(amount);
-            Debug.Log($"[MemorySwapMiniGame] Awarded {amount} Tech Scrap (total: {_totalScrapAwarded})");
+            // Debug.Log($"[MemorySwapMiniGame] Awarded {amount} Tech Scrap (total: {_totalScrapAwarded})");
         }
         else
         {
-            Debug.LogWarning("[MemorySwapMiniGame] SaveManager.Instance is null! Scrap not persisted.");
+            // Debug.LogWarning("[MemorySwapMiniGame] SaveManager.Instance is null! Scrap not persisted.");
         }
     }
 
@@ -391,7 +391,7 @@ public class MemorySwapMiniGame : MonoBehaviour
         hintButton.interactable = false;
         lockInput = true;
 
-        Debug.Log("[MemorySwapMiniGame] Hint activated!");
+        // Debug.Log("[MemorySwapMiniGame] Hint activated!");
 
         // 1. Open all unmatched + covered tiles together
         var openSeq = DOTween.Sequence();
@@ -512,7 +512,7 @@ public class MemorySwapMiniGame : MonoBehaviour
     /// </summary>
     private void CompleteGame()
     {
-        Debug.Log($"[MemorySwapMiniGame] Game complete! Total scrap awarded: {_totalScrapAwarded}");
+        // Debug.Log($"[MemorySwapMiniGame] Game complete! Total scrap awarded: {_totalScrapAwarded}");
 
         // Notify MiniGameManager to transition to next state
         if (MiniGameManager.Instance != null)
@@ -520,11 +520,11 @@ public class MemorySwapMiniGame : MonoBehaviour
             // Pass 0 for eidia (memory game doesn't award eidia, only scrap)
             // Pass 0 for scrap (already persisted per-match)
             MiniGameManager.Instance.EndMiniGame(0, 0);
-            Debug.Log("[MemorySwapMiniGame] Notified MiniGameManager.EndMiniGame(0, 0)");
+            // Debug.Log("[MemorySwapMiniGame] Notified MiniGameManager.EndMiniGame(0, 0)");
         }
         else
         {
-            Debug.LogError("[MemorySwapMiniGame] MiniGameManager.Instance is null! Cannot transition!");
+            // Debug.LogError("[MemorySwapMiniGame] MiniGameManager.Instance is null! Cannot transition!");
             // Fallback: destroy ourselves to at least clean up
             Destroy(gameObject);
         }
@@ -535,7 +535,7 @@ public class MemorySwapMiniGame : MonoBehaviour
     /// </summary>
     private void EndGameEarly()
     {
-        Debug.LogWarning("[MemorySwapMiniGame] Ending game early due to error.");
+        // Debug.LogWarning("[MemorySwapMiniGame] Ending game early due to error.");
 
         if (MiniGameManager.Instance != null)
         {

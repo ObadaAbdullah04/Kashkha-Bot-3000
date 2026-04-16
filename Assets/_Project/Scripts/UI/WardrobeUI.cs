@@ -43,16 +43,16 @@ public class WardrobeUI : MonoBehaviour
 
     private void HandleGlobalScrapChanged(int newTotal)
     {
-        Debug.Log($"[WardrobeUI] HandleGlobalScrapChanged called with: {newTotal}");
+        // Debug.Log($"[WardrobeUI] HandleGlobalScrapChanged called with: {newTotal}");
         
         if (scrapText != null)
         {
             scrapText.text = newTotal.ToString();
-            Debug.Log($"[WardrobeUI] Scrap text updated to: {newTotal}");
+            // Debug.Log($"[WardrobeUI] Scrap text updated to: {newTotal}");
         }
         else
         {
-            Debug.LogWarning("[WardrobeUI] scrapText is null!");
+            // Debug.LogWarning("[WardrobeUI] scrapText is null!");
         }
         
         if (WardrobeManager.Instance != null)
@@ -61,7 +61,7 @@ public class WardrobeUI : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("[WardrobeUI] WardrobeManager.Instance is null!");
+            // Debug.LogWarning("[WardrobeUI] WardrobeManager.Instance is null!");
             RefreshUI();
         }
     }
@@ -126,7 +126,7 @@ public class WardrobeUI : MonoBehaviour
                     else
                     {
                         outfitButtons[i].image.enabled = false;
-                        Debug.LogWarning($"[WardrobeUI] Sprite not found: CharacterSprites/{data.spriteName}");
+                        // Debug.LogWarning($"[WardrobeUI] Sprite not found: CharacterSprites/{data.spriteName}");
                     }
                 }
                 else
@@ -191,7 +191,7 @@ public class WardrobeUI : MonoBehaviour
             }
             else
             {
-                Debug.LogWarning($"[WardrobeUI] Could not load sprite: CharacterSprites/{data.spriteName}");
+                // Debug.LogWarning($"[WardrobeUI] Could not load sprite: CharacterSprites/{data.spriteName}");
                 characterPreviewImage.sprite = defaultCharacterSprite;
             }
         }

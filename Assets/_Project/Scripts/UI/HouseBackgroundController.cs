@@ -49,14 +49,14 @@ public class HouseBackgroundController : MonoBehaviour
         {
             _backgroundImage.sprite = newBg;
 #if UNITY_EDITOR
-            Debug.Log($"[HouseBackground] Loaded background for House {houseLevel}: {resourceName}");
+            // Debug.Log($"[HouseBackground] Loaded background for House {houseLevel}: {resourceName}");
 #endif
         }
         else if (defaultBackground != null)
         {
             _backgroundImage.sprite = defaultBackground;
 #if UNITY_EDITOR
-            Debug.LogWarning($"[HouseBackground] Resource {resourceName} not found. Using default.");
+            // Debug.LogWarning($"[HouseBackground] Resource {resourceName} not found. Using default.");
 #endif
         }
     }

@@ -96,7 +96,7 @@ public class CinematicController : MonoBehaviour
     [Header("Debug")]
     [Tooltip("Type a cinematic ID from DataManager to test (e.g. C_GREET_1)")]
     [SerializeField] private string testCinematicID = "C_GREET_1";
-    [SerializeField] private bool debugLogging = false;
+    // [SerializeField] private bool debugLogging = false;
 
     #endregion
 
@@ -139,7 +139,7 @@ public class CinematicController : MonoBehaviour
         }
         else
         {
-            Debug.LogError("[CinematicController] Duplicate instance! Destroying.");
+            // Debug.LogError("[CinematicController] Duplicate instance! Destroying.");
             Destroy(gameObject);
             return;
         }
@@ -176,7 +176,7 @@ public class CinematicController : MonoBehaviour
 
     private void InitializeHousePortraits(int houseLevel)
     {
-        if (debugLogging) Debug.Log($"[CinematicController] Initializing portraits for House {houseLevel}");
+        // if (debugLogging) {} // Debug.Log($"[CinematicController] Initializing portraits for House {houseLevel}");
 
         // 1. Ensure panel is active but not blocking
         if (cutscenePanel != null)
@@ -259,8 +259,7 @@ public class CinematicController : MonoBehaviour
         
         if (!string.IsNullOrEmpty(data.SpeakerName) && !string.IsNullOrEmpty(targetExpression))
         {
-            if (debugLogging)
-                Debug.Log($"[CinematicController] Interaction result: Updating {data.SpeakerName} to {targetExpression}");
+            // // if (debugLogging) {} // Debug.Log($"[CinematicController] Interaction result: Updating {data.SpeakerName} to {targetExpression}");
 
             // Find speaker data from DataManager
             var speaker = DataManager.Instance?.GetSpeakerByName(data.SpeakerName);
@@ -335,7 +334,7 @@ public class CinematicController : MonoBehaviour
     {
         if (isPlaying)
         {
-            Debug.LogWarning($"[CinematicController] Cinematic already playing: {currentCinematicID}. Ignoring PlayCinematic({cinematicData.ID})");
+            // Debug.LogWarning($"[CinematicController] Cinematic already playing: {currentCinematicID}. Ignoring PlayCinematic({cinematicData.ID})");
             return;
         }
 
@@ -351,8 +350,7 @@ public class CinematicController : MonoBehaviour
             HideGameplayUI();
         }
 
-        if (debugLogging)
-            Debug.Log($"[CinematicController] Playing cinematic: {cinematicData.ID} | Type: {cinematicData.Type}");
+        // // if (debugLogging) {} // Debug.Log($"[CinematicController] Playing cinematic: {cinematicData.ID} | Type: {cinematicData.Type}");
 
         OnCinematicStarted?.Invoke(cinematicData.ID);
 
@@ -367,12 +365,12 @@ public class CinematicController : MonoBehaviour
         {
             if (fallbackToDOTween && !string.IsNullOrEmpty(cinematicData.TextAR))
             {
-                Debug.LogWarning($"[CinematicController] Timeline '{cinematicData.TimelineAssetName}' not found. Falling back to DOTween mode.");
+                // Debug.LogWarning($"[CinematicController] Timeline '{cinematicData.TimelineAssetName}' not found. Falling back to DOTween mode.");
                 actualType = CinematicType.DOTween;
             }
             else if (!fallbackToDOTween)
             {
-                Debug.LogError($"[CinematicController] Timeline '{cinematicData.TimelineAssetName}' not found and fallback disabled!");
+                // Debug.LogError($"[CinematicController] Timeline '{cinematicData.TimelineAssetName}' not found and fallback disabled!");
                 isPlaying = false;
                 ShowGameplayUI(); // Restore UI
                 onComplete?.Invoke(cinematicData.ID);
@@ -391,7 +389,7 @@ public class CinematicController : MonoBehaviour
                 break;
 
             default:
-                Debug.LogError($"[CinematicController] Unknown cinematic type: {cinematicData.Type}");
+                // Debug.LogError($"[CinematicController] Unknown cinematic type: {cinematicData.Type}");
                 isPlaying = false;
                 ShowGameplayUI(); // Restore UI
                 onComplete?.Invoke(cinematicData.ID);
@@ -415,8 +413,7 @@ public class CinematicController : MonoBehaviour
     {
         if (!isPlaying) return;
 
-        if (debugLogging)
-            Debug.Log("[CinematicController] Cinematic cancelled externally.");
+        // // if (debugLogging) {} // Debug.Log("[CinematicController] Cinematic cancelled externally.");
 
         isPlaying = false;
         if (playbackCoroutine != null)
@@ -457,7 +454,7 @@ public class CinematicController : MonoBehaviour
     {
         if (director == null)
         {
-            Debug.LogError("[CinematicController] PlayableDirector not assigned! Cannot play Unity Timeline.");
+            // Debug.LogError("[CinematicController] PlayableDirector not assigned! Cannot play Unity Timeline.");
             isPlaying = false;
             ShowGameplayUI(); // Restore gameplay UI
             onCompleteCallback?.Invoke(cinematicData.ID);
@@ -467,7 +464,7 @@ public class CinematicController : MonoBehaviour
         // Find timeline in cache
         if (!timelineCache.ContainsKey(cinematicData.TimelineAssetName))
         {
-            Debug.LogError($"[CinematicController] Timeline not found: {cinematicData.TimelineAssetName}");
+            // Debug.LogError($"[CinematicController] Timeline not found: {cinematicData.TimelineAssetName}");
             isPlaying = false;
             ShowGameplayUI(); // Restore gameplay UI
             onCompleteCallback?.Invoke(cinematicData.ID);
@@ -477,7 +474,7 @@ public class CinematicController : MonoBehaviour
         TimelineAsset timeline = timelineCache[cinematicData.TimelineAssetName];
         if (timeline == null)
         {
-            Debug.LogError($"[CinematicController] Timeline asset is null: {cinematicData.TimelineAssetName}");
+            // Debug.LogError($"[CinematicController] Timeline asset is null: {cinematicData.TimelineAssetName}");
             isPlaying = false;
             ShowGameplayUI(); // Restore gameplay UI
             onCompleteCallback?.Invoke(cinematicData.ID);
@@ -501,8 +498,7 @@ public class CinematicController : MonoBehaviour
         {
             // TIMELINE MODE: Immediately hide cutscene panel - Timeline has its own visuals
             cutscenePanel.SetActive(false);
-            if (debugLogging)
-                Debug.Log("[CinematicController] Timeline mode - cutscene panel hidden (no text to display)");
+            // // if (debugLogging) {} // Debug.Log("[CinematicController] Timeline mode - cutscene panel hidden (no text to display)");
         }
 
         // CORRECT timeline playback sequence
@@ -515,8 +511,7 @@ public class CinematicController : MonoBehaviour
         float safetyTimeout = Mathf.Max((float)timelineDuration + 2f, 5f); // Add 2s buffer, minimum 5s
         float elapsed = 0f;
 
-        if (debugLogging)
-            Debug.Log($"[CinematicController] Timeline started: {cinematicData.TimelineAssetName} | Duration: {timelineDuration:F2}s | Timeout: {safetyTimeout:F2}s | State: {director.state}");
+        // // if (debugLogging) {} // Debug.Log($"[CinematicController] Timeline started: {cinematicData.TimelineAssetName} | Duration: {timelineDuration:F2}s | Timeout: {safetyTimeout:F2}s | State: {director.state}");
 
         // Wait for timeline to complete with safety timeout
         yield return new WaitUntil(() => 
@@ -526,8 +521,7 @@ public class CinematicController : MonoBehaviour
             // Safety timeout: force completion if timeline runs too long
             if (elapsed >= safetyTimeout)
             {
-                if (debugLogging)
-                    Debug.LogWarning($"[CinematicController] Timeline safety timeout triggered ({elapsed:F2}s >= {safetyTimeout:F2}s). Forcing completion.");
+                // // if (debugLogging) {} // Debug.LogWarning($"[CinematicController] Timeline safety timeout triggered ({elapsed:F2}s >= {safetyTimeout:F2}s). Forcing completion.");
                 
                 // Stop the director to ensure clean state
                 if (director != null && director.state == PlayState.Playing)
@@ -540,8 +534,7 @@ public class CinematicController : MonoBehaviour
             bool timelineEnded = director.state != PlayState.Playing;
             bool wasCancelled = !isPlaying;
             
-            if (timelineEnded && debugLogging)
-                Debug.Log($"[CinematicController] Timeline naturally ended at {elapsed:F2}s | Final State: {director.state}");
+            if (timelineEnded) {} // Debug.Log($"[CinematicController] Timeline naturally ended at {elapsed:F2}s | Final State: {director.state}");
             
             return timelineEnded || wasCancelled;
         });
@@ -549,8 +542,7 @@ public class CinematicController : MonoBehaviour
         // Timeline finished
         if (isPlaying)
         {
-            if (debugLogging)
-                Debug.Log($"[CinematicController] Timeline complete: {cinematicData.ID} | Elapsed: {elapsed:F2}s | Final State: {director.state}");
+            // // if (debugLogging) {} // Debug.Log($"[CinematicController] Timeline complete: {cinematicData.ID} | Elapsed: {elapsed:F2}s | Final State: {director.state}");
 
             isPlaying = false;
             OnCinematicCompleted?.Invoke(cinematicData.ID);
@@ -582,7 +574,7 @@ public class CinematicController : MonoBehaviour
     {
         if (cutsceneText == null)
         {
-            Debug.LogError("[CinematicController] CutsceneText not assigned! Cannot play DOTween cinematic.");
+            // Debug.LogError("[CinematicController] CutsceneText not assigned! Cannot play DOTween cinematic.");
             isPlaying = false;
             ShowGameplayUI(); // Restore gameplay UI
             onCompleteCallback?.Invoke(cinematicData.ID);
@@ -695,14 +687,16 @@ public class CinematicController : MonoBehaviour
         // Finish
         if (isPlaying)
         {
-            if (debugLogging)
-                Debug.Log($"[CinematicController] DOTween cinematic complete: {cinematicData.ID}");
+            // // if (debugLogging) {} // Debug.Log($"[CinematicController] DOTween cinematic complete: {cinematicData.ID}");
 
             isPlaying = false;
             OnCinematicCompleted?.Invoke(cinematicData.ID);
             onCompleteCallback?.Invoke(cinematicData.ID);
 
-            // PHASE 17: UI is NOT hidden here to allow seamless transitions in HouseFlowController
+            // PHASE 17 REFINEMENT: 
+            // We DO NOT hide UI here anymore, because we want portraits to persist 
+            // into the following Interaction/Question.
+            // HouseFlowController will hide it when the entire House is done.
         }
 
         currentCinematicID = null;
@@ -822,8 +816,7 @@ public class CinematicController : MonoBehaviour
             timerSlider.gameObject.SetActive(false);
         }
 
-        if (debugLogging)
-            Debug.Log("[CinematicController] Gameplay UI hidden - EXCLUSIVE mode");
+        // // if (debugLogging) {} // Debug.Log("[CinematicController] Gameplay UI hidden - EXCLUSIVE mode");
     }
 
     /// <summary>
@@ -854,11 +847,10 @@ public class CinematicController : MonoBehaviour
         wasInteractionPanelActive = false;
         wasTimerActive = false;
 
-        if (debugLogging)
-            Debug.Log("[CinematicController] Gameplay UI restored");
+        // // if (debugLogging) {} // Debug.Log("[CinematicController] Gameplay UI restored");
     }
 
-    private void ShowCutsceneUI()
+    public void ShowCutsceneUI()
     {
         if (cutscenePanel == null) return;
 
@@ -910,8 +902,20 @@ public class CinematicController : MonoBehaviour
             }
         }
 
-        if (debugLogging)
-            Debug.Log("[CinematicController] Cutscene UI hidden");
+        // // if (debugLogging) {} // Debug.Log("[CinematicController] Cutscene UI hidden");
+    }
+
+    /// <summary>
+    /// Toggles only the dialogue box and text, keeping portraits visible.
+    /// Useful for interactions where characters react but no text is shown.
+    /// </summary>
+    public void ToggleDialogueBox(bool visible)
+    {
+        if (dialogueRoot != null)
+            dialogueRoot.SetActive(visible);
+        
+        if (speakerNamePanel != null)
+            speakerNamePanel.SetActive(visible);
     }
 
     #endregion
@@ -928,7 +932,7 @@ public class CinematicController : MonoBehaviour
         var timelines = Resources.LoadAll<TimelineAsset>(timelinesResourcesPath);
         if (timelines == null || timelines.Length == 0)
         {
-            Debug.LogWarning($"[CinematicController] No timelines found at Resources/{timelinesResourcesPath}/");
+            // Debug.LogWarning($"[CinematicController] No timelines found at Resources/{timelinesResourcesPath}/");
             return;
         }
 
@@ -937,12 +941,11 @@ public class CinematicController : MonoBehaviour
             if (timeline != null && !timelineCache.ContainsKey(timeline.name))
             {
                 timelineCache[timeline.name] = timeline;
-                if (debugLogging)
-                    Debug.Log($"[CinematicController] Preloaded timeline: {timeline.name}");
+                // // if (debugLogging) {} // Debug.Log($"[CinematicController] Preloaded timeline: {timeline.name}");
             }
         }
 
-        Debug.Log($"[CinematicController] Preloaded {timelines.Length} timelines from Resources");
+        // Debug.Log($"[CinematicController] Preloaded {timelines.Length} timelines from Resources");
     }
 
     #endregion
@@ -954,18 +957,18 @@ public class CinematicController : MonoBehaviour
     {
         if (!Application.isPlaying)
         {
-            Debug.LogWarning("[CinematicController] Enter Play mode to test.");
+            // Debug.LogWarning("[CinematicController] Enter Play mode to test.");
             return;
         }
 
         var data = DataManager.Instance?.GetCinematicByID(testCinematicID);
         if (data != null)
         {
-            PlayCinematic(data, (id) => Debug.Log($"[CinematicController Test] Completed: {id}"));
+            PlayCinematic(data, (id) => {}); // // Debug.Log($"[CinematicController Test] Completed: {id}"));
         }
         else
         {
-            Debug.LogError($"[CinematicController] Cinematic ID '{testCinematicID}' not found in DataManager.");
+            // Debug.LogError($"[CinematicController] Cinematic ID '{testCinematicID}' not found in DataManager.");
         }
     }
 
@@ -986,22 +989,22 @@ public class CinematicController : MonoBehaviour
 
             PlayCinematic(testData, (id) =>
             {
-                Debug.Log($"[CinematicController Test] Completed: {id}");
+                // Debug.Log($"[CinematicController Test] Completed: {id}");
             });
         }
         else
         {
-            Debug.LogWarning("[CinematicController] Enter Play mode to test.");
+            // Debug.LogWarning("[CinematicController] Enter Play mode to test.");
         }
     }
 
     [Button("List Loaded Timelines")]
     private void ListTimelines()
     {
-        Debug.Log($"[CinematicController] Loaded timelines: {timelineCache.Count}");
+        // Debug.Log($"[CinematicController] Loaded timelines: {timelineCache.Count}");
         foreach (var kvp in timelineCache)
         {
-            Debug.Log($"  - {kvp.Key}");
+            // Debug.Log($"  - {kvp.Key}");
         }
     }
 

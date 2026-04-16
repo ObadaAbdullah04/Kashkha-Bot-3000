@@ -163,7 +163,7 @@ public class UIManager : MonoBehaviour
     {
         AudioManager.Instance?.PlaySFX(AudioManager.SFXType.ButtonClick);
         
-        Debug.Log("[UIManager] Quitting Game...");
+        // Debug.Log("[UIManager] Quitting Game...");
 #if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
 #else
@@ -186,7 +186,7 @@ public class UIManager : MonoBehaviour
         if (GameManager.Instance != null)
         {
             GameState initialState = GameManager.Instance.CurrentState;
-            Debug.Log($"[UIManager] Initial state: {initialState}");
+            // Debug.Log($"[UIManager] Initial state: {initialState}");
 
             // Show appropriate panel based on initial state
             if (initialState == GameState.MainMenu)
@@ -314,7 +314,7 @@ public class UIManager : MonoBehaviour
     {
         if (feedbackPanel == null)
         {
-            Debug.LogError("[UIManager] FeedbackPanel not assigned!");
+            // Debug.LogError("[UIManager] FeedbackPanel not assigned!");
             return;
         }
 
@@ -467,14 +467,14 @@ public class UIManager : MonoBehaviour
             _feedbackCanvasGroup = feedbackPanel.GetComponent<CanvasGroup>();
             if (_feedbackCanvasGroup == null)
             {
-                Debug.LogWarning("[UIManager] feedbackPanel missing CanvasGroup — adding at runtime. Please add to prefab!");
+                // Debug.LogWarning("[UIManager] feedbackPanel missing CanvasGroup — adding at runtime. Please add to prefab!");
                 _feedbackCanvasGroup = feedbackPanel.AddComponent<CanvasGroup>();
             }
         }
 
         if (feedbackPanel.GetComponent<Image>() == null)
         {
-            Debug.LogWarning("[UIManager] feedbackPanel missing Image component — adding at runtime. Please add to prefab!");
+            // Debug.LogWarning("[UIManager] feedbackPanel missing Image component — adding at runtime. Please add to prefab!");
             feedbackPanel.AddComponent<Image>();
         }
     }
@@ -519,7 +519,7 @@ public class UIManager : MonoBehaviour
         SetHUDEnabled(false);
 
 #if UNITY_EDITOR
-        Debug.Log("[UIManager] Unified Hub panel shown.");
+        // Debug.Log("[UIManager] Unified Hub panel shown.");
 #endif
     }
 
@@ -538,7 +538,7 @@ public class UIManager : MonoBehaviour
         SetHUDEnabled(false);
 
 #if UNITY_EDITOR
-        Debug.Log("[UIManager] Unified Hub panel shown (overlay mode).");
+        // Debug.Log("[UIManager] Unified Hub panel shown (overlay mode).");
 #endif
     }
 
@@ -703,6 +703,9 @@ public class UIManager : MonoBehaviour
 
         // Set value directly (no normalization needed with correct maxValue)
         batterySlider.DOValue(currentValue, 0.3f).SetEase(Ease.OutQuad);
+        
+        // JUICE: Punch scale on modification
+        batterySlider.transform.DOPunchScale(Vector3.one * 0.05f, 0.2f);
     }
 
     /// <summary>
@@ -721,6 +724,9 @@ public class UIManager : MonoBehaviour
 
         // Set value directly (no normalization needed with correct maxValue)
         stomachSlider.DOValue(currentValue, 0.3f).SetEase(Ease.OutQuad);
+        
+        // JUICE: Punch scale on modification
+        stomachSlider.transform.DOPunchScale(Vector3.one * 0.05f, 0.2f);
     }
 
     #endregion

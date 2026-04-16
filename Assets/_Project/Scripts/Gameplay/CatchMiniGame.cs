@@ -31,7 +31,7 @@ public class CatchMiniGame : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("[CatchMiniGame] Multiple instances detected! Destroying duplicate.");
+            // Debug.LogWarning("[CatchMiniGame] Multiple instances detected! Destroying duplicate.");
             Destroy(gameObject);
             return;
         }
@@ -39,7 +39,7 @@ public class CatchMiniGame : MonoBehaviour
         // Validate input action assignment
         if (moveAction == null || moveAction.action == null)
         {
-            Debug.LogWarning("[CatchMiniGame] moveAction not assigned! Please assign MoveHorizontal from DeviceControls in Inspector.");
+            // Debug.LogWarning("[CatchMiniGame] moveAction not assigned! Please assign MoveHorizontal from DeviceControls in Inspector.");
         }
     }
 
@@ -168,23 +168,23 @@ public class CatchMiniGame : MonoBehaviour
     {
         // === DIAGNOSTIC LOGGER ===
 #if UNITY_EDITOR
-        Debug.Log("=== [CatchMiniGame] WORLD SPACE SETUP ===");
-        Debug.Log($"[CatchMiniGame] playerBasketPrefab: {(playerBasketPrefab != null ? "ASSIGNED" : "NULL!")}");
-        Debug.Log($"[CatchMiniGame] itemsParent: {(itemsParent != null ? "ASSIGNED" : "NULL!")}");
-        Debug.Log($"[CatchMiniGame] fallingItemPrefab: {(fallingItemPrefab != null ? "ASSIGNED" : "NULL!")}");
-        Debug.Log($"[CatchMiniGame] fallingBadItemPrefab: {(fallingBadItemPrefab != null ? "ASSIGNED" : "NULL!")}");
-        Debug.Log($"[CatchMiniGame] moveAction: {(moveAction != null ? "ASSIGNED" : "NULL! Assign in Inspector!")}");
-        Debug.Log($"[CatchMiniGame] _playerY: {_playerY}");
+        // Debug.Log("=== [CatchMiniGame] WORLD SPACE SETUP ===");
+        // Debug.Log($"[CatchMiniGame] playerBasketPrefab: {(playerBasketPrefab != null ? "ASSIGNED" : "NULL!")}");
+        // Debug.Log($"[CatchMiniGame] itemsParent: {(itemsParent != null ? "ASSIGNED" : "NULL!")}");
+        // Debug.Log($"[CatchMiniGame] fallingItemPrefab: {(fallingItemPrefab != null ? "ASSIGNED" : "NULL!")}");
+        // Debug.Log($"[CatchMiniGame] fallingBadItemPrefab: {(fallingBadItemPrefab != null ? "ASSIGNED" : "NULL!")}");
+        // Debug.Log($"[CatchMiniGame] moveAction: {(moveAction != null ? "ASSIGNED" : "NULL! Assign in Inspector!")}");
+        // Debug.Log($"[CatchMiniGame] _playerY: {_playerY}");
 
-        Debug.Log($"[CatchMiniGame] Spawn Interval: {spawnInterval}s | Eidia Chance: {eidiaSpawnChance * 100:F0}%");
-        Debug.Log("========================================");
+        // Debug.Log($"[CatchMiniGame] Spawn Interval: {spawnInterval}s | Eidia Chance: {eidiaSpawnChance * 100:F0}%");
+        // Debug.Log("========================================");
 #endif
 
         // Calculate world space boundaries from camera
         CalculateWorldBoundaries();
 
 #if UNITY_EDITOR
-        Debug.Log("[CatchMiniGame] Waiting for Initialize() call from MiniGameManager...");
+        // Debug.Log("[CatchMiniGame] Waiting for Initialize() call from MiniGameManager...");
 #endif
     }
 
@@ -195,7 +195,7 @@ public class CatchMiniGame : MonoBehaviour
     {
         if (Camera.main == null)
         {
-            Debug.LogError("[CatchMiniGame] Main Camera not found! Using fallback values.");
+            // Debug.LogError("[CatchMiniGame] Main Camera not found! Using fallback values.");
             _minX = -4f;
             _maxX = 4f;
             _spawnY = 6f;
@@ -236,7 +236,7 @@ public class CatchMiniGame : MonoBehaviour
         _destroyY = Camera.main.ViewportToWorldPoint(new Vector3(0, -0.1f, 0)).y;
 
 #if UNITY_EDITOR
-        Debug.Log($"[CatchMiniGame] World Boundaries: minX={_minX:F2}, maxX={_maxX:F2}, spawnY={_spawnY:F2}, destroyY={_destroyY:F2}");
+        // Debug.Log($"[CatchMiniGame] World Boundaries: minX={_minX:F2}, maxX={_maxX:F2}, spawnY={_spawnY:F2}, destroyY={_destroyY:F2}");
 #endif
     }
 
@@ -260,19 +260,19 @@ public class CatchMiniGame : MonoBehaviour
             _spawnedPlayerBasket = basketGo;
             _playerSpriteRenderer = basketGo.GetComponentInChildren<SpriteRenderer>();
 #if UNITY_EDITOR
-            Debug.Log($"[CatchMiniGame] PlayerBasket spawned at (0, {_playerY}, 0)");
+            // Debug.Log($"[CatchMiniGame] PlayerBasket spawned at (0, {_playerY}, 0)");
 #endif
         }
         else
         {
-            Debug.LogError("[CatchMiniGame] playerBasketPrefab not assigned!");
+            // Debug.LogError("[CatchMiniGame] playerBasketPrefab not assigned!");
         }
 
         if (scoreText != null)
             scoreText.text = "0";
 
 #if UNITY_EDITOR
-        Debug.Log($"[CatchMiniGame] TIME ATTACK STARTED! Duration: {gameDuration}s");
+        // Debug.Log($"[CatchMiniGame] TIME ATTACK STARTED! Duration: {gameDuration}s");
 #endif
     }
 
@@ -380,7 +380,7 @@ public class CatchMiniGame : MonoBehaviour
     {
         if (fallingItemPrefab == null && fallingBadItemPrefab == null)
         {
-            Debug.LogWarning("[CatchMiniGame] No item prefabs assigned!");
+            // Debug.LogWarning("[CatchMiniGame] No item prefabs assigned!");
             return;
         }
 
@@ -401,7 +401,7 @@ public class CatchMiniGame : MonoBehaviour
                 prefabToSpawn = rand < 0.5f ? fallingBadItemPrefab : fallingBadItemPrefab2;
                 
                 #if UNITY_EDITOR
-                // Debug.Log($"[CatchMiniGame] Selected Bad Prefab: {(rand < 0.5f ? "1" : "2")}");
+                // // Debug.Log($"[CatchMiniGame] Selected Bad Prefab: {(rand < 0.5f ? "1" : "2")}");
                 #endif
             }
             else
@@ -412,12 +412,12 @@ public class CatchMiniGame : MonoBehaviour
 
         if (prefabToSpawn == null)
         {
-            Debug.LogWarning($"[CatchMiniGame] Prefab to spawn is null! isEidia={isEidia}");
+            // Debug.LogWarning($"[CatchMiniGame] Prefab to spawn is null! isEidia={isEidia}");
             return;
         }
 
         #if UNITY_EDITOR
-        // Debug.Log($"[CatchMiniGame] Spawning: {prefabToSpawn.name}");
+        // // Debug.Log($"[CatchMiniGame] Spawning: {prefabToSpawn.name}");
         #endif
 
         // Random X between boundaries
@@ -428,18 +428,28 @@ public class CatchMiniGame : MonoBehaviour
 
         // Instantiate in world space
         GameObject newItem = Instantiate(prefabToSpawn, spawnPos, Quaternion.identity);
-
-        // Parent to items container for organization
-        if (itemsParent != null)
+        
+        // Ensure Z is exactly 0 and sorting order is high for visibility
+        newItem.transform.position = new Vector3(randomX, _spawnY, 0f);
+        SpriteRenderer sr = newItem.GetComponentInChildren<SpriteRenderer>();
+        if (sr != null)
         {
-            newItem.transform.SetParent(itemsParent);
+            sr.sortingOrder = 100; // Items well above background
         }
+
+        // JUICE: Scale up animation (preserve prefab's original scale)
+        Vector3 originalScale = newItem.transform.localScale;
+        newItem.transform.localScale = Vector3.zero;
+        newItem.transform.DOScale(originalScale, 0.3f).SetEase(Ease.OutBack);
+
+        // NOTE: Items stay in world space (no parent) to prevent Canvas transform issues.
+        // If you need organization, create a world-space empty GameObject as container.
 
         // Track for cleanup
         _activeItems.Add(newItem.transform);
 
 #if UNITY_EDITOR
-        Debug.Log($"[CatchMiniGame] Spawned {(isEidia ? "Eidia" : "Ma'amoul")} at X={randomX:F2}");
+        // Debug.Log($"[CatchMiniGame] Spawned {(isEidia ? "Eidia" : "Ma'amoul")} at X={randomX:F2}");
 #endif
     }
 
@@ -483,7 +493,7 @@ public class CatchMiniGame : MonoBehaviour
             AudioManager.Instance?.PlaySFX(AudioManager.SFXType.CatchGood);
 
 #if UNITY_EDITOR
-            Debug.Log($"[CatchMiniGame] Eidia caught! Score: {_score}");
+            // Debug.Log($"[CatchMiniGame] Eidia caught! Score: {_score}");
 #endif
         }
         else
@@ -499,11 +509,14 @@ public class CatchMiniGame : MonoBehaviour
                 playerBasket.DOShakeScale(avoidShakeDuration, avoidShakeStrength, avoidShakeVibrato, avoidShakeRandomness).SetUpdate(true);
             }
 
+            // JUICE: Floating Text
+            FloatingTextManager.Instance?.SpawnCustom("-1", Color.red, playerBasket != null ? playerBasket.position + Vector3.up : Vector3.zero);
+
             // Play avoid sound (use enum-based system)
             AudioManager.Instance?.PlaySFX(AudioManager.SFXType.CatchBad);
 
 #if UNITY_EDITOR
-            Debug.Log($"[CatchMiniGame] Ma'amoul caught! Score: {_score}");
+            // Debug.Log($"[CatchMiniGame] Ma'amoul caught! Score: {_score}");
 #endif
         }
     }
@@ -516,7 +529,7 @@ public class CatchMiniGame : MonoBehaviour
         _isPlaying = false;
 
 #if UNITY_EDITOR
-        Debug.Log($"[CatchMiniGame] TIME'S UP! Final Score: {_score}");
+        // Debug.Log($"[CatchMiniGame] TIME'S UP! Final Score: {_score}");
 #endif
 
         // Closing the Economic Loop (Phase 3)

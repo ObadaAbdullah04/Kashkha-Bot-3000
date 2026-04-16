@@ -50,7 +50,7 @@ public class HouseFlowController : MonoBehaviour
 
     [Header("Debug")]
     [Tooltip("Enable verbose debug logging")]
-    [SerializeField] private bool debugLogging = false;
+    // [SerializeField] private bool debugLogging = false;
 
     #endregion
 
@@ -91,7 +91,7 @@ public class HouseFlowController : MonoBehaviour
         }
         else
         {
-            Debug.LogError("[HouseFlowController] Duplicate instance! Destroying.");
+            // Debug.LogError("[HouseFlowController] Duplicate instance! Destroying.");
             Destroy(gameObject);
             return;
         }
@@ -109,13 +109,13 @@ public class HouseFlowController : MonoBehaviour
     {
         if (isSequencePlaying)
         {
-            Debug.LogWarning("[HouseFlowController] Sequence already playing!");
+            // Debug.LogWarning("[HouseFlowController] Sequence already playing!");
             yield break;
         }
 
         if (sequence == null || sequence.Sequence == null || sequence.Sequence.Count == 0)
         {
-            Debug.LogError($"[HouseFlowController] No sequence data for House {houseLevel}!");
+            // Debug.LogError($"[HouseFlowController] No sequence data for House {houseLevel}!");
             OnHouseCompleted?.Invoke(houseLevel);
             yield break;
         }
@@ -124,10 +124,8 @@ public class HouseFlowController : MonoBehaviour
         currentSequence = new List<SequenceElement>(sequence.Sequence);
         isSequencePlaying = true;
 
-        if (debugLogging)
-            Debug.Log($"[HouseFlowController] === Starting House {houseLevel} ===");
-        if (debugLogging)
-            Debug.Log($"[HouseFlowController] Sequence: {sequence.GetSequenceSummary()}");
+        // // if (debugLogging) {} // Debug.Log($"[HouseFlowController] === Starting House {houseLevel} ===");
+        // // if (debugLogging) {} // Debug.Log($"[HouseFlowController] Sequence: {sequence.GetSequenceSummary()}");
 
         OnHouseStarted?.Invoke(houseLevel);
 
@@ -147,45 +145,49 @@ public class HouseFlowController : MonoBehaviour
 
             if (element == null || string.IsNullOrWhiteSpace(element.ElementID))
             {
-                Debug.LogWarning($"[HouseFlowController] Element {i} is null or empty — skipping.");
+                // Debug.LogWarning($"[HouseFlowController] Element {i} is null or empty — skipping.");
                 continue;
             }
 
-            if (debugLogging)
-                Debug.Log($"[HouseFlowController] Element {i + 1}/{currentSequence.Count}: [{element.Type}] {element.ElementID}");
+            // // if (debugLogging) {} // Debug.Log($"[HouseFlowController] Element {i + 1}/{currentSequence.Count}: [{element.Type}] {element.ElementID}");
 
             // Trigger element and WAIT for completion
             switch (element.Type)
             {
                 case ElementType.Question:
+                    // Hide dialogue box for questions
+                    if (cinematicController != null) cinematicController.ToggleDialogueBox(false);
                     yield return PlayQuestion(element.ElementID, questionIndex, totalQuestions);
                     questionIndex++;
                     break;
 
                 case ElementType.Cinematic:
+                    // Show dialogue box for cinematics
+                    if (cinematicController != null) cinematicController.ToggleDialogueBox(true);
                     yield return PlayCinematic(element.ElementID);
                     break;
 
                 case ElementType.Interaction:
+                    // Panel and dialogue box stay visible from previous cinematic
                     yield return PlayInteraction(element.ElementID);
+                    
+                    // Panel stays visible until the entire house sequence ends (handled below)
                     break;
 
                 default:
-                    Debug.LogError($"[HouseFlowController] Unknown element type: {element.Type}");
+                    // Debug.LogError($"[HouseFlowController] Unknown element type: {element.Type}");
                     break;
             }
 
             // Pause between elements (skip pause after last element)
             if (i < currentSequence.Count - 1 && pauseBetweenElements > 0)
             {
-                if (debugLogging)
-                    Debug.Log($"[HouseFlowController] Pausing {pauseBetweenElements}s before next element...");
+                // // if (debugLogging) {} // Debug.Log($"[HouseFlowController] Pausing {pauseBetweenElements}s before next element...");
                 yield return new WaitForSeconds(pauseBetweenElements);
             }
         }
 // All elements done
-if (debugLogging)
-    Debug.Log($"[HouseFlowController] === House {houseLevel} Complete! All {currentSequence.Count} elements processed. ===");
+// // if (debugLogging) {} // Debug.Log($"[HouseFlowController] === House {houseLevel} Complete! All {currentSequence.Count} elements processed. ===");
 
 // PHASE 17: Clean up cinematic UI and restore gameplay HUD
 if (cinematicController != null)
@@ -204,8 +206,7 @@ OnHouseCompleted?.Invoke(houseLevel);
     {
         if (!isSequencePlaying) return;
 
-        if (debugLogging)
-            Debug.Log("[HouseFlowController] Sequence cancelled externally. Stopping all coroutines.");
+        // // if (debugLogging) {} // Debug.Log("[HouseFlowController] Sequence cancelled externally. Stopping all coroutines.");
 
         // Actually stop the coroutines
         StopAllCoroutines();
@@ -228,36 +229,33 @@ OnHouseCompleted?.Invoke(houseLevel);
         SwipeCardData questionData = DataManager.Instance?.GetQuestionByID(questionID);
         if (questionData == null)
         {
-            Debug.LogError($"[HouseFlowController] Question not found: {questionID}");
+            // Debug.LogError($"[HouseFlowController] Question not found: {questionID}");
             OnElementCompleted?.Invoke(ElementType.Question, questionID);
             yield break;
         }
 
         if (swipeEncounterManager == null)
         {
-            Debug.LogError("[HouseFlowController] SwipeEncounterManager not assigned!");
+            // Debug.LogError("[HouseFlowController] SwipeEncounterManager not assigned!");
             OnElementCompleted?.Invoke(ElementType.Question, questionID);
             yield break;
         }
 
-        if (debugLogging)
-            Debug.Log($"[HouseFlowController] === Playing Question: {questionID} ({questionIndex + 1}/{totalQuestions}) ===");
+        // // if (debugLogging) {} // Debug.Log($"[HouseFlowController] === Playing Question: {questionID} ({questionIndex + 1}/{totalQuestions}) ===");
 
         // Show card and wait for completion
         bool cardDone = false;
         swipeEncounterManager.ShowSingleCard(questionData, questionIndex, totalQuestions, (batteryDelta, eidia, wasCorrect) =>
         {
             cardDone = true;
-            if (debugLogging)
-                Debug.Log($"[HouseFlowController] Question complete: {questionID} | Correct={wasCorrect}");
+            // // if (debugLogging) {} // Debug.Log($"[HouseFlowController] Question complete: {questionID} | Correct={wasCorrect}");
             OnElementCompleted?.Invoke(ElementType.Question, questionID);
         });
 
         // Wait for card to be answered or timeout
         yield return new WaitUntil(() => cardDone);
 
-        if (debugLogging)
-            Debug.Log($"[HouseFlowController] === Question {questionID} Finished ===");
+        // // if (debugLogging) {} // Debug.Log($"[HouseFlowController] === Question {questionID} Finished ===");
     }
 
     /// <summary>
@@ -271,7 +269,7 @@ OnHouseCompleted?.Invoke(houseLevel);
     {
         if (cinematicController == null)
         {
-            Debug.LogError("[HouseFlowController] CinematicController not assigned!");
+            // Debug.LogError("[HouseFlowController] CinematicController not assigned!");
             OnElementCompleted?.Invoke(ElementType.Cinematic, cinematicID);
             yield break;
         }
@@ -280,29 +278,26 @@ OnHouseCompleted?.Invoke(houseLevel);
         var cinematicData = DataManager.Instance?.GetCinematicByID(cinematicID);
         if (cinematicData == null)
         {
-            Debug.LogError($"[HouseFlowController] Cinematic not found: {cinematicID}");
+            // Debug.LogError($"[HouseFlowController] Cinematic not found: {cinematicID}");
             OnElementCompleted?.Invoke(ElementType.Cinematic, cinematicID);
             yield break;
         }
 
-        if (debugLogging)
-            Debug.Log($"[HouseFlowController] === Playing Cinematic: {cinematicID} [EXCLUSIVE MODE] ===");
+        // // if (debugLogging) {} // Debug.Log($"[HouseFlowController] === Playing Cinematic: {cinematicID} [EXCLUSIVE MODE] ===");
 
         // Play cinematic and wait for completion
         bool cinematicDone = false;
         cinematicController.PlayCinematic(cinematicData, (id) =>
         {
             cinematicDone = true;
-            if (debugLogging)
-                Debug.Log($"[HouseFlowController] Cinematic complete: {cinematicID} | Type: {cinematicData.Type}");
+            // // if (debugLogging) {} // Debug.Log($"[HouseFlowController] Cinematic complete: {cinematicID} | Type: {cinematicData.Type}");
             OnElementCompleted?.Invoke(ElementType.Cinematic, cinematicID);
         });
 
         // Wait for cinematic to finish - blocks all other gameplay
         yield return new WaitUntil(() => cinematicDone);
 
-        if (debugLogging)
-            Debug.Log($"[HouseFlowController] === Cinematic {cinematicID} Finished - Resuming House Flow ===");
+        // // if (debugLogging) {} // Debug.Log($"[HouseFlowController] === Cinematic {cinematicID} Finished - Resuming House Flow ===");
     }
 
     /// <summary>
@@ -313,34 +308,31 @@ OnHouseCompleted?.Invoke(houseLevel);
         InteractionData interactionData = DataManager.Instance?.GetInteractionByID(interactionID);
         if (interactionData == null)
         {
-            Debug.LogError($"[HouseFlowController] Interaction not found: {interactionID}");
+            // Debug.LogError($"[HouseFlowController] Interaction not found: {interactionID}");
             OnElementCompleted?.Invoke(ElementType.Interaction, interactionID);
             yield break;
         }
 
         if (interactionHUDController == null)
         {
-            Debug.LogError("[HouseFlowController] InteractionHUDController not assigned!");
+            // Debug.LogError("[HouseFlowController] InteractionHUDController not assigned!");
             OnElementCompleted?.Invoke(ElementType.Interaction, interactionID);
             yield break;
         }
 
-        if (debugLogging)
-            Debug.Log($"[HouseFlowController] === Playing Interaction: {interactionID} ===");
+        // // if (debugLogging) {} // Debug.Log($"[HouseFlowController] === Playing Interaction: {interactionID} ===");
 
         bool interactionDone = false;
         interactionHUDController.RunInteraction(interactionData, (succeeded, batteryDelta, eidiaReward) =>
         {
             interactionDone = true;
-            if (debugLogging)
-                Debug.Log($"[HouseFlowController] Interaction complete: {interactionID} | Success={succeeded} | Battery:{batteryDelta} | Eid:{eidiaReward}");
+            // // if (debugLogging) {} // Debug.Log($"[HouseFlowController] Interaction complete: {interactionID} | Success={succeeded} | Battery:{batteryDelta} | Eid:{eidiaReward}");
             OnElementCompleted?.Invoke(ElementType.Interaction, interactionID);
         });
 
         yield return new WaitUntil(() => interactionDone);
 
-        if (debugLogging)
-            Debug.Log($"[HouseFlowController] === Interaction {interactionID} Finished ===");
+        // // if (debugLogging) {} // Debug.Log($"[HouseFlowController] === Interaction {interactionID} Finished ===");
     }
 
     #endregion
@@ -352,7 +344,7 @@ OnHouseCompleted?.Invoke(houseLevel);
     {
         // This button requires a HouseSequenceData to be assigned
         // Use GameManager.StartHouse() in Play mode instead
-        Debug.LogWarning("[HouseFlowController] Use GameManager.StartHouse() to test. This button is for reference only.");
+        // Debug.LogWarning("[HouseFlowController] Use GameManager.StartHouse() to test. This button is for reference only.");
     }
 
     #endregion

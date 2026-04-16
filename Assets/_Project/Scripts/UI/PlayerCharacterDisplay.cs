@@ -44,7 +44,7 @@ public class PlayerCharacterDisplay : MonoBehaviour
             }
             else
             {
-                Debug.LogWarning($"[PlayerCharacterDisplay] Sprite not found in Resources: CharacterSprites/{data.spriteName}");
+                // Debug.LogWarning($"[PlayerCharacterDisplay] Sprite not found in Resources: CharacterSprites/{data.spriteName}");
                 _image.sprite = defaultSprite;
             }
         }

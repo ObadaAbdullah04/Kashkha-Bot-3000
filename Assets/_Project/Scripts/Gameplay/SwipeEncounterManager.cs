@@ -161,14 +161,14 @@ public class SwipeEncounterManager : MonoBehaviour
     {
         if (cardData == null)
         {
-            Debug.LogError("[SwipeEncounterManager] CardData is null!");
+            // Debug.LogError("[SwipeEncounterManager] CardData is null!");
             onComplete?.Invoke(0, 0, false);
             return;
         }
 
         if (isProcessingSwipe)
         {
-            Debug.LogWarning("[SwipeEncounterManager] Already processing a card.");
+            // Debug.LogWarning("[SwipeEncounterManager] Already processing a card.");
             onComplete?.Invoke(0, 0, false);
             return;
         }
@@ -306,7 +306,7 @@ public class SwipeEncounterManager : MonoBehaviour
     {
         if (cardCounterText == null)
         {
-            Debug.LogWarning("[SwipeEncounterManager] cardCounterText is not assigned! Please assign in inspector.");
+            // Debug.LogWarning("[SwipeEncounterManager] cardCounterText is not assigned! Please assign in inspector.");
             return;
         }
 
@@ -314,7 +314,7 @@ public class SwipeEncounterManager : MonoBehaviour
         {
             cardCounterText.text = $"{current}/{total}";
 #if UNITY_EDITOR
-            Debug.Log($"[SwipeEncounterManager] Card counter updated: {cardCounterText.text}");
+            // Debug.Log($"[SwipeEncounterManager] Card counter updated: {cardCounterText.text}");
 #endif
         }
         else
@@ -439,7 +439,7 @@ public class SwipeEncounterManager : MonoBehaviour
 
         ShowSingleCard(testData, 0, 1, (batteryDelta, eidia, wasCorrect) =>
         {
-            Debug.Log($"[Test] Card complete: {(wasCorrect ? "CORRECT" : "INCORRECT")} | Battery: {batteryDelta}, Eidia: {eidia}");
+            // Debug.Log($"[Test] Card complete: {(wasCorrect ? "CORRECT" : "INCORRECT")} | Battery: {batteryDelta}, Eidia: {eidia}");
         });
     }
 

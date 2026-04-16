@@ -108,7 +108,7 @@ public class MeterManager : MonoBehaviour
         float delta = currentBattery - previous;
 
 #if UNITY_EDITOR
-        Debug.Log($"[Meter] Battery: {previous:F0} → {currentBattery:F0} ({(modifiedAmount > 0 ? "+" : "")}{modifiedAmount:F0})");
+        // Debug.Log($"[Meter] Battery: {previous:F0} → {currentBattery:F0} ({(modifiedAmount > 0 ? "+" : "")}{modifiedAmount:F0})");
 #endif
 
         if (currentBattery <= 0f && previous > 0f)
@@ -158,7 +158,7 @@ public class MeterManager : MonoBehaviour
         currentStomach = Mathf.Clamp(currentStomach + modifiedAmount, 0f, 100f);
         float delta = currentStomach - previous;
 
-        Debug.Log($"[Meter] Stomach: {previous:F0} → {currentStomach:F0} ({(modifiedAmount > 0 ? "+" : "")}{modifiedAmount:F0})");
+        // Debug.Log($"[Meter] Stomach: {previous:F0} → {currentStomach:F0} ({(modifiedAmount > 0 ? "+" : "")}{modifiedAmount:F0})");
 
         if (currentStomach >= 100f && previous < 100f)
         {
@@ -192,7 +192,7 @@ public class MeterManager : MonoBehaviour
         OnMetersChanged?.Invoke(currentBattery, currentStomach);
         _suppressEvents = false;
 
-        Debug.Log($"[MeterManager] Run started! Battery: {currentBattery:F0}/{maxBattery:F0}, Stomach: 0");
+        // Debug.Log($"[MeterManager] Run started! Battery: {currentBattery:F0}/{maxBattery:F0}, Stomach: 0");
     }
 
     /// <summary>
@@ -217,7 +217,7 @@ public class MeterManager : MonoBehaviour
         upgradeBatteryBonus += amount;
         currentBattery = Mathf.Min(currentBattery + amount, maxBattery); // Heal too!
         OnMetersChanged?.Invoke(currentBattery, currentStomach);
-        Debug.Log($"[Meter] Max Battery increased to {maxBattery:F0} (Bonus: +{upgradeBatteryBonus:F0})");
+        // Debug.Log($"[Meter] Max Battery increased to {maxBattery:F0} (Bonus: +{upgradeBatteryBonus:F0})");
     }
 
     /// <summary>
@@ -227,7 +227,7 @@ public class MeterManager : MonoBehaviour
     {
         stomachFillMultiplier = Mathf.Max(stomachFillMultiplier - reduction, 0.1f); // Min 0.1
         upgradeStomachReduction += reduction;
-        Debug.Log($"[Meter] Stomach Fill Rate Multiplier: {stomachFillMultiplier:F2} (Reduction: -{upgradeStomachReduction:P1})");
+        // Debug.Log($"[Meter] Stomach Fill Rate Multiplier: {stomachFillMultiplier:F2} (Reduction: -{upgradeStomachReduction:P1})");
     }
 
     /// <summary>
@@ -235,7 +235,7 @@ public class MeterManager : MonoBehaviour
     /// </summary>
     public void ResetHouseCounters()
     {
-        Debug.Log("[MeterManager] House counters reset.");
+        // Debug.Log("[MeterManager] House counters reset.");
     }
 
     /// <summary>
@@ -244,7 +244,7 @@ public class MeterManager : MonoBehaviour
     public void EnableHouse4Mode()
     {
         isHouse4Active = true;
-        Debug.Log("[MeterManager] HOUSE 4 INSANE MODE ACTIVATED!");
+        // Debug.Log("[MeterManager] HOUSE 4 INSANE MODE ACTIVATED!");
     }
 
     #endregion
