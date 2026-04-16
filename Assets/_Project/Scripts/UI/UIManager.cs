@@ -137,6 +137,7 @@ public class UIManager : MonoBehaviour
     /// </summary>
     private void OnPlayAgainClicked()
     {
+        Debug.Log("[UIManager] PLAY AGAIN CLICKED");
         AudioManager.Instance?.PlaySFX(AudioManager.SFXType.ButtonClick);
         OnPlayAgain?.Invoke();
     }
@@ -147,6 +148,7 @@ public class UIManager : MonoBehaviour
     /// </summary>
     private void OnExitToMainMenu()
     {
+        Debug.Log("[UIManager] EXIT TO MAIN MENU CLICKED");
         AudioManager.Instance?.PlaySFX(AudioManager.SFXType.ButtonClick);
 
         if (GameManager.Instance != null)
@@ -564,7 +566,7 @@ public class UIManager : MonoBehaviour
             gameOverEidiaText.text = $"عيدية مجمعة: {totalEidia}";
         }
         SetHUDEnabled(false);
-        ShowUnifiedHubWithoutHidingOthers();
+        HideUnifiedHub();
     }
 
     public void ShowWin(int totalEidia)
@@ -576,7 +578,7 @@ public class UIManager : MonoBehaviour
             winEidiaText.text = $"عيدية مجمعة: {totalEidia}";
         }
         SetHUDEnabled(false);
-        ShowUnifiedHubWithoutHidingOthers();
+        HideUnifiedHub();
     }
 
     private void HandleStateChanged(GameState newState)

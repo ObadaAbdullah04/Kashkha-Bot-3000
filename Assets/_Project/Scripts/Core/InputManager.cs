@@ -44,6 +44,7 @@ public class InputManager : MonoBehaviour
     private bool _isHolding = false;
     private int _tapCount = 0;
     private float _lastTapTime = 0f;
+    private Vector3 _lastAcceleration;
     private const float SHAKE_COOLDOWN = 0.3f; // Minimum time between shake detections
     private const float TAP_COOLDOWN = 0.5f;  // Maximum time between taps to count as combo
 
@@ -113,6 +114,14 @@ public class InputManager : MonoBehaviour
 #if UNITY_EDITOR
         // Debug.Log("[InputManager] DeviceControls disabled.");
 #endif
+    }
+
+    private void Update()
+    {
+        // Poll interaction inputs every frame for consistent behavior
+        UpdateShakeInput();
+        UpdateHoldInput();
+        UpdateTapInput();
     }
 
     #endregion
@@ -294,6 +303,7 @@ public class InputManager : MonoBehaviour
         _isHolding = false;
         _tapCount = 0;
         _lastTapTime = 0f;
+        _lastAcceleration = GetAcceleration();
         
         // Ensure acceleration action is enabled for shake
         EnableAction("Acceleration");
@@ -304,7 +314,6 @@ public class InputManager : MonoBehaviour
     /// </summary>
     public int GetShakeCount()
     {
-        UpdateShakeInput();
         return _shakeCount;
     }
 
@@ -314,7 +323,6 @@ public class InputManager : MonoBehaviour
     /// </summary>
     public float GetHoldDuration()
     {
-        UpdateHoldInput();
         return _isHolding ? Time.time - _holdStartTime : 0f;
     }
 
@@ -323,7 +331,6 @@ public class InputManager : MonoBehaviour
     /// </summary>
     public bool IsHolding()
     {
-        UpdateHoldInput();
         return _isHolding;
     }
 
@@ -332,7 +339,6 @@ public class InputManager : MonoBehaviour
     /// </summary>
     public int GetTapCount()
     {
-        UpdateTapInput();
         return _tapCount;
     }
 
@@ -368,20 +374,29 @@ public class InputManager : MonoBehaviour
         }
 #endif
 
-        // Mobile/Standalone: accelerometer magnitude threshold
-        Vector3 accel = GetAcceleration();
-        float magnitude = accel.magnitude;
+        // Mobile/Standalone: accelerometer delta detection
+        Vector3 currentAccel = GetAcceleration();
         
-        // Threshold should be higher than gravity to count as a "shake"
-        // 13.0f means roughly 1.3g (gravity is 1g = ~9.81)
-        // Some devices report higher values, so we also check for delta changes
-        const float SHAKE_THRESHOLD = 13.0f; 
+        // IMPROVED: Check delta acceleration for more reliable shake detection
+        // Magnitude threshold check (total acceleration)
+        float magnitude = currentAccel.magnitude;
         
-        // Check if acceleration exceeds threshold and cooldown has passed
-        if (magnitude >= SHAKE_THRESHOLD && Time.time - _lastShakeTime >= SHAKE_COOLDOWN)
+        // Delta threshold check (change since last frame)
+        float delta = (currentAccel - _lastAcceleration).magnitude;
+        _lastAcceleration = currentAccel;
+        
+        // Constants for shake detection
+        const float SHAKE_THRESHOLD = 13.0f; // Magnitude-based (roughly 1.3g)
+        const float DELTA_THRESHOLD = 1.5f;  // Delta-based (rapid change)
+        
+        // Trigger if either threshold is met and cooldown has passed
+        if ((magnitude >= SHAKE_THRESHOLD || delta >= DELTA_THRESHOLD) && Time.time - _lastShakeTime >= SHAKE_COOLDOWN)
         {
             _shakeCount++;
             _lastShakeTime = Time.time;
+#if UNITY_EDITOR
+            // Debug.Log($"[InputManager] SHAKE DETECTED! Mag: {magnitude:F2}, Delta: {delta:F2}");
+#endif
         }
     }
 
@@ -407,28 +422,34 @@ public class InputManager : MonoBehaviour
 #endif
 
         // Mobile: check touch via Hold action or direct touch detection
-        bool isTouching = false;
+        bool isTouchingNow = false;
         
         // Try Hold action first
-        if (deviceControls?.Device.Hold != null)
+        if (deviceControls?.Device.Hold != null && deviceControls.Device.Hold.enabled)
         {
-            isTouching = deviceControls.Device.Hold.IsPressed();
+            isTouchingNow = deviceControls.Device.Hold.IsPressed();
         }
         
         // Fallback: direct touch detection
-        if (!isTouching)
+        if (!isTouchingNow)
         {
-            isTouching = IsTouching();
+            isTouchingNow = IsTouching();
         }
         
-        if (isTouching && !_isHolding)
+        if (isTouchingNow && !_isHolding)
         {
             _isHolding = true;
             _holdStartTime = Time.time;
+#if UNITY_EDITOR
+            // Debug.Log("[InputManager] HOLD STARTED");
+#endif
         }
-        else if (!isTouching && _isHolding)
+        else if (!isTouchingNow && _isHolding)
         {
             _isHolding = false;
+#if UNITY_EDITOR
+            // Debug.Log("[InputManager] HOLD ENDED");
+#endif
         }
     }
 

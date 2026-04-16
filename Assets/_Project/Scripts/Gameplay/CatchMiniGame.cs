@@ -252,6 +252,13 @@ public class CatchMiniGame : MonoBehaviour
         _spawnTimer = 0f;
         _activeItems.Clear();
 
+        // Ensure touch actions are enabled for mobile direct-follow
+        if (InputManager.Instance != null)
+        {
+            InputManager.Instance.EnableAction("TouchPosition");
+            InputManager.Instance.EnableAction("TouchStart");
+        }
+
         // Spawn the basket in the WORLD, not the canvas!
         if (playerBasketPrefab != null)
         {
@@ -321,57 +328,74 @@ public class CatchMiniGame : MonoBehaviour
     }
 
     /// <summary>
-    /// Smooth World Space Movement using New Input System + Touch override.
-    /// Fixed: No more snapping - direct position application with clamped input.
+    /// Smooth World Space Movement using New Input System + Touch follow override.
+    /// IMPROVED: Now uses direct follow for mobile, making it much more responsive.
     /// </summary>
     private void HandlePlayerMovement()
     {
         if (playerBasket == null) return;
-        if (moveAction == null || moveAction.action == null) return;
+        if (InputManager.Instance == null) return;
 
-        // Read input from New Input System (consistent Vector2 read avoids stale fallback values)
-        float moveInput = moveAction.action.ReadValue<Vector2>().x;
+        float moveInput = 0f;
+        bool isDirectTouch = false;
+        float targetWorldX = playerBasket.position.x;
 
-        // === MOBILE TOUCH OVERRIDE (Screen Halves) ===
-        // Check if touch is actually pressed (not just touchscreen exists)
-        if (Touchscreen.current != null &&
-            Touchscreen.current.primaryTouch.press.isPressed)
+        // 1. MOBILE/POINTER OVERRIDE: Direct Follow
+        // Check if player is touching or clicking anywhere on screen
+        if (InputManager.Instance.IsTouching())
         {
-            // Read touch pixel position
-            Vector2 touchPos = Touchscreen.current.primaryTouch.position.ReadValue();
-
-            // Screen halves: left half = -1, right half = +1
-            if (touchPos.x < Screen.width / 2f)
+            isDirectTouch = true;
+            Vector2 screenPos = InputManager.Instance.GetTouchPosition();
+            
+            // Convert to world space
+            if (Camera.main != null)
             {
-                moveInput = -1f;
-            }
-            else
-            {
-                moveInput = 1f;
+                // We only care about the X coordinate
+                Vector3 worldPos = Camera.main.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, Camera.main.nearClipPlane));
+                targetWorldX = worldPos.x;
             }
         }
+        else
+        {
+            // 2. KEYBOARD/JOYSTICK INPUT (Fallback)
+            // Read input from InputManager wrapper
+            moveInput = InputManager.Instance.GetMoveHorizontalValue().x;
+        }
 
-        // Clamp input to prevent overflow (-1 to 1)
-        moveInput = Mathf.Clamp(moveInput, -1f, 1f);
+        // === APPLY MOVEMENT ===
+        float currentX = playerBasket.position.x;
+        float nextX = currentX;
+
+        if (isDirectTouch)
+        {
+            // For touch, move TOWARD the target world X at a high speed
+            // This feels much better than binary left/right buttons
+            // Use a higher speed multiplier for touch follow to make it feel snappy
+            const float TOUCH_MOVE_MULTIPLIER = 1.5f; 
+            nextX = Mathf.MoveTowards(currentX, targetWorldX, moveSpeed * TOUCH_MOVE_MULTIPLIER * Time.deltaTime);
+            
+            // Calculate effective moveInput for flipping sprite
+            moveInput = (nextX - currentX) / Time.deltaTime;
+        }
+        else if (moveInput != 0f)
+        {
+            // For keyboard/joystick, move by delta
+            nextX = currentX + (moveInput * moveSpeed * Time.deltaTime);
+        }
+
+        // === CLAMP TO BOUNDARIES ===
+        nextX = Mathf.Clamp(nextX, _minX, _maxX);
 
         // === SPRITE FLIPPING ===
         if (_playerSpriteRenderer != null)
         {
-            if (moveInput > 0.01f) _playerSpriteRenderer.flipX = false; // Face Right
-            else if (moveInput < -0.01f) _playerSpriteRenderer.flipX = true; // Face Left (flipped)
+            // Use moveInput for flipping (either keyboard input or touch delta)
+            if (moveInput > 0.1f) _playerSpriteRenderer.flipX = false; // Face Right
+            else if (moveInput < -0.1f) _playerSpriteRenderer.flipX = true; // Face Left
         }
 
-        // Early exit if no input
-        if (moveInput == 0f) return;
-
-        // Calculate new X position by adding to current position
-        float newX = playerBasket.position.x + (moveInput * moveSpeed * Time.deltaTime);
-
-        // Clamp to world boundaries
-        newX = Mathf.Clamp(newX, _minX, _maxX);
-
-        // Apply position (preserve Y and Z)
-        playerBasket.position = new Vector3(newX, playerBasket.position.y, playerBasket.position.z);
+        // === APPLY POSITION ===
+        playerBasket.position = new Vector3(nextX, playerBasket.position.y, playerBasket.position.z);
     }
 
     /// <summary>
