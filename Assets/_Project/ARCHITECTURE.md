@@ -4,7 +4,7 @@
 
 This document describes the architecture implemented for Kashkha-Bot-3000, following single-responsibility principles and loose coupling.
 
-**Current State:** Phase 16+ - Sequence-Driven Architecture with Cinematic System, Question Pools, Wave System, Streak Combos, Unified Hub, and Character Expressions.
+**Current State:** Phase 18 - Sequence-Driven Architecture + Wardrobe UI Overhaul + Background System + Memory Swap Mini-Game
 
 **Architecture Philosophy:** Pragmatic Hackathon Approach — Speed and stability over perfect architecture. Singleton Managers + State Machine + Events + ScriptableObjects for data-driven content.
 
@@ -133,7 +133,7 @@ This document describes the architecture implemented for Kashkha-Bot-3000, follo
 | `InteractionSignalEmitter.cs` | Timeline signal emitter for interactions | Emits signals from Timeline to trigger interactions |
 | `URPPostProcessing.cs` | Runtime URP post-processing control | Chromatic aberration, panic mode pulse effects |
 
-### Gameplay Layer (7 scripts)
+### Gameplay Layer (9 scripts)
 
 | Script | Responsibility | Key Methods |
 |--------|----------------|-------------|
@@ -144,8 +144,11 @@ This document describes the architecture implemented for Kashkha-Bot-3000, follo
 | `CatchMiniGame.cs` | Time attack catch mini-game | `Initialize()`, `HandlePlayerMovement()`, `OnItemCaught()` |
 | `FallingItem.cs` | Component-based item collision for mini-games | `OnTriggerEnter2D()`, `Update()` |
 | `PathDrawingGame.cs` | Path-drawing mini-game mechanics | `Initialize()`, `HandleDrawing()`, `ValidatePath()` |
+| `MemorySwapMiniGame.cs` | **Phase 17:** Tile matching memory game | `OnTileClicked()`, `ResolvePair()`, `HintReveal()`, `CompleteGame()` |
+| `TileValue.cs` | **Phase 17:** Stores tile matching values | `SetValue()`, `Flip()`, `IsFlipped` |
+| `MiniGameType` | Enum for mini-game slot assignment | `CatchGame`, `PathDrawing`, `MemorySwap` |
 
-### UI Layer (7 scripts)
+### UI Layer (11 scripts)
 
 | Script | Responsibility | Key Methods |
 |--------|----------------|-------------|
@@ -156,6 +159,10 @@ This document describes the architecture implemented for Kashkha-Bot-3000, follo
 | `ScreenFlash.cs` | Full-screen flash effects | `FlashCorrect()`, `FlashWrong()`, `TriggerFlash()` |
 | `InteractionHUDController.cs` | Standalone interaction prompts (Shake/Hold/Tap/Draw) | `RunInteraction()`, type-specific prompts |
 | `UIScreenShake.cs` | Coroutine-based screen shake | `Shake*()` preset methods |
+| `WardrobeUI.cs` | **Phase 18:** Simplified 4-choice wardrobe UI | `RefreshUI()`, `OnOutfitClicked()`, `UpdatePreview()` |
+| `PlayerCharacterDisplay.cs` | **Phase 18:** Shows equipped outfit in HUD | `UpdateDisplay()`, subscribes to OnOutfitEquipped |
+| `MiniGameBackgroundLoader.cs` | **Phase 18:** Smart background loader for mini-games | `Initialize()`, specific/house-based fallback |
+| `HouseBackgroundController.cs` | **Phase 18:** Auto-switches backgrounds by house | `UpdateBackground()`, subscribes to OnHouseStarted |
 
 ### Data Layer (8 scripts)
 
@@ -178,6 +185,12 @@ This document describes the architecture implemented for Kashkha-Bot-3000, follo
 | `ScreenFlash.cs` | Full-screen color flash for correct/wrong feedback | `FlashCorrect()`, `FlashWrong()`, `TriggerFlash()` |
 | `CameraShakeManager.cs` | Preset screen shakes via Cinemachine | `ShakeWrongAnswer()`, `ShakeExplosion()`, `ShakeSocialShutdown()` |
 | `HapticFeedback.cs` | Mobile haptic vibration | `LightTap()`, `HeavyVibration()`, `ExplosionVibration()` |
+
+### Editor Layer (1 script)
+
+| Script | Responsibility | Key Methods |
+|--------|----------------|-------------|
+| `MemorySwapPrefabCreator.cs` | **Phase 17:** Quick setup helper for Memory Swap prefab | `ShowWindow()`, opens via `Tools → Kashkha → Memory Swap → Create Prefab Helper` |
 
 ---
 
@@ -497,6 +510,10 @@ Each house is defined by a `HouseSequenceData` ScriptableObject with:
 | **Phase 16: Element not found** | Invalid ID in sequence | Verify ElementID matches CSV ID or cinematic ID |
 | **Phase 16: Sequence skips element** | Element ID null/empty | Check HouseSequenceData in inspector for empty fields |
 | Streak bonus not applying | Streak not tracked | Check SwipeEncounterManager.currentStreak increments |
+| **Phase 17: MemorySwap tiles not matching** | TileValue component missing | Ensure tile prefab has TileValue component attached |
+| **Phase 17: MemorySwap grid empty** | Grid or prefab not assigned | Check MemorySwapMiniGame Inspector: Grid, _tilePrefab, _tiles[] |
+| **Phase 18: Background not showing** | Resource path incorrect | Check Resources/Backgrounds/ folder exists with HouseX_BG sprites |
+| **Phase 18: Outfit preview stuck** | Sprite not found | Verify Resources/CharacterSprites/ folder exists with outfit sprites |
 | House 4 not unlocking | Logic bug in UnifiedHubManager | Check House 3 completion triggers unlock |
 
 ---
@@ -532,6 +549,14 @@ Each house is defined by a `HouseSequenceData` ScriptableObject with:
 3. **More Mini-Game Types**
    - New script: `NewMiniGame.cs`
    - MiniGameManager instantiates different prefab per slot
+   - Follow MemorySwapMiniGame pattern for consistency
+
+4. **More Backgrounds (Phase 18)**
+   - Add sprites to Resources/Backgrounds/
+   - Name convention: HouseX_BG or specific names (e.g., Catch_BG)
+
+5. **More Outfits (Phase 18)**
+   - Add to Outfits.csv with spriteName pointing to Resources/CharacterSprites/
 
 ### Medium Effort (Minor Refactoring)
 
@@ -542,6 +567,10 @@ Each house is defined by a `HouseSequenceData` ScriptableObject with:
 2. **Cinematic Variants**
    - Multiple cinematic versions per house (randomized)
    - HouseFlowController picks at runtime
+
+3. **Memory Swap Difficulty Levels**
+   - Configure pair count via Inspector
+   - Adjustable reveal duration and hint cooldown
 
 ### Advanced (Major Architecture)
 
@@ -554,8 +583,12 @@ Each house is defined by a `HouseSequenceData` ScriptableObject with:
    - Different paths based on player choices
    - Requires state machine expansion
 
+3. **Dynamic Wardrobe Grid**
+   - Expand beyond 4 outfits
+   - Scrollable grid with pagination
+
 ---
 
-**Last Updated:** Phase 16+ - Sequence-Driven Architecture Complete
+**Last Updated:** Phase 18 - Wardrobe UI Overhaul + Background System + Memory Swap Mini-Game
 **Maintained By:** Core Development Team
-**Status:** ✅ **SEQUENCE-DRIVEN ARCHITECTURE** - Questions, Cinematics, Interactions unified
+**Status:** ✅ **PRODUCTION READY** - All core systems implemented and tested

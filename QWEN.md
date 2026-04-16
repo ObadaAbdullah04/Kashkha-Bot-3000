@@ -586,6 +586,51 @@ House1_Sequence (9 elements):
 
 ---
 
+### Phase 17: Memory Swap Mini-Game + Background System
+
+#### What Was Added:
+- ✅ **MemorySwapMiniGame** - Tile matching memory game as third mini-game type
+- ✅ **TileValue Component** - Stores tile matching values and flip state
+- ✅ **MemorySwapPrefabCreator** - Editor tool for quick setup (Tools → Kashkha)
+- ✅ **MiniGameType.MemorySwap** - Enum entry for slot assignment
+
+#### Memory Swap Gameplay:
+- Player flips two tiles at a time to find matching pairs
+- All tiles briefly revealed at start for memorization
+- Tap tiles to flip and find matches
+- Awards Tech Scrap (3 per match + 10 bonus for perfect game)
+- Hint button reveals all unmatched tiles (10s cooldown)
+
+#### Editor Tool:
+- Menu: `Tools → Kashkha → Memory Swap → Create Prefab Helper`
+- Opens setup guide and checklist
+- Links to MiniGameManager for slot assignment
+
+---
+
+### Phase 18: Wardrobe UI Overhaul + Background Controllers
+
+#### Wardrobe UI (WardrobeUI.cs):
+- ✅ **Super Simplified** - Exactly 4 choices: Default + 3 Outfits
+- ✅ **Character Preview** - Shows selected outfit with bounce animation on equip
+- ✅ **Lock Overlays** - Visual feedback for locked outfits with cost display
+- ✅ **Event-Driven** - Subscribes to WardrobeManager events for real-time updates
+
+#### Player Character Display (PlayerCharacterDisplay.cs):
+- ✅ **HUD Integration** - Shows player's currently selected outfit in encounters
+- ✅ **Event-Driven Updates** - Syncs with WardrobeManager.OnOutfitEquipped
+
+#### Background System:
+- ✅ **MiniGameBackgroundLoader** - Smart background loader for mini-games
+  - Supports specific backgrounds (e.g., "Catch_BG")
+  - Falls back to house-based backgrounds (HouseX_BG)
+  - Nested Canvas with proper sorting (40 = behind world objects)
+- ✅ **HouseBackgroundController** - Auto-switches backgrounds based on current house
+  - Listens to HouseFlowController.OnHouseStarted
+  - Loads Resources/Backgrounds/HouseX_BG dynamically
+
+---
+
 ## Current System State
 
 ### Script Inventory
@@ -594,9 +639,10 @@ House1_Sequence (9 elements):
 |-----------|-------|-------------|
 | **Core/** | 17 | GameManager, UIManager, DataManager, HouseFlowController, CinematicController, WardrobeManager, UnifiedHubManager, SaveManager, AudioManager, InputManager, TransitionPlayer, MiniGameManager, CameraShakeManager, HapticFeedback, GameConstants, InteractionSignalEmitter, URPPostProcessing |
 | **Data/** | 8 | SwipeCardData, HouseSequenceData, CinematicData, InteractionData, InteractionType, CharacterExpressionSO, OutfitData, SaveData |
-| **Gameplay/** | 7 | MeterManager, SwipeEncounterManager, SwipeCard, CatchMiniGame, PathDrawingGame, FallingItem, Obstacle, MiniGameType |
-| **UI/** | 7 | UIManager, SwipeCard, FloatingText, FloatingTextManager, OutfitSlot, ScreenFlash, InteractionHUDController |
-| **Total** | **39** | |
+| **Gameplay/** | 9 | MeterManager, SwipeEncounterManager, SwipeCard, CatchMiniGame, PathDrawingGame, FallingItem, Obstacle, MemorySwapMiniGame, TileValue, MiniGameType |
+| **UI/** | 11 | UIManager, SwipeCard, FloatingText, FloatingTextManager, OutfitSlot, ScreenFlash, InteractionHUDController, WardrobeUI, PlayerCharacterDisplay, MiniGameBackgroundLoader, HouseBackgroundController |
+| **Editor/** | 2 | MemorySwapPrefabCreator, [Placeholder Generator] |
+| **Total** | **47** | |
 
 ### Resources Inventory
 
@@ -622,6 +668,6 @@ House1_Sequence (9 elements):
 
 ---
 
-**Last Updated:** Phase 16+ Complete - Sequence-Driven Architecture Fully Operational
+**Last Updated:** Phase 18 Complete - Wardrobe UI Overhaul + Background System + Memory Swap Mini-Game
 **Maintained By:** Core Development Team
 **Status:** ✅ **PRODUCTION READY** - All core systems implemented and tested

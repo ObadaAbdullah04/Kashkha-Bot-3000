@@ -858,16 +858,21 @@ public class CinematicController : MonoBehaviour
         cutscenePanel.SetActive(true);
         
         CanvasGroup canvasGroup = cutscenePanel.GetComponent<CanvasGroup>();
-        if (canvasGroup != null)
+        if (canvasGroup == null)
         {
-            canvasGroup.blocksRaycasts = true; // Block input during active cinematic dialogue
-            
-            // ONLY fade in if it wasn't already showing (prevents flickering)
-            if (!wasAlreadyActive || canvasGroup.alpha < 0.9f)
-            {
-                canvasGroup.alpha = 0f;
-                canvasGroup.DOFade(1f, 0.3f);
-            }
+            canvasGroup = cutscenePanel.AddComponent<CanvasGroup>();
+        }
+
+        canvasGroup.blocksRaycasts = true; // Block input during active cinematic dialogue
+        
+        // ONLY animate in if it wasn't already showing (prevents flickering)
+        if (!wasAlreadyActive || canvasGroup.alpha < 0.9f)
+        {
+            // Animate panel entrance with scale + fade
+            canvasGroup.alpha = 0f;
+            canvasGroup.transform.localScale = Vector3.one * 0.95f;
+            canvasGroup.DOFade(1f, 0.25f).SetEase(Ease.OutQuad);
+            canvasGroup.transform.DOScale(Vector3.one, 0.25f).SetEase(Ease.OutBack);
         }
     }
 
@@ -891,9 +896,11 @@ public class CinematicController : MonoBehaviour
             if (canvasGroup != null)
             {
                 DOTween.Kill(canvasGroup);
-                canvasGroup.DOFade(0f, 0.3f).OnComplete(() =>
+                canvasGroup.transform.DOScale(Vector3.one * 0.95f, 0.25f).SetEase(Ease.InBack);
+                canvasGroup.DOFade(0f, 0.25f).SetEase(Ease.InQuad).OnComplete(() =>
                 {
                     cutscenePanel.SetActive(false);
+                    canvasGroup.transform.localScale = Vector3.one;
                 });
             }
             else
@@ -908,14 +915,60 @@ public class CinematicController : MonoBehaviour
     /// <summary>
     /// Toggles only the dialogue box and text, keeping portraits visible.
     /// Useful for interactions where characters react but no text is shown.
+    /// Animated with smooth fade.
     /// </summary>
     public void ToggleDialogueBox(bool visible)
     {
-        if (dialogueRoot != null)
-            dialogueRoot.SetActive(visible);
+        if (dialogueRoot == null) return;
+        
+        CanvasGroup canvasGroup = dialogueRoot.GetComponent<CanvasGroup>();
+        if (canvasGroup == null)
+        {
+            canvasGroup = dialogueRoot.AddComponent<CanvasGroup>();
+        }
+
+        if (visible)
+        {
+            dialogueRoot.SetActive(true);
+            canvasGroup.alpha = 0f;
+            canvasGroup.DOFade(1f, 0.2f).SetEase(Ease.OutQuad);
+        }
+        else
+        {
+            canvasGroup.DOFade(0f, 0.2f).SetEase(Ease.InQuad).OnComplete(() =>
+            {
+                dialogueRoot.SetActive(false);
+            });
+        }
         
         if (speakerNamePanel != null)
+        {
             speakerNamePanel.SetActive(visible);
+        }
+    }
+
+    /// <summary>
+    /// Ensures the cutscene panel and portraits are visible.
+    /// Called when starting elements that should keep portraits visible.
+    /// </summary>
+    public void EnsurePortraitsVisible()
+    {
+        if (cutscenePanel != null)
+        {
+            cutscenePanel.SetActive(true);
+            CanvasGroup cg = cutscenePanel.GetComponent<CanvasGroup>();
+            if (cg != null)
+            {
+                cg.alpha = 1f;
+                cg.blocksRaycasts = false;
+            }
+        }
+        
+        if (visualImage != null)
+            visualImage.gameObject.SetActive(true);
+        
+        if (playerImage != null)
+            playerImage.gameObject.SetActive(true);
     }
 
     #endregion

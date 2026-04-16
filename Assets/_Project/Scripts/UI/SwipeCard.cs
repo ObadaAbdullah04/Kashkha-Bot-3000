@@ -330,7 +330,6 @@ public class SwipeCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
         if (!_hasTriggeredHaptic && Mathf.Abs(swipeProgress) >= 0.95f)
         {
             _hasTriggeredHaptic = true;
-            HapticFeedback.Instance?.LightTap();
             
             // JUICE: Scale pulse on commitment
             transform.DOPunchScale(Vector3.one * 0.05f, 0.2f, 10, 0.5f);
@@ -358,6 +357,12 @@ public class SwipeCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
             
             // JUICE: Pulse scale on result
             transform.DOPunchScale(Vector3.one * 0.1f, 0.3f);
+        }
+
+        // Haptic feedback ONLY on incorrect answer
+        if (!wasCorrect)
+        {
+            HapticFeedback.Instance?.MediumTap();
         }
 
         // ONLY show feedback text if enabled

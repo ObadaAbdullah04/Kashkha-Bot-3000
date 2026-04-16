@@ -65,13 +65,10 @@ public class InputManager : MonoBehaviour
             Instance = this;
             DontDestroyOnLoad(gameObject);
 
-            // Initialize DeviceControls if not assigned
+            // Initialize DeviceControls programmatically (uses embedded JSON)
             if (deviceControls == null)
             {
                 deviceControls = new DeviceControls();
-#if UNITY_EDITOR
-                // Debug.Log("[InputManager] DeviceControls created programmatically.");
-#endif
             }
 
             // AUTO-DISABLE simulation on mobile devices
@@ -79,13 +76,18 @@ public class InputManager : MonoBehaviour
             useEditorSimulation = false;
 #endif
 
+            // Enable Touch input on mobile
+#if !UNITY_EDITOR
+            if (Touchscreen.current != null)
+            {
+                InputSystem.EnableDevice(Touchscreen.current);
+            }
+#endif
+
             // Ensure Accelerometer is enabled (required on some mobile platforms)
             if (Accelerometer.current != null)
             {
                 InputSystem.EnableDevice(Accelerometer.current);
-#if UNITY_EDITOR
-                // Debug.Log("[InputManager] Accelerometer device enabled.");
-#endif
             }
         }
         else
@@ -136,6 +138,7 @@ public class InputManager : MonoBehaviour
             case "Draw": device.Draw?.Enable(); break;
             case "TouchPosition": device.TouchPosition?.Enable(); break;
             case "TouchStart": device.TouchStart?.Enable(); break;
+            case "Hold": device.Hold?.Enable(); break;
             case "Acceleration": 
                 device.Acceleration?.Enable();
                 if (Accelerometer.current != null) InputSystem.EnableDevice(Accelerometer.current);
@@ -166,6 +169,7 @@ public class InputManager : MonoBehaviour
             case "Draw": device.Draw?.Disable(); break;
             case "TouchPosition": device.TouchPosition?.Disable(); break;
             case "TouchStart": device.TouchStart?.Disable(); break;
+            case "Hold": device.Hold?.Disable(); break;
             case "Acceleration": device.Acceleration?.Disable(); break;
             case "Tap": device.Tap?.Disable(); break;
             default:
@@ -194,8 +198,18 @@ public class InputManager : MonoBehaviour
     /// </summary>
     public Vector2 GetTouchPosition()
     {
+        // Try DeviceControls TouchPosition action first
         if (deviceControls?.Device.TouchPosition != null)
             return deviceControls.Device.TouchPosition.ReadValue<Vector2>();
+            
+        // Fallback: Direct Touchscreen position (mobile)
+        if (Touchscreen.current != null && Touchscreen.current.primaryTouch.press.isPressed)
+            return Touchscreen.current.primaryTouch.position.ReadValue();
+            
+        // Fallback: Mouse position
+        if (Mouse.current != null)
+            return Mouse.current.position.ReadValue();
+            
         return Vector2.zero;
     }
 
@@ -204,12 +218,19 @@ public class InputManager : MonoBehaviour
     /// </summary>
     public bool IsTouching()
     {
-        // Try direct touch start check first
+        // Try DeviceControls TouchStart action first
         if (deviceControls?.Device.TouchStart != null && deviceControls.Device.TouchStart.IsPressed())
             return true;
             
-        // Fallback to screen-wide pointer check for reliability
-        return Pointer.current != null && Pointer.current.press.isPressed;
+        // Fallback: Direct Touchscreen check (mobile)
+        if (Touchscreen.current != null && Touchscreen.current.primaryTouch.press.isPressed)
+            return true;
+            
+        // Fallback: Pointer check
+        if (Pointer.current != null && Pointer.current.press.isPressed)
+            return true;
+            
+        return false;
     }
 
     /// <summary>
@@ -247,10 +268,14 @@ public class InputManager : MonoBehaviour
         if (deviceControls?.Device.Tap != null && deviceControls.Device.Tap.WasPressedThisFrame())
             return true;
             
-        // Fallback to touch start
+        // Fallback: TouchStart action
         if (deviceControls?.Device.TouchStart != null && deviceControls.Device.TouchStart.WasPressedThisFrame())
             return true;
 
+        // Fallback: Direct touchscreen check (mobile)
+        if (Touchscreen.current != null && Touchscreen.current.primaryTouch.press.wasPressedThisFrame)
+            return true;
+            
         return false;
     }
 
@@ -337,29 +362,26 @@ public class InputManager : MonoBehaviour
                 {
                     _shakeCount++;
                     _lastShakeTime = Time.time;
-                    // Debug.Log($"[InputManager] Shake detected (SIM)! Count: {_shakeCount}");
                 }
             }
             return; // Don't run real accelerometer logic in editor if simulation is on
         }
 #endif
 
-        // Mobile: accelerometer magnitude threshold
-        // NOTE: We look for spikes ABOVE gravity (9.81 m/s^2)
+        // Mobile/Standalone: accelerometer magnitude threshold
         Vector3 accel = GetAcceleration();
         float magnitude = accel.magnitude;
         
         // Threshold should be higher than gravity to count as a "shake"
-        // 13.0f means roughly 1.3g (gravity is 1g)
+        // 13.0f means roughly 1.3g (gravity is 1g = ~9.81)
+        // Some devices report higher values, so we also check for delta changes
         const float SHAKE_THRESHOLD = 13.0f; 
         
+        // Check if acceleration exceeds threshold and cooldown has passed
         if (magnitude >= SHAKE_THRESHOLD && Time.time - _lastShakeTime >= SHAKE_COOLDOWN)
         {
             _shakeCount++;
             _lastShakeTime = Time.time;
-#if UNITY_EDITOR
-            // Debug.Log($"[InputManager] Real Shake detected! Magnitude: {magnitude}");
-#endif
         }
     }
 
@@ -384,8 +406,20 @@ public class InputManager : MonoBehaviour
         }
 #endif
 
-        // Mobile: touch held
-        bool isTouching = IsTouching();
+        // Mobile: check touch via Hold action or direct touch detection
+        bool isTouching = false;
+        
+        // Try Hold action first
+        if (deviceControls?.Device.Hold != null)
+        {
+            isTouching = deviceControls.Device.Hold.IsPressed();
+        }
+        
+        // Fallback: direct touch detection
+        if (!isTouching)
+        {
+            isTouching = IsTouching();
+        }
         
         if (isTouching && !_isHolding)
         {
@@ -403,14 +437,12 @@ public class InputManager : MonoBehaviour
 #if UNITY_EDITOR
         if (useEditorSimulation)
         {
-            // Editor simulation: T key presses (New Input System)
             if (Keyboard.current != null && Keyboard.current[tapKey].wasPressedThisFrame)
             {
                 if (Time.time - _lastTapTime <= TAP_COOLDOWN || _tapCount == 0)
                 {
                     _tapCount++;
                     _lastTapTime = Time.time;
-                    // Debug.Log($"[InputManager] Tap detected (SIM)! Count: {_tapCount}");
                 }
                 else
                 {
@@ -422,8 +454,19 @@ public class InputManager : MonoBehaviour
         }
 #endif
 
-        // Mobile: touch started
-        if (IsTapPressed())
+        bool tapped = false;
+        
+        if (deviceControls?.Device.Tap != null)
+        {
+            tapped = deviceControls.Device.Tap.WasPressedThisFrame();
+        }
+        
+        if (!tapped)
+        {
+            tapped = IsTapPressed();
+        }
+        
+        if (tapped)
         {
             if (Time.time - _lastTapTime <= TAP_COOLDOWN || _tapCount == 0)
             {

@@ -155,20 +155,32 @@ public class HouseFlowController : MonoBehaviour
             switch (element.Type)
             {
                 case ElementType.Question:
-                    // Hide dialogue box for questions
-                    if (cinematicController != null) cinematicController.ToggleDialogueBox(false);
+                    // Ensure portraits are visible, hide dialogue box for questions
+                    if (cinematicController != null)
+                    {
+                        cinematicController.EnsurePortraitsVisible();
+                        cinematicController.ToggleDialogueBox(false);
+                    }
                     yield return PlayQuestion(element.ElementID, questionIndex, totalQuestions);
                     questionIndex++;
                     break;
 
                 case ElementType.Cinematic:
-                    // Show dialogue box for cinematics
-                    if (cinematicController != null) cinematicController.ToggleDialogueBox(true);
+                    // Ensure portraits are visible and show dialogue box for cinematics
+                    if (cinematicController != null)
+                    {
+                        cinematicController.EnsurePortraitsVisible();
+                        cinematicController.ToggleDialogueBox(true);
+                    }
                     yield return PlayCinematic(element.ElementID);
                     break;
 
                 case ElementType.Interaction:
                     // Panel and dialogue box stay visible from previous cinematic
+                    if (cinematicController != null)
+                    {
+                        cinematicController.EnsurePortraitsVisible();
+                    }
                     yield return PlayInteraction(element.ElementID);
                     
                     // Panel stays visible until the entire house sequence ends (handled below)

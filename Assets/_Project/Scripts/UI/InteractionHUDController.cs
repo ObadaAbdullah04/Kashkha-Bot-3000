@@ -174,7 +174,27 @@ public class InteractionHUDController : MonoBehaviour
         lastShakeCount = 0f; // Reset shake cache
 
         // Reset input manager state
-        InputManager.Instance?.ResetInteractionState();
+        if (InputManager.Instance != null)
+        {
+            InputManager.Instance.ResetInteractionState();
+            
+            // Enable appropriate touch actions based on interaction type
+            switch (data.InteractionType)
+            {
+                case InteractionType.Shake:
+                    InputManager.Instance.EnableAction("Acceleration");
+                    break;
+                case InteractionType.Hold:
+                case InteractionType.Tap:
+                    InputManager.Instance.EnableAction("Hold");
+                    InputManager.Instance.EnableAction("Tap");
+                    InputManager.Instance.EnableAction("TouchStart");
+                    break;
+                case InteractionType.Draw:
+                    InputManager.Instance.EnableAction("Draw");
+                    break;
+            }
+        }
 
         // Update UI
         UpdateUI();
@@ -411,6 +431,12 @@ public class InteractionHUDController : MonoBehaviour
         AudioManager.Instance?.PlaySFX(succeeded
             ? AudioManager.SFXType.InteractionSuccess
             : AudioManager.SFXType.InteractionFail);
+
+        // Haptic feedback ONLY on incorrect/failed answer
+        if (!succeeded)
+        {
+            HapticFeedback.Instance?.MediumTap();
+        }
 
         // Play shake rumble for shake-type interactions
         if (succeeded && currentInteraction.InteractionType == InteractionType.Shake)

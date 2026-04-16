@@ -32,7 +32,9 @@ The project follows a **Manager-based Clean Architecture** with event-driven com
 - **Swipe System:** Tinder-style cards with explicit correct/incorrect sides defined in CSV. Includes a streak combo system (+3, +5, +8 Eidia).
 - **Sequence System:** Each house is an ordered list of `SequenceElement` (Question, Cinematic, or Interaction).
 - **Cinematic System:** Unified playback supporting both Unity Timeline assets and DOTween-based typewriter text with smart fallback logic.
-- **Mini-Games:** Inter-house "Catch" games and other mini-interactions.
+- **Mini-Games:** Inter-house games: Catch (eidia catching), PathDrawing (maze), MemorySwap (tile matching - Phase 17).
+- **Background System:** Dynamic backgrounds via HouseBackgroundController and MiniGameBackgroundLoader (Phase 18).
+- **Wardrobe System:** Simplified 4-choice outfit system with visual preview (Phase 18).
 
 ## 📁 Project Structure
 
@@ -81,6 +83,19 @@ Data is managed via CSVs in `Assets/_Project/Data/`:
 - **Outfits.csv:** Wardrobe items and stat modifiers.
 
 **Note:** Correctness is explicit in CSV (`CorrectSide: 1=Right, 0=Left`).
+
+## 🎮 Mini-Game Types
+
+| Type | Description | Phase |
+|------|-------------|-------|
+| **CatchGame** | Time-attack eidia catching game | Core |
+| **PathDrawing** | Maze path drawing game | Core |
+| **MemorySwap** | Tile matching memory game with hints | Phase 17 |
+
+## 🖼️ Background System (Phase 18)
+
+- **HouseBackgroundController:** Auto-switches backgrounds based on current house level
+- **MiniGameBackgroundLoader:** Smart loader for mini-game backgrounds with sorting control
 
 ---
 *For deep technical details, refer to `Assets/_Project/ARCHITECTURE.md`.*

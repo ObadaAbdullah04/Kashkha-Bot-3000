@@ -1,6 +1,23 @@
 {
     "version": 1,
     "name": "DeviceControls",
+    "controlSchemes": [
+        {
+            "name": "Keyboard&Mouse",
+            "bindingGroup": "Keyboard&Mouse",
+            "devices": [
+                { "devicePath": "<Keyboard>", "isOptional": false, "isOR": false },
+                { "devicePath": "<Mouse>", "isOptional": false, "isOR": false }
+            ]
+        },
+        {
+            "name": "Touch",
+            "bindingGroup": "Touch",
+            "devices": [
+                { "devicePath": "<Touchscreen>", "isOptional": false, "isOR": false }
+            ]
+        }
+    ],
     "maps": [
         {
             "name": "Device",
@@ -41,33 +58,6 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": true
-                },
-                {
-                    "name": "ShakeSkip",
-                    "type": "Button",
-                    "id": "9870390d-33ef-4b11-8001-0e34a88a4dfe",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
-                    "name": "SwipeUp",
-                    "type": "Button",
-                    "id": "a7befbee-1830-4da3-b4a1-499900004ff1",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
-                    "name": "SkipQTE",
-                    "type": "Button",
-                    "id": "f6f048b7-a569-4cb4-8d61-2b242e0d333e",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
                 },
                 {
                     "name": "MoveHorizontal",
@@ -113,7 +103,7 @@
                     "path": "<Accelerometer>/acceleration",
                     "interactions": "",
                     "processors": "",
-                    "groups": "",
+                    "groups": "Touch",
                     "action": "Acceleration",
                     "isComposite": false,
                     "isPartOfComposite": false
@@ -124,7 +114,7 @@
                     "path": "<Touchscreen>/primaryTouch/press",
                     "interactions": "",
                     "processors": "",
-                    "groups": "",
+                    "groups": "Touch",
                     "action": "TouchStart",
                     "isComposite": false,
                     "isPartOfComposite": false
@@ -135,7 +125,7 @@
                     "path": "<Touchscreen>/primaryTouch/press",
                     "interactions": "",
                     "processors": "Invert",
-                    "groups": "",
+                    "groups": "Touch",
                     "action": "TouchEnd",
                     "isComposite": false,
                     "isPartOfComposite": false
@@ -146,41 +136,8 @@
                     "path": "<Touchscreen>/primaryTouch/position",
                     "interactions": "",
                     "processors": "",
-                    "groups": "",
+                    "groups": "Touch",
                     "action": "TouchPosition",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "d8d3da17-53fc-4046-9138-fb67e8d6767b",
-                    "path": "<Keyboard>/space",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "ShakeSkip",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "8bfcf0ad-5732-4033-881c-275d0acb2733",
-                    "path": "<Keyboard>/upArrow",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "SwipeUp",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "d3af2e25-c86e-48d0-a9e2-52b55a35038f",
-                    "path": "<Keyboard>/enter",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "SkipQTE",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
@@ -190,7 +147,7 @@
                     "path": "2DVector",
                     "interactions": "",
                     "processors": "",
-                    "groups": "",
+                    "groups": "Keyboard&Mouse",
                     "action": "MoveHorizontal",
                     "isComposite": true,
                     "isPartOfComposite": false
@@ -223,7 +180,7 @@
                     "path": "<Touchscreen>/primaryTouch/press",
                     "interactions": "",
                     "processors": "",
-                    "groups": "",
+                    "groups": "Touch",
                     "action": "Draw",
                     "isComposite": false,
                     "isPartOfComposite": false
@@ -234,7 +191,7 @@
                     "path": "<Mouse>/leftButton",
                     "interactions": "",
                     "processors": "",
-                    "groups": "",
+                    "groups": "Keyboard&Mouse",
                     "action": "Draw",
                     "isComposite": false,
                     "isPartOfComposite": false
@@ -245,7 +202,7 @@
                     "path": "<Keyboard>/space",
                     "interactions": "",
                     "processors": "",
-                    "groups": "",
+                    "groups": "Keyboard&Mouse",
                     "action": "Draw",
                     "isComposite": false,
                     "isPartOfComposite": false
@@ -256,7 +213,7 @@
                     "path": "<Touchscreen>/primaryTouch/press",
                     "interactions": "",
                     "processors": "",
-                    "groups": "",
+                    "groups": "Touch",
                     "action": "Tap",
                     "isComposite": false,
                     "isPartOfComposite": false
@@ -267,7 +224,7 @@
                     "path": "<Mouse>/leftButton",
                     "interactions": "",
                     "processors": "",
-                    "groups": "",
+                    "groups": "Keyboard&Mouse",
                     "action": "Tap",
                     "isComposite": false,
                     "isPartOfComposite": false
@@ -278,7 +235,7 @@
                     "path": "<Keyboard>/space",
                     "interactions": "",
                     "processors": "",
-                    "groups": "",
+                    "groups": "Keyboard&Mouse",
                     "action": "Tap",
                     "isComposite": false,
                     "isPartOfComposite": false
@@ -289,7 +246,7 @@
                     "path": "<Touchscreen>/primaryTouch/press",
                     "interactions": "",
                     "processors": "",
-                    "groups": "",
+                    "groups": "Touch",
                     "action": "Hold",
                     "isComposite": false,
                     "isPartOfComposite": false
@@ -300,7 +257,7 @@
                     "path": "<Mouse>/leftButton",
                     "interactions": "",
                     "processors": "",
-                    "groups": "",
+                    "groups": "Keyboard&Mouse",
                     "action": "Hold",
                     "isComposite": false,
                     "isPartOfComposite": false
@@ -311,13 +268,12 @@
                     "path": "<Keyboard>/space",
                     "interactions": "",
                     "processors": "",
-                    "groups": "",
+                    "groups": "Keyboard&Mouse",
                     "action": "Hold",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
             ]
         }
-    ],
-    "controlSchemes": []
+    ]
 }
