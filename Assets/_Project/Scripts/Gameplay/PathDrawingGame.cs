@@ -100,15 +100,15 @@ public class PathDrawingGame : MonoBehaviour
 
     #region Private Fields
 
-    private bool isHolding = false; // Is player currently holding?
+    private bool isHolding = false;
     private List<Vector3> linePoints = new List<Vector3>();
-    private List<Collider2D> alreadyHitObstacles = new List<Collider2D>(); // Prevent double penalty
+    private List<Collider2D> alreadyHitObstacles = new List<Collider2D>();
     private float timeRemaining;
     private Camera mainCam;
     private bool gameEnded = false;
-    private Canvas gameCanvas; // Cache canvas reference
+    private Canvas gameCanvas;
+    private bool isInitialized = false;
 
-    // Pooled collision buffer to avoid GC allocation (OverlapCircleNonAlloc)
     private static readonly Collider2D[] _collisionBuffer = new Collider2D[16];
 
     #endregion
@@ -135,26 +135,31 @@ public class PathDrawingGame : MonoBehaviour
             mainCam = Camera.allCameras.Length > 0 ? Camera.allCameras[0] : null;
         }
 
-        // FIX #1: Auto-configure Canvas for proper rendering
         ConfigureCanvas();
 
-        // Enable input action (handled by OnEnable)
-        
-        // If not initialized yet, use default values
-        if (!gameEnded && timeRemaining <= 0)
+        if (!isInitialized && !gameEnded)
         {
             InitializeGame();
         }
     }
 
-    /// <summary>
-    /// PHASE 5C (REVISED): Initialize the mini-game with specific time limit.
-    /// Called by MiniGameManager.
-    /// </summary>
     public void Initialize(float customTimeLimit)
     {
         timeLimit = customTimeLimit;
-        InitializeGame();
+        
+        if (!isInitialized)
+        {
+            if (mainCam == null)
+            {
+                mainCam = Camera.main;
+                if (mainCam == null)
+                {
+                    mainCam = Camera.allCameras.Length > 0 ? Camera.allCameras[0] : null;
+                }
+                ConfigureCanvas();
+            }
+            InitializeGame();
+        }
     }
 
     private void OnEnable()
@@ -240,25 +245,6 @@ public class PathDrawingGame : MonoBehaviour
             return;
         }
 
-        if (mainCam != null)
-        {
-            // Use ScreenSpaceCamera for world-space LineRenderer compatibility
-            gameCanvas.renderMode = RenderMode.ScreenSpaceCamera;
-            gameCanvas.worldCamera = mainCam;
-            gameCanvas.planeDistance = 100f;
-
-#if UNITY_EDITOR
-            Debug.Log($"[PathDrawingGame] Canvas configured with camera: {mainCam.gameObject.name}");
-#endif
-        }
-        else
-        {
-            // Fallback to Overlay if no camera
-            gameCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            Debug.LogWarning("[PathDrawingGame] No camera found! Using ScreenSpaceOverlay.");
-        }
-
-        // Fix RectTransform to fill screen
         RectTransform rectTransform = gameCanvas.GetComponent<RectTransform>();
         if (rectTransform != null)
         {
@@ -268,6 +254,20 @@ public class PathDrawingGame : MonoBehaviour
             rectTransform.sizeDelta = Vector2.zero;
             rectTransform.pivot = new Vector2(0.5f, 0.5f);
             rectTransform.localScale = Vector3.one;
+        }
+
+        if (mainCam != null)
+        {
+            gameCanvas.renderMode = RenderMode.ScreenSpaceCamera;
+            gameCanvas.worldCamera = mainCam;
+            gameCanvas.planeDistance = 100f;
+
+            Debug.Log($"[PathDrawingGame] Canvas configured with camera: {mainCam.gameObject.name}, Scale: {rectTransform?.localScale}");
+        }
+        else
+        {
+            gameCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            Debug.LogWarning("[PathDrawingGame] No camera found! Using ScreenSpaceOverlay.");
         }
     }
 
@@ -564,6 +564,7 @@ public class PathDrawingGame : MonoBehaviour
 
     private void InitializeGame()
     {
+        isInitialized = true;
         gameEnded = false;
         timeRemaining = timeLimit;
         linePoints.Clear();
@@ -606,7 +607,13 @@ public class PathDrawingGame : MonoBehaviour
 
     private void SpawnRandomObstacles()
     {
-        if (obstaclePrefabs == null || obstaclePrefabs.Length == 0 || randomObstacleCount <= 0) return;
+        if (obstaclePrefabs == null || obstaclePrefabs.Length == 0 || randomObstacleCount <= 0)
+        {
+            Debug.LogError($"[PathGame] Cannot spawn obstacles! prefabs: {obstaclePrefabs?.Length ?? -1}, count: {randomObstacleCount}");
+            return;
+        }
+
+        Debug.Log($"[PathGame] Starting obstacle spawn: {randomObstacleCount} obstacles, {obstaclePrefabs.Length} prefab types");
 
         int spawnedCount = 0;
         int maxGlobalAttempts = randomObstacleCount * 10;
@@ -619,10 +626,14 @@ public class PathDrawingGame : MonoBehaviour
             GameObject prefab = obstaclePrefabs[Random.Range(0, obstaclePrefabs.Length)];
             if (prefab == null) continue;
 
-            // Calculate random world position based on screen range
             Vector3 spawnPos = GetRandomWorldPosition();
+            
+            if (spawnPos == Vector3.zero && mainCam == null)
+            {
+                Debug.LogError("[PathGame] mainCam is null! Cannot spawn obstacles at valid positions.");
+                return;
+            }
 
-            // 1. Check distance to critical game points
             float distToStart = Vector2.Distance(spawnPos, startPoint.position);
             float distToEnd = Vector2.Distance(spawnPos, endPoint.position);
 
@@ -631,7 +642,6 @@ public class PathDrawingGame : MonoBehaviour
                 continue;
             }
 
-            // 2. Check distance to other obstacles
             bool tooCloseToOther = false;
             foreach (var existing in obstacles)
             {
@@ -645,39 +655,38 @@ public class PathDrawingGame : MonoBehaviour
 
             if (tooCloseToOther) continue;
 
-            // All checks passed - Instantiate
             GameObject instance = Instantiate(prefab, spawnPos, Quaternion.identity);
             instance.name = $"Obstacle_{spawnedCount}";
             
             _spawnedObstacles.Add(instance);
             
-            // Add to the tracking list for collision detection
             if (!obstacles.Contains(instance.transform))
             {
                 obstacles.Add(instance.transform);
             }
 
             spawnedCount++;
+            Debug.Log($"[PathGame] Spawned obstacle {spawnedCount} at world pos: {spawnPos}");
         }
 
-        if (spawnedCount < randomObstacleCount)
-        {
-            Debug.LogWarning($"[PathGame] Only spawned {spawnedCount}/{randomObstacleCount} obstacles due to space constraints.");
-        }
+        Debug.Log($"[PathGame] Obstacle spawn complete! Spawned: {spawnedCount}/{randomObstacleCount}, Total in list: {obstacles.Count}");
     }
 
     private Vector3 GetRandomWorldPosition()
     {
-        if (mainCam == null) return Vector3.zero;
+        if (mainCam == null)
+        {
+            Debug.LogError("[PathGame] mainCam is null in GetRandomWorldPosition!");
+            return Vector3.zero;
+        }
 
-        // Use Viewport coordinates (0,0 to 1,1) for more reliable mapping
         float randomX = Random.Range(spawnRangeX.x, spawnRangeX.y);
         float randomY = Random.Range(spawnRangeY.x, spawnRangeY.y);
 
-        // Convert viewport point to world point
-        // Use a Z distance that matches where we want them in the world
-        Vector3 worldPos = mainCam.ViewportToWorldPoint(new Vector3(randomX, randomY, 10f));
-        worldPos.z = 0; // Ensure they are on the 2D plane
+        Vector3 viewportPos = new Vector3(randomX, randomY, 10f);
+        Vector3 worldPos = mainCam.ViewportToWorldPoint(viewportPos);
+        worldPos.z = 0;
+        
         return worldPos;
     }
 

@@ -43,25 +43,43 @@ public class WardrobeUI : MonoBehaviour
 
     private void HandleGlobalScrapChanged(int newTotal)
     {
-        if (WardrobeManager.Instance != null)
+        Debug.Log($"[WardrobeUI] HandleGlobalScrapChanged called with: {newTotal}");
+        
+        if (scrapText != null)
         {
-            WardrobeManager.Instance.SyncScrap(); // This will trigger WardrobeManager.OnScrapChanged which calls RefreshUI
+            scrapText.text = newTotal.ToString();
+            Debug.Log($"[WardrobeUI] Scrap text updated to: {newTotal}");
         }
         else
         {
+            Debug.LogWarning("[WardrobeUI] scrapText is null!");
+        }
+        
+        if (WardrobeManager.Instance != null)
+        {
+            WardrobeManager.Instance.SyncScrap();
+        }
+        else
+        {
+            Debug.LogWarning("[WardrobeUI] WardrobeManager.Instance is null!");
             RefreshUI();
         }
     }
 
     public void RefreshUI()
     {
-        if (WardrobeManager.Instance == null || WardrobeManager.Instance.AllOutfits.Count == 0) return;
+        if (WardrobeManager.Instance == null) return;
 
         _selectedID = WardrobeManager.Instance.EquippedOutfitID;
 
-        // Update scrap
-        if (scrapText != null)
+        if (scrapText != null && WardrobeManager.Instance.AllOutfits.Count > 0)
+        {
             scrapText.text = WardrobeManager.Instance.CurrentScrap.ToString();
+        }
+        else if (scrapText != null && SaveManager.Instance != null)
+        {
+            scrapText.text = SaveManager.Instance.CurrentData.TotalEidia.ToString();
+        }
 
         // Update preview
         UpdatePreview();

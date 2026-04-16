@@ -2674,9 +2674,9 @@ MonoBehaviour:
   fileName: save_data.json
   currentSaveData:
     TotalScrap: 0
-    TotalEidia: 0
-    HighScore: 0
-    LastSaveDate: 2026-04-16 16:02:17
+    TotalEidia: 100
+    HighScore: 100
+    LastSaveDate: 2026-04-16 16:26:18
     ownedOutfitIDs: 
     equippedOutfitID: 0
 --- !u!1 &388203298
