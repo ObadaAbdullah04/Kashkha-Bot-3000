@@ -14,6 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   HouseLevel: 1
   Sequence:
+  - Type: 3
+    ElementID: Test
+    DesignerNote: 
   - Type: 0
     ElementID: Q1
     DesignerNote: 
@@ -25,6 +28,9 @@ MonoBehaviour:
     DesignerNote: 
   - Type: 2
     ElementID: SHAKE_Qahwa_1
+    DesignerNote: 
+  - Type: 3
+    ElementID: Test
     DesignerNote: 
   - Type: 0
     ElementID: Q3

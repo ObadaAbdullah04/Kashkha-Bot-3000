@@ -186,6 +186,10 @@ public class HouseFlowController : MonoBehaviour
                     // Panel stays visible until the entire house sequence ends (handled below)
                     break;
 
+                case ElementType.Video:
+                    yield return PlayVideo(element.ElementID);
+                    break;
+
                 default:
                     // Debug.LogError($"[HouseFlowController] Unknown element type: {element.Type}");
                     break;
@@ -227,6 +231,27 @@ OnHouseCompleted?.Invoke(houseLevel);
         
         // Ensure cinematic UI is hidden if we cancel mid-cinematic
         if (cinematicController != null) cinematicController.HideCutsceneUI();
+    }
+
+    /// <summary>
+    /// Plays a Video element.
+    /// </summary>
+    private IEnumerator PlayVideo(string videoName)
+    {
+        if (cinematicController == null)
+        {
+            OnElementCompleted?.Invoke(ElementType.Video, videoName);
+            yield break;
+        }
+
+        bool videoDone = false;
+        cinematicController.PlayVideo(videoName, (id) =>
+        {
+            videoDone = true;
+            OnElementCompleted?.Invoke(ElementType.Video, videoName);
+        });
+
+        yield return new WaitUntil(() => videoDone);
     }
 
     #endregion

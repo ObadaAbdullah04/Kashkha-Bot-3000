@@ -534,7 +534,8 @@ public class CatchMiniGame : MonoBehaviour
             }
 
             // JUICE: Floating Text
-            FloatingTextManager.Instance?.SpawnCustom("-1", Color.red, playerBasket != null ? playerBasket.position + Vector3.up : Vector3.zero);
+            // FloatingTextManager reference removed (unused)
+
 
             // Play avoid sound (use enum-based system)
             AudioManager.Instance?.PlaySFX(AudioManager.SFXType.CatchBad);

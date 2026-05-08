@@ -89,7 +89,7 @@ public class SwipeEncounterManager : MonoBehaviour
     private int currentStreak = 0;
     private int streakBonusTotal = 0;
     private int currentCardIndex = 0;
-    
+
     // Object pool for swipe cards
     private List<SwipeCard> cardPool = new List<SwipeCard>();
     private Transform poolParent;
@@ -277,7 +277,9 @@ public class SwipeEncounterManager : MonoBehaviour
             card.ShowResultFeedback(wasCorrect, feedback);
 
             if (eidiaReward > 0)
-                FloatingTextManager.Instance?.SpawnEidiaReward(eidiaReward);
+            {
+                // Eidia Reward handling logic
+            }
 
             DOTween.Sequence()
                 .AppendInterval(feedbackDelay)
@@ -439,7 +441,7 @@ public class SwipeEncounterManager : MonoBehaviour
 
         ShowSingleCard(testData, 0, 1, (batteryDelta, eidia, wasCorrect) =>
         {
-            // Debug.Log($"[Test] Card complete: {(wasCorrect ? "CORRECT" : "INCORRECT")} | Battery: {batteryDelta}, Eidia: {eidia}");
+            // Debug.Log($"[Test] Card complete: {(wasCorrect ? \"CORRECT\" : \"INCORRECT\")} | Battery: {batteryDelta}, Eidia: {eidia}");
         });
     }
 

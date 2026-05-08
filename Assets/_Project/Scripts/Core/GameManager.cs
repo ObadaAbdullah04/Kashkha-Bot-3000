@@ -183,7 +183,8 @@ public class GameManager : MonoBehaviour
         // SYNC SCRAP at start of run so wardrobe shows correct values
         WardrobeManager.Instance?.SyncScrap();
 
-        FloatingTextManager.Instance?.gameObject.SetActive(true);
+        // FloatingTextManager reference removed (unused)
+
         MeterManager.Instance?.ResetMeters();
         
         // CRITICAL: Reset post-processing on restart

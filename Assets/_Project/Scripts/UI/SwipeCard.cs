@@ -99,6 +99,7 @@ public class SwipeCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
     private Vector3 originalPosition;
     private Quaternion originalRotation;
     private bool isSwiped = false; // Prevents double-swipe
+    private bool _hasBeenDragged = false;
     private SwipeCardData cardData;
     private int cardIndex;
     private int totalCards;
@@ -113,6 +114,7 @@ public class SwipeCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
     public int CardIndex => cardIndex;
     public int TotalCards => totalCards;
     public bool IsSwiped => isSwiped;
+    public bool HasBeenDragged => _hasBeenDragged;
 
     #endregion
 
@@ -209,6 +211,7 @@ public class SwipeCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
             DOTween.Kill(backgroundImage);
 
         isSwiped = false;
+        _hasBeenDragged = false;
         _hasTriggeredHaptic = false; // Reset haptic flag
 
         // CRITICAL FIX: Force position using BOTH Transform and RectTransform
@@ -254,6 +257,9 @@ public class SwipeCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
     public void OnBeginDrag(PointerEventData eventData)
     {
         if (isSwiped) return;
+
+        _hasBeenDragged = true;
+
         // Disable raycast blocking during drag
         if (canvasGroup != null)
             canvasGroup.blocksRaycasts = false;

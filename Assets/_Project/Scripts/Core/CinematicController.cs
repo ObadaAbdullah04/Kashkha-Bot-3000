@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
+using UnityEngine.Video;
 using RTLTMPro;
 using DG.Tweening;
 using NaughtyAttributes;
@@ -77,6 +78,23 @@ public class CinematicController : MonoBehaviour
     [Header("Timeline Loading")]
     [Tooltip("Resources path for timeline assets (relative to any Resources/ folder)")]
     [SerializeField] private string timelinesResourcesPath = "Timelines";
+
+    [Header("Video Player")]
+    [Tooltip("VideoPlayer component for MP4 playback")]
+    [SerializeField] private UnityEngine.Video.VideoPlayer videoPlayer;
+
+    [Tooltip("RawImage to display the video texture")]
+    [SerializeField] private UnityEngine.UI.RawImage videoDisplay;
+
+    [Tooltip("Resources path for video assets")]
+    [SerializeField] private string videoResourcesPath = "Videos";
+
+    [Header("Video Skip")]
+    [Tooltip("Hold duration in seconds to skip the video")]
+    [SerializeField] private float videoSkipHoldTime = 2f;
+
+    [Tooltip("Optional UI element to show skip progress (e.g., a filling image)")]
+    [SerializeField] private GameObject videoSkipIndicator;
 
     [Header("Fallback Behavior")]
     [Tooltip("If Timeline not found, automatically fallback to DOTween mode")]
@@ -421,6 +439,11 @@ public class CinematicController : MonoBehaviour
 
         if (director != null && director.state == PlayState.Playing)
             director.Stop();
+
+        if (videoPlayer != null && videoPlayer.isPlaying)
+            videoPlayer.Stop();
+
+        if (videoSkipIndicator != null) videoSkipIndicator.SetActive(false);
 
         onCompleteCallback?.Invoke(currentCinematicID);
         OnCinematicCompleted?.Invoke(currentCinematicID);
@@ -999,6 +1022,190 @@ public class CinematicController : MonoBehaviour
         }
 
         // Debug.Log($"[CinematicController] Preloaded {timelines.Length} timelines from Resources");
+    }
+
+    /// <summary>
+    /// Plays a Video element using the VideoPlayer component.
+    /// Loads the video from Resources and plays it full-screen.
+    /// </summary>
+    public void PlayVideo(string videoName, Action<string> onComplete)
+    {
+        if (isPlaying)
+        {
+            Debug.LogWarning($"[CinematicController] Cinematic already playing: {currentCinematicID}. Ignoring PlayVideo({videoName})");
+            onComplete?.Invoke(videoName);
+            return;
+        }
+
+        if (videoPlayer == null || videoDisplay == null)
+        {
+            Debug.LogError("[CinematicController] VideoPlayer or VideoDisplay not assigned! Cannot play video.");
+            onComplete?.Invoke(videoName);
+            return;
+        }
+
+        if (string.IsNullOrEmpty(videoResourcesPath))
+        {
+            Debug.LogError("[CinematicController] Video resources path not set!");
+            onComplete?.Invoke(videoName);
+            return;
+        }
+
+        VideoClip clip = Resources.Load<VideoClip>($"{videoResourcesPath}/{videoName}");
+        if (clip == null)
+        {
+            Debug.LogError($"[CinematicController] Video clip not found: {videoResourcesPath}/{videoName}");
+            onComplete?.Invoke(videoName);
+            return;
+        }
+
+        currentCinematicID = videoName;
+        onCompleteCallback = onComplete;
+        isPlaying = true;
+
+        HideGameplayUI();
+        if (dialogueRoot != null) dialogueRoot.SetActive(false);
+        if (visualImage != null) visualImage.gameObject.SetActive(false);
+        if (playerImage != null) playerImage.gameObject.SetActive(false);
+        
+        if (cutscenePanel != null)
+        {
+            cutscenePanel.SetActive(true);
+            CanvasGroup cg = cutscenePanel.GetComponent<CanvasGroup>();
+            if (cg != null)
+            {
+                cg.alpha = 1f;
+                cg.blocksRaycasts = true;
+            }
+        }
+
+        videoDisplay.gameObject.SetActive(false);
+
+        videoPlayer.clip = clip;
+        videoPlayer.playOnAwake = false;
+        videoPlayer.renderMode = UnityEngine.Video.VideoRenderMode.APIOnly;
+        videoPlayer.waitForFirstFrame = true;
+
+        void OnVideoPrepared(UnityEngine.Video.VideoPlayer vp)
+        {
+            videoPlayer.prepareCompleted -= OnVideoPrepared;
+            if (!isPlaying) return;
+
+            videoDisplay.texture = videoPlayer.texture;
+            videoDisplay.gameObject.SetActive(true);
+            videoDisplay.transform.SetAsLastSibling();
+
+            OnCinematicStarted?.Invoke(videoName);
+            videoPlayer.Play();
+        }
+
+        void OnVideoFinished(UnityEngine.Video.VideoPlayer vp)
+        {
+            videoPlayer.loopPointReached -= OnVideoFinished;
+            videoPlayer.errorReceived -= OnVideoError;
+            FinishVideo(videoName);
+        }
+
+        void OnVideoError(UnityEngine.Video.VideoPlayer vp, string message)
+        {
+            videoPlayer.prepareCompleted -= OnVideoPrepared;
+            videoPlayer.loopPointReached -= OnVideoFinished;
+            videoPlayer.errorReceived -= OnVideoError;
+            Debug.LogError($"[CinematicController] Video playback error: {message}");
+            FinishVideo(videoName);
+        }
+
+        videoPlayer.prepareCompleted += OnVideoPrepared;
+        videoPlayer.loopPointReached += OnVideoFinished;
+        videoPlayer.errorReceived += OnVideoError;
+
+        videoPlayer.Prepare();
+
+        if (playbackCoroutine != null)
+            StopCoroutine(playbackCoroutine);
+        playbackCoroutine = StartCoroutine(TrackVideoSkip(videoName));
+    }
+
+    private void FinishVideo(string videoName)
+    {
+        if (!isPlaying) return;
+
+        isPlaying = false;
+        if (playbackCoroutine != null)
+        {
+            StopCoroutine(playbackCoroutine);
+            playbackCoroutine = null;
+        }
+
+        videoPlayer.Stop();
+        videoDisplay.gameObject.SetActive(false);
+        if (videoSkipIndicator != null)
+        {
+            videoSkipIndicator.SetActive(false);
+            var img = videoSkipIndicator.GetComponent<UnityEngine.UI.Image>();
+            if (img != null) img.fillAmount = 0f;
+        }
+
+        OnCinematicCompleted?.Invoke(videoName);
+        onCompleteCallback?.Invoke(videoName);
+        ShowGameplayUI();
+        HideCutsceneUI(true);
+
+        currentCinematicID = null;
+        onCompleteCallback = null;
+    }
+
+    private IEnumerator TrackVideoSkip(string videoName)
+    {
+        bool isHolding = false;
+        float holdTimer = 0f;
+
+        while (isPlaying)
+        {
+            bool isInputDown = Input.GetMouseButton(0);
+
+            if (isInputDown)
+            {
+                if (!isHolding)
+                {
+                    isHolding = true;
+                    holdTimer = 0f;
+                    if (videoSkipIndicator != null) videoSkipIndicator.SetActive(true);
+                }
+                holdTimer += Time.deltaTime;
+
+                if (videoSkipIndicator != null)
+                {
+                    var img = videoSkipIndicator.GetComponent<UnityEngine.UI.Image>();
+                    if (img != null) img.fillAmount = Mathf.Clamp01(holdTimer / videoSkipHoldTime);
+                }
+
+                if (holdTimer >= videoSkipHoldTime)
+                {
+                    videoPlayer.Stop();
+                    FinishVideo(videoName);
+                    yield break;
+                }
+            }
+            else
+            {
+                if (isHolding)
+                {
+                    isHolding = false;
+                    holdTimer = 0f;
+                    if (videoSkipIndicator != null)
+                    {
+                        videoSkipIndicator.SetActive(false);
+                        var img = videoSkipIndicator.GetComponent<UnityEngine.UI.Image>();
+                        if (img != null) img.fillAmount = 0f;
+                    }
+                }
+            }
+
+            yield return null;
+        }
+
+        if (videoSkipIndicator != null) videoSkipIndicator.SetActive(false);
     }
 
     #endregion

@@ -75,7 +75,7 @@ public class HouseSequenceData : ScriptableObject
         if (Sequence == null || Sequence.Count == 0)
             return "Empty sequence";
 
-        int questionCount = 0, cinematicCount = 0, interactionCount = 0;
+        int questionCount = 0, cinematicCount = 0, interactionCount = 0, videoCount = 0;
         foreach (var element in Sequence)
         {
             if (element != null)
@@ -85,11 +85,12 @@ public class HouseSequenceData : ScriptableObject
                     case ElementType.Question: questionCount++; break;
                     case ElementType.Cinematic: cinematicCount++; break;
                     case ElementType.Interaction: interactionCount++; break;
+                    case ElementType.Video: videoCount++; break;
                 }
             }
         }
 
-        return $"Total: {Sequence.Count} elements | {questionCount} Questions | {cinematicCount} Cinematics | {interactionCount} Interactions";
+        return $"Total: {Sequence.Count} elements | {questionCount} Questions | {cinematicCount} Cinematics | {interactionCount} Interactions | {videoCount} Videos";
     }
 }
 
@@ -137,5 +138,6 @@ public enum ElementType
 {
     Question,       // Triggers SwipeEncounterManager.ShowSingleCard()
     Cinematic,      // Triggers CinematicController.PlayCinematic() (Timeline or DOTween)
-    Interaction     // Triggers InteractionHUDController.RunInteraction()
+    Interaction,    // Triggers InteractionHUDController.RunInteraction()
+    Video           // Triggers CinematicController.PlayVideo()
 }
