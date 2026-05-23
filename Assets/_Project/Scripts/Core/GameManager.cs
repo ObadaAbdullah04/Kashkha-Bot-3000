@@ -49,6 +49,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private int eidiaToWin = 100;
 
     [Header("House Transition Texts")]
+    [SerializeField] private string introTransitionText = "جاري التحميل...";
     [SerializeField] private string house1TransitionText = "السفر إلى بيت خالة أم محمد...";
     [SerializeField] private string house2TransitionText = "الذهاب إلى بيت عمو أبو أحمد...";
     [SerializeField] private string house3TransitionText = "زيارة بيت جدو الحاج...";
@@ -60,6 +61,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private string pathDrawingTransitionText = "تحدي المتاهة!";
     [SerializeField] private string memorySwapTransitionText = "تحدي الذاكرة!";
     [SerializeField] private string backToHubTransitionText = "العودة للمجلس...";
+    [SerializeField] private string playAgainTransitionText = "بدء جولة جديدة...";
 
     #endregion
 
@@ -115,7 +117,7 @@ public class GameManager : MonoBehaviour
         TransitionPlayer.OnTransitionComplete -= OnTransitionFinished;
         MeterManager.OnBatteryDrained -= HandleBatteryDrained;
         MeterManager.OnStomachFull -= HandleStomachFull;
-        HouseFlowController.OnHouseCompleted -= HandleHouseFlowCompleted;
+        HouseFlowController.OnHouseCompleted += HandleHouseFlowCompleted;
     }
 
     #endregion
@@ -193,7 +195,48 @@ public class GameManager : MonoBehaviour
         OnRunStarted?.Invoke();
 
         // Show unified hub (Houses tab) to start the run
-        ShowUnifiedHub();
+        // FTUE: Play Intro Video and start walkthrough on first run
+        if (SaveManager.Instance != null && !SaveManager.Instance.HasSeenTutorial("HubWalkthrough"))
+        {
+            // 1. INSTANTLY hide everything to avoid flashes
+            UIManager.Instance?.HideAllPanels();
+            
+            // 2. Play transition and STAY BLACK while video starts
+            if (TransitionPlayer.Instance != null)
+            {
+                // We use a very long duration (10s) and 'instant: true' to hold 
+                // a solid black screen with no fades until the video is ready.
+                TransitionPlayer.Instance.PlayTransition(introTransitionText, onMidpoint: () => {
+                    
+                    // 3. Trigger video while screen is fully black
+                    CinematicController.Instance?.PlayVideo("Intro", (videoID) =>
+                    {
+                        // Video finished callback
+                        ShowUnifiedHub();
+                        if (UnifiedHubManager.Instance != null)
+                        {
+                            UnifiedHubManager.Instance.StartHubTutorial();
+                        }
+                    }, 
+                    onPrepared: () => {
+                        // 4. Video is ready! INSTANTLY remove the black blind
+                        TransitionPlayer.Instance.SkipTransition();
+                    });
+                }, overrideTextDuration: 10f, instant: true); 
+            }
+            else
+            {
+                // Fallback if no transition player
+                CinematicController.Instance?.PlayVideo("Intro", (videoID) => {
+                    ShowUnifiedHub();
+                    UnifiedHubManager.Instance?.StartHubTutorial();
+                });
+            }
+        }
+        else
+        {
+            ShowUnifiedHub();
+        }
     }
 
     #endregion
@@ -239,7 +282,8 @@ public class GameManager : MonoBehaviour
                     // This callback fires when wait duration is OVER (just before fade-out)
                     // IDEAL FOR STARTING ACTION: Start the actual house flow here
                     StartHouseFlowController(houseLevel);
-                });
+                },
+                instant: true); // PHASE 18: Instant black
         }
         else
         {
@@ -350,18 +394,6 @@ public class GameManager : MonoBehaviour
     {
         // Debug.Log($"[GameManager] House {houseLevel} flow completed!");
         
-        // Get streak bonus if applicable
-        if (SwipeEncounterManager.Instance != null)
-        {
-            encounterStreakBonus = SwipeEncounterManager.Instance.GetStreakBonus();
-            if (encounterStreakBonus > 0)
-            {
-                // Use centralized handler to track run total and persist lifetime total
-                HandleEidiaEarned(encounterStreakBonus);
-                // Debug.Log($"[GameManager] Streak bonus: +{encounterStreakBonus} Eidia!");
-            }
-        }
-
         // House complete - move to next
         EndHouse();
     }
@@ -441,7 +473,7 @@ public class GameManager : MonoBehaviour
                 int next = currentHouseLevel + 1;
                 UnifiedHubManager.Instance?.InitializeHub(next, completedHouses);
                 UIManager.Instance?.ShowUnifiedHub();
-            });
+            }, instant: true); // PHASE 18: Instant black
         }
         else
         {
@@ -487,7 +519,8 @@ public class GameManager : MonoBehaviour
                 {
                     // START: Action begins as transition starts fading out
                     MiniGameManager.Instance?.StartAssignedMiniGame(miniGameIndex);
-                });
+                },
+                instant: true); // PHASE 18: Instant black
         }
         else
         {
@@ -518,14 +551,14 @@ public class GameManager : MonoBehaviour
     private void HandlePlayAgain()
     {
         // Debug.Log("[GameManager] Play Again!");
-        
+
         if (TransitionPlayer.Instance != null)
         {
-            TransitionPlayer.Instance.PlayTransition("بدء جولة جديدة...", () =>
+            TransitionPlayer.Instance.PlayTransition(playAgainTransitionText, () =>
             {
                 UIManager.Instance?.HideUnifiedHub();
                 StartRun();
-            });
+            }, instant: true); // PHASE 18: Instant black
         }
         else
         {

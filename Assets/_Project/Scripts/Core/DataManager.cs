@@ -37,6 +37,9 @@ public class DataManager : MonoBehaviour
     [Tooltip("Cinematics CSV (Cinematics.csv)")]
     public TextAsset cinematicsCSV;
 
+    [Tooltip("Tutorials CSV (Tutorials.csv)")]
+    public TextAsset tutorialsCSV;
+
     [Header("Cinematics (Unity Timeline / DOTween)")]
     [Tooltip("Character data pool for looking up speakers in cinematics")]
     [SerializeField] private List<CharacterExpressionSO> characterDataPool = new List<CharacterExpressionSO>();
@@ -56,6 +59,10 @@ public class DataManager : MonoBehaviour
     [ReadOnly]
     [Tooltip("Interactions pooled by HouseLevel")]
     public Dictionary<int, List<InteractionData>> interactionPoolsByHouse = new Dictionary<int, List<InteractionData>>();
+
+    [ReadOnly]
+    [Tooltip("Tutorial steps by TutorialID")]
+    public Dictionary<string, List<TutorialStepData>> tutorialStepsByID = new Dictionary<string, List<TutorialStepData>>();
 
     // Questions CSV Column indices (13 columns)
     private const int Q_COL_ID = 0;
@@ -104,6 +111,16 @@ public class DataManager : MonoBehaviour
     private const int C_COL_RESOURCE = 9;
     private const int C_TOTAL_COLS = 10;
 
+    // Tutorials CSV Column indices (7 columns)
+    private const int T_COL_ID = 0;
+    private const int T_COL_STEP_INDEX = 1;
+    private const int T_COL_TARGET_ID = 2;
+    private const int T_COL_INSTRUCTION = 3;
+    private const int T_COL_REQUIRE_CLICK = 4;
+    private const int T_COL_TIMESCALE = 5;
+    private const int T_COL_ANIMATION = 6;
+    private const int T_TOTAL_COLS = 7;
+
     private void Awake()
     {
         if (Instance == null)
@@ -147,14 +164,66 @@ public class DataManager : MonoBehaviour
         questionPoolsByHouse.Clear();
         cinematicByID.Clear();
         interactionPoolsByHouse.Clear();
+        tutorialStepsByID.Clear();
 
         ParseQuestionsCSV();
         LoadCinematics();
-        ParseCinematicsCSV(); // New CSV loader
+        ParseCinematicsCSV(); 
         ParseInteractionsCSV();
+        ParseTutorialsCSV();
 
         // Debug.Log("[DataManager] All CSVs parsed!");
         PrintSummary();
+    }
+
+    [Button("Parse Tutorials")]
+    private void ParseTutorialsCSV()
+    {
+        tutorialStepsByID.Clear();
+
+        if (tutorialsCSV == null)
+        {
+            // Debug.Log("[DataManager] No Tutorials CSV assigned. Skipping.");
+            return;
+        }
+
+        string[] lines = tutorialsCSV.text.Split('\n');
+        int parsed = 0;
+
+        for (int i = 1; i < lines.Length; i++)
+        {
+            if (string.IsNullOrWhiteSpace(lines[i])) continue;
+
+            string[] fields = Regex.Split(lines[i].Trim(), ",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
+            if (fields.Length < 6) continue; // Minimum required columns
+
+            TutorialStepData step = new TutorialStepData
+            {
+                TutorialID = SafeField(fields, T_COL_ID),
+                StepIndex = ParseInt(SafeField(fields, T_COL_STEP_INDEX)),
+                TargetID = SafeField(fields, T_COL_TARGET_ID),
+                InstructionAR = SafeField(fields, T_COL_INSTRUCTION),
+                RequireTargetClick = SafeField(fields, T_COL_REQUIRE_CLICK) == "1",
+                TimeScale = ParseFloat(SafeField(fields, T_COL_TIMESCALE)),
+                AnimationType = (fields.Length > T_COL_ANIMATION) 
+                    ? (Enum.TryParse<TutorialAnimationType>(SafeField(fields, T_COL_ANIMATION), true, out var anim) ? anim : TutorialAnimationType.None)
+                    : TutorialAnimationType.None
+            };
+
+            if (!tutorialStepsByID.ContainsKey(step.TutorialID))
+                tutorialStepsByID[step.TutorialID] = new List<TutorialStepData>();
+
+            tutorialStepsByID[step.TutorialID].Add(step);
+            parsed++;
+        }
+        
+        // Sort by step index
+        foreach (var list in tutorialStepsByID.Values)
+        {
+            list.Sort((a, b) => a.StepIndex.CompareTo(b.StepIndex));
+        }
+
+        // Debug.Log($"[DataManager] ✅ Tutorials CSV: {parsed} steps parsed");
     }
 
     [Button("Parse Cinematics CSV")]

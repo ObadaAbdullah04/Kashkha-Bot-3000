@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -50,12 +51,15 @@ public class UnifiedHubManager : MonoBehaviour
     [Header("Tab Buttons")]
     [Tooltip("Button to switch to Houses tab")]
     [SerializeField] private Button housesTabButton;
+    public Button HousesTabButton => housesTabButton;
 
     [Tooltip("Button to switch to Wardrobe tab")]
     [SerializeField] private Button wardrobeTabButton;
+    public Button WardrobeTabButton => wardrobeTabButton;
 
     [Tooltip("Button to switch to Upgrades tab")]
     [SerializeField] private Button upgradesTabButton;
+    public Button UpgradesTabButton => upgradesTabButton;
 
     [Header("Tab Panels")]
     [Tooltip("Panel containing house navigation buttons")]
@@ -238,10 +242,18 @@ public class UnifiedHubManager : MonoBehaviour
     #region Private Fields
 
     private HubTab activeTab = HubTab.Houses;
+    public HubTab ActiveTab => activeTab;
+
+    public GameObject HousesTabPanel => housesTabPanel;
+    public GameObject WardrobeTabPanel => wardrobeTabPanel;
+    public GameObject UpgradesTabPanel => upgradesTabPanel;
     private int highestUnlockedHouse = 1;
     private bool[] completedHouses = new bool[5]; // Index 1-4
     private bool isFullRunComplete = false;
     private int nextHouseLevelToPlay = 1;
+
+    // Juice tracking
+    private Tween activePulseTween;
 
     // Upgrade tracking (resets each run)
     private Dictionary<UpgradeType, int> upgradePurchaseCounts = new Dictionary<UpgradeType, int>
@@ -269,6 +281,15 @@ public class UnifiedHubManager : MonoBehaviour
             // Start with Houses tab active
             activeTab = HubTab.Houses;
             if (housesTabPanel != null) housesTabPanel.SetActive(true);
+
+            // Register tab buttons and House 1 button for tutorials
+            if (TutorialOverlayManager.Instance != null)
+            {
+                if (upgradesTabButton != null) TutorialOverlayManager.Instance.RegisterTarget("Tab_Upgrades", upgradesTabButton.GetComponent<RectTransform>());
+                if (wardrobeTabButton != null) TutorialOverlayManager.Instance.RegisterTarget("Tab_Wardrobe", wardrobeTabButton.GetComponent<RectTransform>());
+                if (housesTabButton != null) TutorialOverlayManager.Instance.RegisterTarget("Tab_Houses", housesTabButton.GetComponent<RectTransform>());
+                if (house1Button != null) TutorialOverlayManager.Instance.RegisterTarget("Btn_House1", house1Button.GetComponent<RectTransform>());
+            }
         }
         else
         {
@@ -284,6 +305,8 @@ public class UnifiedHubManager : MonoBehaviour
         WardrobeManager.OnOutfitEquipped += HandleOutfitEquipped;
         WardrobeManager.OnScrapChanged += RefreshWardrobeUI;
         SaveManager.OnScrapChanged += OnScrapChangedFromSaveManager; // Subscribe to scrap changes from mini-games
+        
+        UpdateAllUI();
     }
 
     private void OnDisable()
@@ -293,6 +316,8 @@ public class UnifiedHubManager : MonoBehaviour
         WardrobeManager.OnOutfitEquipped -= HandleOutfitEquipped;
         WardrobeManager.OnScrapChanged -= RefreshWardrobeUI;
         SaveManager.OnScrapChanged -= OnScrapChangedFromSaveManager; // Unsubscribe from scrap changes
+        
+        StopActivePulse();
     }
 
     private void InitializeArrays()
@@ -542,6 +567,12 @@ public class UnifiedHubManager : MonoBehaviour
         if (tab == HubTab.Wardrobe) RefreshWardrobeUI();
         if (tab == HubTab.Upgrades) RefreshUpgradeUI();
 
+        // REACTION FIX: Advance tutorial if player switches tabs manually
+        if (TutorialOverlayManager.Instance != null && TutorialOverlayManager.Instance.IsTutorialActive)
+        {
+            TutorialOverlayManager.Instance.AdvanceTutorial();
+        }
+
 #if UNITY_EDITOR
         // Debug.Log($"[UnifiedHub] Switched to {tab} tab");
 #endif
@@ -551,7 +582,7 @@ public class UnifiedHubManager : MonoBehaviour
 
     #region House & Mini-Game Selection
 
-    private void SelectHouse(int houseLevel)
+    public void SelectHouse(int houseLevel)
     {
         if (isFullRunComplete) return;
         if (houseLevel > highestUnlockedHouse) return;
@@ -567,10 +598,16 @@ public class UnifiedHubManager : MonoBehaviour
         // DEBOUNCE: Disable all buttons immediately to prevent double-click during transition
         DisableAllNavigation();
 
+        // REACTION FIX: Advance tutorial if player selects house manually
+        if (TutorialOverlayManager.Instance != null && TutorialOverlayManager.Instance.IsTutorialActive)
+        {
+            TutorialOverlayManager.Instance.AdvanceTutorial();
+        }
+
         OnStartNextHouse?.Invoke(houseLevel);
     }
 
-    private void SelectMiniGame(int miniGameIndex)
+    public void SelectMiniGame(int miniGameIndex)
     {
         if (isFullRunComplete) return;
 
@@ -585,6 +622,12 @@ public class UnifiedHubManager : MonoBehaviour
 
         // DEBOUNCE: Disable all buttons immediately to prevent double-click during transition
         DisableAllNavigation();
+
+        // REACTION FIX: Advance tutorial if player selects mini-game manually
+        if (TutorialOverlayManager.Instance != null && TutorialOverlayManager.Instance.IsTutorialActive)
+        {
+            TutorialOverlayManager.Instance.AdvanceTutorial();
+        }
 
         OnStartMiniGame?.Invoke(miniGameIndex);
     }
@@ -671,6 +714,12 @@ public class UnifiedHubManager : MonoBehaviour
 
         RefreshWardrobeUI();
 
+        // REACTION FIX: Advance tutorial if player equips outfit manually
+        if (TutorialOverlayManager.Instance != null && TutorialOverlayManager.Instance.IsTutorialActive)
+        {
+            TutorialOverlayManager.Instance.AdvanceTutorial();
+        }
+
         // Notify GameManager for stat application
         OnOutfitEquipped?.Invoke(outfitID);
     }
@@ -698,7 +747,7 @@ public class UnifiedHubManager : MonoBehaviour
             expandCostText,
             expandLevelText,
             playerEidia,
-            maxExpandPurchases
+            maxRechargePurchases
         );
 
         UpdateUpgradeUI(
@@ -790,6 +839,12 @@ public class UnifiedHubManager : MonoBehaviour
         // Refresh UI
         RefreshUpgradeUI();
 
+        // REACTION FIX: Advance tutorial if player purchases upgrade manually
+        if (TutorialOverlayManager.Instance != null && TutorialOverlayManager.Instance.IsTutorialActive)
+        {
+            TutorialOverlayManager.Instance.AdvanceTutorial();
+        }
+
 #if UNITY_EDITOR
         // Debug.Log($"[UnifiedHub] Purchased {upgradeType} for {currentCost}. Level: {upgradePurchaseCounts[upgradeType]}/{maxPurchases}");
 #endif
@@ -868,6 +923,7 @@ public class UnifiedHubManager : MonoBehaviour
         UpdateHousesUI();
         UpdateMiniGameButtons();
         UpdateActionButton();
+        UpdateJuice(); // Guide player
     }
 
     private void UpdateHousesUI()
@@ -969,6 +1025,138 @@ public class UnifiedHubManager : MonoBehaviour
         }
 
         actionButton.interactable = miniGameAvailable || houseAvailable;
+    }
+
+    #endregion
+
+    #region Hub Onboarding
+
+    public void StartHubTutorial()
+    {
+        if (gameObject.activeInHierarchy)
+        {
+            StartCoroutine(HubWalkthroughRoutine());
+        }
+    }
+
+    private IEnumerator HubWalkthroughRoutine()
+    {
+        // Wait a few frames for UI Layout to stabilize
+        yield return new WaitForEndOfFrame();
+        yield return new WaitForEndOfFrame();
+
+        yield return new WaitForSecondsRealtime(1.0f);
+        TutorialOverlayManager.Instance.PlayTutorial("TUT_HUB_WELCOME");
+        yield return new WaitUntil(() => !TutorialOverlayManager.Instance.IsTutorialActive);
+
+        // --- STEP 1: UPGRADES ---
+        if (activeTab != HubTab.Upgrades && upgradesTabButton != null)
+        {
+            TutorialOverlayManager.Instance.ShowTutorial(upgradesTabButton.transform, "ابدأ بتطوير مهاراتك من هنا!", false, null, TutorialAnimationType.Point);
+            yield return new WaitUntil(() => activeTab == HubTab.Upgrades || !gameObject.activeInHierarchy);
+            TutorialOverlayManager.Instance.HideTutorial();
+            yield return new WaitForSecondsRealtime(0.5f);
+        }
+        
+        TutorialOverlayManager.Instance.PlayTutorial("TUT_HUB_UPGRADES_INFO");
+        yield return new WaitUntil(() => !TutorialOverlayManager.Instance.IsTutorialActive);
+
+        // --- STEP 2: WARDROBE ---
+        if (activeTab != HubTab.Wardrobe && wardrobeTabButton != null)
+        {
+            TutorialOverlayManager.Instance.ShowTutorial(wardrobeTabButton.transform, "اختر ملابسك لتغيير مظهرك!", false, null, TutorialAnimationType.Point);
+            yield return new WaitUntil(() => activeTab == HubTab.Wardrobe || !gameObject.activeInHierarchy);
+            TutorialOverlayManager.Instance.HideTutorial();
+            yield return new WaitForSecondsRealtime(0.5f);
+        }
+
+        TutorialOverlayManager.Instance.PlayTutorial("TUT_HUB_WARDROBE_INFO");
+        yield return new WaitUntil(() => !TutorialOverlayManager.Instance.IsTutorialActive);
+
+        // NEW: Only suggest selecting cloth if they haven't done it yet
+        if (WardrobeManager.Instance != null && WardrobeManager.Instance.EquippedOutfitID == 0)
+        {
+            TutorialOverlayManager.Instance.PlayTutorial("TUT_HUB_SELECT_CLOTH");
+            yield return new WaitUntil(() => !TutorialOverlayManager.Instance.IsTutorialActive || (WardrobeManager.Instance != null && WardrobeManager.Instance.EquippedOutfitID != 0));
+            TutorialOverlayManager.Instance.HideTutorial();
+        }
+
+        // --- STEP 3: HOUSES ---
+        if (activeTab != HubTab.Houses && housesTabButton != null)
+        {
+            TutorialOverlayManager.Instance.ShowTutorial(housesTabButton.transform, "والآن، عد إلى البيوت لبدء الزيارات!", false, null, TutorialAnimationType.Point);
+            yield return new WaitUntil(() => activeTab == HubTab.Houses || !gameObject.activeInHierarchy);
+            TutorialOverlayManager.Instance.HideTutorial();
+            yield return new WaitForSecondsRealtime(0.5f);
+        }
+
+        TutorialOverlayManager.Instance.PlayTutorial("TUT_HUB_HOUSES_INFO");
+        yield return new WaitUntil(() => !TutorialOverlayManager.Instance.IsTutorialActive);
+
+        // --- STEP 4: START HOUSE ---
+        if (GameManager.Instance != null && GameManager.Instance.CurrentHouseLevel <= 0 && house1Button != null)
+        {
+            TutorialOverlayManager.Instance.ShowTutorial(house1Button.transform, "اضغط هنا لتبدأ أول زيارة لك. بالتوفيق!", false, null, TutorialAnimationType.Point);
+            yield return new WaitUntil(() => (GameManager.Instance != null && GameManager.Instance.CurrentHouseLevel > 0) || !gameObject.activeInHierarchy);
+            TutorialOverlayManager.Instance.HideTutorial(); 
+        }
+
+        SaveManager.Instance?.MarkTutorialAsComplete("HubWalkthrough");
+    }
+
+    #endregion
+
+    #region Juice / Animations
+
+    private void UpdateJuice()
+    {
+        StopActivePulse();
+
+        if (activeTab != HubTab.Houses) return;
+
+        // Find the "Next Action" to pulse
+        int miniGameIndex = nextHouseLevelToPlay - 1;
+        bool miniGameAvailable = miniGameIndex >= 0 && miniGameIndex < 3 &&
+                                 completedHouses[nextHouseLevelToPlay] &&
+                                 nextHouseLevelToPlay + 1 <= 4 &&
+                                 !completedHouses[nextHouseLevelToPlay + 1];
+
+        bool houseAvailable = !completedHouses[nextHouseLevelToPlay] &&
+                              nextHouseLevelToPlay <= highestUnlockedHouse;
+
+        if (miniGameAvailable)
+        {
+            if (miniGameButtons != null && miniGameIndex < miniGameButtons.Length)
+                StartPulse(miniGameButtons[miniGameIndex]);
+        }
+        else if (houseAvailable)
+        {
+            if (houseButtons != null && (nextHouseLevelToPlay - 1) < houseButtons.Length)
+                StartPulse(houseButtons[nextHouseLevelToPlay - 1]);
+        }
+        else if (actionButton != null && actionButton.interactable && actionButton.gameObject.activeInHierarchy)
+        {
+            StartPulse(actionButton);
+        }
+    }
+
+    private void StartPulse(Button target)
+    {
+        if (target == null) return;
+        activePulseTween = target.transform.DOScale(1.1f, 0.8f)
+            .SetEase(Ease.InOutSine)
+            .SetLoops(-1, LoopType.Yoyo)
+            .SetUpdate(true);
+    }
+
+    private void StopActivePulse()
+    {
+        activePulseTween?.Kill();
+        
+        // Reset scales of all potential targets to be safe
+        if (houseButtons != null) foreach (var b in houseButtons) if (b != null) b.transform.localScale = Vector3.one;
+        if (miniGameButtons != null) foreach (var b in miniGameButtons) if (b != null) b.transform.localScale = Vector3.one;
+        if (actionButton != null) actionButton.transform.localScale = Vector3.one;
     }
 
     #endregion

@@ -195,6 +195,13 @@ public class HouseFlowController : MonoBehaviour
                     break;
             }
 
+            // CRITICAL: If a tutorial is active (e.g. TUT_SAD), wait for it to be dismissed 
+            // BEFORE moving to the next element or pausing.
+            if (TutorialOverlayManager.Instance != null && TutorialOverlayManager.Instance.IsTutorialActive)
+            {
+                yield return new WaitUntil(() => !TutorialOverlayManager.Instance.IsTutorialActive);
+            }
+
             // Pause between elements (skip pause after last element)
             if (i < currentSequence.Count - 1 && pauseBetweenElements > 0)
             {

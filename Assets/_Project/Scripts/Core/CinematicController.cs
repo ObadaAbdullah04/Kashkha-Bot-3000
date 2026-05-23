@@ -180,6 +180,12 @@ public class CinematicController : MonoBehaviour
 
         // Listen for house starts to show portraits immediately
         HouseFlowController.OnHouseStarted += InitializeHousePortraits;
+
+        // Register visual portrait with tutorial manager for highlighting
+        if (visualImage != null && TutorialOverlayManager.Instance != null)
+        {
+            TutorialOverlayManager.Instance.RegisterCharacterPortrait(visualImage.rectTransform);
+        }
     }
 
     private void OnDestroy()
@@ -288,13 +294,18 @@ public class CinematicController : MonoBehaviour
         }
     }
 
+    private bool isExpressionLockedByCinematic = false;
+
     /// <summary>
-    /// Updates the speaker portrait expression even if no cinematic is playing.
-    /// Useful for showing reactions to gameplay (e.g., interaction success/failure).
+    /// Updates the speaker portrait expression.
+    /// priority: 0 = Gameplay (Inactivity/Result), 1 = Cinematic (Story/Dialogue)
     /// </summary>
-    public void UpdateExpressionExternally(CharacterExpressionSO speaker, string expressionName)
+    public void UpdateExpressionExternally(CharacterExpressionSO speaker, string expressionName, int priority = 0, bool showNamePanel = false)
     {
         if (visualImage == null) return;
+
+        // If a high-priority cinematic is playing, ignore low-priority gameplay expressions
+        if (isExpressionLockedByCinematic && priority < 1) return;
 
         bool wasAlreadyVisible = visualImage.gameObject.activeSelf;
         Sprite newSprite = speaker.GetExpressionSprite(expressionName);
@@ -331,7 +342,7 @@ public class CinematicController : MonoBehaviour
             speakerNameText.text = speaker.characterName;
 
         if (speakerNamePanel != null)
-            speakerNamePanel.SetActive(true);
+            speakerNamePanel.SetActive(showNamePanel);
 
         // ONLY play pop-in juice if we are switching characters or it was hidden
         if (!isSameSpeaker)
@@ -359,6 +370,13 @@ public class CinematicController : MonoBehaviour
         currentCinematicID = cinematicData.ID;
         onCompleteCallback = onComplete;
         isPlaying = true;
+        isExpressionLockedByCinematic = true;
+
+        // RESET expression to default at the start of any cinematic if speaker is known
+        if (cinematicData.Speaker != null)
+        {
+            UpdateExpressionExternally(cinematicData.Speaker, "Default", 1);
+        }
 
         // PHASE 18 REFINEMENT: 
         // Only hide gameplay UI for Unity Timelines (full screen movies).
@@ -568,6 +586,7 @@ public class CinematicController : MonoBehaviour
             // // if (debugLogging) {} // Debug.Log($"[CinematicController] Timeline complete: {cinematicData.ID} | Elapsed: {elapsed:F2}s | Final State: {director.state}");
 
             isPlaying = false;
+            isExpressionLockedByCinematic = false;
             OnCinematicCompleted?.Invoke(cinematicData.ID);
             onCompleteCallback?.Invoke(cinematicData.ID);
 
@@ -637,6 +656,8 @@ public class CinematicController : MonoBehaviour
             {
                 spriteToShow = cinematicData.Speaker.GetExpressionSprite(cinematicData.Expression);
                 if (speakerNameText != null) speakerNameText.text = cinematicData.Speaker.characterName;
+                
+                // Show name panel during story dialogue
                 if (speakerNamePanel != null) speakerNamePanel.SetActive(true);
             }
             else if (!isResourceValid)
@@ -713,6 +734,7 @@ public class CinematicController : MonoBehaviour
             // // if (debugLogging) {} // Debug.Log($"[CinematicController] DOTween cinematic complete: {cinematicData.ID}");
 
             isPlaying = false;
+            isExpressionLockedByCinematic = false;
             OnCinematicCompleted?.Invoke(cinematicData.ID);
             onCompleteCallback?.Invoke(cinematicData.ID);
 
@@ -964,6 +986,14 @@ public class CinematicController : MonoBehaviour
             });
         }
         
+        // MOVED speakerNamePanel control to its own method for better granularity
+    }
+
+    /// <summary>
+    /// Toggles the speaker name panel visibility.
+    /// </summary>
+    public void ToggleSpeakerName(bool visible)
+    {
         if (speakerNamePanel != null)
         {
             speakerNamePanel.SetActive(visible);
@@ -1028,7 +1058,7 @@ public class CinematicController : MonoBehaviour
     /// Plays a Video element using the VideoPlayer component.
     /// Loads the video from Resources and plays it full-screen.
     /// </summary>
-    public void PlayVideo(string videoName, Action<string> onComplete)
+    public void PlayVideo(string videoName, Action<string> onComplete, Action onPrepared = null)
     {
         if (isPlaying)
         {
@@ -1068,15 +1098,10 @@ public class CinematicController : MonoBehaviour
         if (visualImage != null) visualImage.gameObject.SetActive(false);
         if (playerImage != null) playerImage.gameObject.SetActive(false);
         
+        // PHASE 18: Keep panel HIDDEN until prepared to avoid NPC/UI flashes
         if (cutscenePanel != null)
         {
-            cutscenePanel.SetActive(true);
-            CanvasGroup cg = cutscenePanel.GetComponent<CanvasGroup>();
-            if (cg != null)
-            {
-                cg.alpha = 1f;
-                cg.blocksRaycasts = true;
-            }
+            cutscenePanel.SetActive(false); 
         }
 
         videoDisplay.gameObject.SetActive(false);
@@ -1091,11 +1116,24 @@ public class CinematicController : MonoBehaviour
             videoPlayer.prepareCompleted -= OnVideoPrepared;
             if (!isPlaying) return;
 
+            // NOW show the panel and display
+            if (cutscenePanel != null)
+            {
+                cutscenePanel.SetActive(true);
+                CanvasGroup cg = cutscenePanel.GetComponent<CanvasGroup>();
+                if (cg != null)
+                {
+                    cg.alpha = 1f;
+                    cg.blocksRaycasts = true;
+                }
+            }
+
             videoDisplay.texture = videoPlayer.texture;
             videoDisplay.gameObject.SetActive(true);
             videoDisplay.transform.SetAsLastSibling();
 
             OnCinematicStarted?.Invoke(videoName);
+            onPrepared?.Invoke(); // Trigger the prepared callback!
             videoPlayer.Play();
         }
 

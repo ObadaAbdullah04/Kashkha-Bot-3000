@@ -49,7 +49,7 @@ public class InteractionHUDController : MonoBehaviour
     [SerializeField] private float defaultDuration = 5f;
 
     [Tooltip("Warning threshold - bar turns red")]
-    [SerializeField] private float warningThreshold = 2f;
+    [SerializeField] private float warningThreshold = 3.5f;
 
     [Header("Colors")]
     [SerializeField] private Color normalColor = Color.white;
@@ -75,6 +75,8 @@ public class InteractionHUDController : MonoBehaviour
     private bool isActive = false;
     private Sequence entranceTween;
     private Sequence exitTween;
+    private bool hasInteracted = false;
+    private bool hasTriggeredInactivityFeedback = false;
     
     // GC optimization
     private int lastCounterValue = -1;
@@ -93,12 +95,30 @@ public class InteractionHUDController : MonoBehaviour
         if (Instance == null) Instance = this;
         else { Destroy(gameObject); return; }
 
-        if (hudPanel != null) hudPanel.gameObject.SetActive(false);
+        if (hudPanel != null)
+        {
+            hudPanel.gameObject.SetActive(false);
+            
+            // Register for tutorials
+            if (TutorialOverlayManager.Instance != null)
+            {
+                TutorialOverlayManager.Instance.RegisterTarget("InteractionZone", hudPanel);
+            }
+        }
     }
 
     private void Update()
     {
         if (!isActive || currentInteraction == null) return;
+
+        bool tutorialActive = TutorialOverlayManager.Instance != null && TutorialOverlayManager.Instance.IsTutorialActive;
+        
+        // If tutorial is active, we only check for interaction to advance it, but pause the timer
+        if (tutorialActive)
+        {
+            CheckForInteractionAdvance(tutorialActive);
+            return;
+        }
 
         UpdateTimer();
         UpdateProgress();
@@ -124,6 +144,8 @@ public class InteractionHUDController : MonoBehaviour
         onCompleteCallback = onComplete;
         elapsed = 0f;
         isActive = true;
+        hasInteracted = false; // Reset interaction flag
+        hasTriggeredInactivityFeedback = false; // Reset feedback flag
         lastCounterValue = -1;
         lastShakeCount = 0f;
 
@@ -144,8 +166,60 @@ public class InteractionHUDController : MonoBehaviour
         }
 
         UpdateUI();
+        
+        // --- IMPROVED TUTORIAL FLOW ---
+        bool isHouse1 = GameManager.Instance != null && GameManager.Instance.CurrentHouseLevel == 1;
+        string interactionName = data.InteractionType.ToString().ToUpper();
+        string tutorialKey = $"TUT_{interactionName}";
 
+        if (isHouse1 && !SaveManager.Instance.HasSeenTutorial(tutorialKey))
+        {
+            // HIDE panel and speaker name initially so the tutorial can introduce it cleanly
+            if (hudPanel != null) hudPanel.gameObject.SetActive(false);
+            if (CinematicController.Instance != null) CinematicController.Instance.ToggleSpeakerName(false);
+
+            if (DataManager.Instance != null && DataManager.Instance.tutorialStepsByID.ContainsKey(tutorialKey))
+            {
+                TutorialOverlayManager.Instance.PlayTutorial(tutorialKey, () =>
+                {
+                    SaveManager.Instance.MarkTutorialAsComplete(tutorialKey);
+                    BeginActualInteraction(); 
+                });
+            }
+            else
+            {
+                SaveManager.Instance.MarkTutorialAsComplete(tutorialKey);
+                BeginActualInteraction();
+            }
+        }
+        else
+        {
+            BeginActualInteraction();
+        }
+    }
+
+    /// <summary>
+    /// Starts the actual interaction UI (Panel + Speaker Name BG).
+    /// </summary>
+    private void BeginActualInteraction()
+    {
         ShowPanel();
+        if (CinematicController.Instance != null)
+        {
+            CinematicController.Instance.ToggleSpeakerName(true);
+        }
+    }
+
+    private string GetInteractionInstruction(InteractionType type)
+    {
+        return type switch
+        {
+            InteractionType.Shake => "SHAKE!",
+            InteractionType.Hold => "HOLD!",
+            InteractionType.Tap => "TAP!",
+            InteractionType.Draw => "DRAW!",
+            _ => "GO!"
+        };
     }
 
     public void HideHUD()
@@ -161,6 +235,12 @@ public class InteractionHUDController : MonoBehaviour
             CanvasGroup canvasGroup = hudPanel.GetComponent<CanvasGroup>();
             if (canvasGroup != null) canvasGroup.alpha = 1f;
             hudPanel.localScale = Vector3.one;
+        }
+
+        // HIDE Speaker Name Panel (BG) as well
+        if (CinematicController.Instance != null)
+        {
+            CinematicController.Instance.ToggleSpeakerName(false);
         }
     }
 
@@ -187,13 +267,62 @@ public class InteractionHUDController : MonoBehaviour
         if (timerBar != null) { timerBar.fillAmount = 1f; timerBar.color = normalColor; }
     }
 
+    private void CheckForInteractionAdvance(bool tutorialActive)
+    {
+        float currentValue = GetCurrentValue();
+        // Increased threshold to 0.05f to avoid noise triggers
+        if (!hasInteracted && currentValue > 0.05f)
+        {
+            hasInteracted = true;
+            
+            // DYNAMIC: If we were in a "Sad" state, restore expression to Default
+            if (hasTriggeredInactivityFeedback)
+            {
+                RestoreCharacterToDefaultExpression();
+            }
+
+            // Advance tutorial dynamically if the player starts interacting!
+            if (tutorialActive)
+            {
+                TutorialOverlayManager.Instance.AdvanceTutorial();
+            }
+        }
+    }
+
+    private void RestoreCharacterToDefaultExpression()
+    {
+        if (currentInteraction == null || CinematicController.Instance == null) return;
+
+        var speaker = DataManager.Instance?.GetSpeakerByName(currentInteraction.SpeakerName);
+        if (speaker != null)
+        {
+            CinematicController.Instance.UpdateExpressionExternally(speaker, "Default");
+        }
+    }
+
     private void UpdateTimer()
     {
-        if (currentInteraction.Duration <= 0) return;
+        if (currentInteraction == null || currentInteraction.Duration <= 0) return;
+
+        bool tutorialActive = TutorialOverlayManager.Instance != null && TutorialOverlayManager.Instance.IsTutorialActive;
+        
+        CheckForInteractionAdvance(tutorialActive);
+
+        // Removed the hardcoded return so that Time.deltaTime respects the CSV's TimeScale setting.
         elapsed += Time.deltaTime;
+        
         float duration = currentInteraction.Duration > 0 ? currentInteraction.Duration : defaultDuration;
         float remaining = Mathf.Max(0, duration - elapsed);
         float progress = remaining / duration;
+
+        // Removed inactivity timer to restore original logic
+        /*
+        if (!hasInteracted && !hasTriggeredInactivityFeedback && elapsed >= 2.0f)
+        {
+            hasTriggeredInactivityFeedback = true;
+            UpdateCharacterToWarningExpression();
+        }
+        */
 
         if (timerBar != null)
         {
@@ -201,6 +330,24 @@ public class InteractionHUDController : MonoBehaviour
             if (remaining <= warningThreshold) timerBar.color = dangerColor;
             else if (remaining <= warningThreshold * 2) timerBar.color = warningColor;
             else timerBar.color = normalColor;
+        }
+    }
+
+    private void UpdateCharacterToWarningExpression()
+    {
+        if (currentInteraction == null || CinematicController.Instance == null) return;
+
+        // Find speaker data from DataManager
+        var speaker = DataManager.Instance?.GetSpeakerByName(currentInteraction.SpeakerName);
+        if (speaker != null)
+        {
+            // Use "Sad" or "Warning" expression if available
+            string expression = !string.IsNullOrEmpty(currentInteraction.FailureExpression) 
+                ? currentInteraction.FailureExpression 
+                : "Sad";
+            
+            // Explicitly pass false for showNamePanel
+            CinematicController.Instance.UpdateExpressionExternally(speaker, expression, 0, false);
         }
     }
 
@@ -212,26 +359,72 @@ public class InteractionHUDController : MonoBehaviour
         {
             lastCounterValue = currentValueInt;
             UpdateCounterText(currentValue);
+            
+            // JUICE: Visual punch on any progress update
+            if (iconImage != null)
+            {
+                iconImage.transform.DOKill();
+                iconImage.transform.localScale = Vector3.one;
+                iconImage.transform.DOPunchScale(Vector3.one * 0.15f, 0.15f);
+            }
         }
         UpdateIconStruggle(currentValue);
     }
     
     private void UpdateIconStruggle(float currentValue)
     {
-        if (currentInteraction.InteractionType != InteractionType.Shake) return;
         if (iconRectTransform == null && iconImage == null) return;
-        
-        float shakeDelta = currentValue - lastShakeCount;
-        lastShakeCount = currentValue;
-        if (shakeDelta < 0.5f) return;
-        
-        float intensity = Mathf.Clamp01(currentValue / currentInteraction.Threshold);
-        float amplitude = Mathf.Lerp(3f, 12f, intensity);
-        float frequency = Mathf.Lerp(15f, 30f, intensity);
-        
-        iconShakeTween?.Kill();
         RectTransform targetRect = iconRectTransform ?? iconImage.rectTransform;
-        iconShakeTween = targetRect.DOShakePosition(0.15f, new Vector2(amplitude, amplitude * 0.6f), Mathf.RoundToInt(frequency), 90f, false);
+
+        switch (currentInteraction.InteractionType)
+        {
+            case InteractionType.Shake:
+                float shakeDelta = currentValue - lastShakeCount;
+                lastShakeCount = currentValue;
+                if (shakeDelta < 0.5f) return;
+                
+                float intensity = Mathf.Clamp01(currentValue / currentInteraction.Threshold);
+                float amplitude = Mathf.Lerp(3f, 12f, intensity);
+                float frequency = Mathf.Lerp(15f, 30f, intensity);
+                
+                iconShakeTween?.Kill();
+                iconShakeTween = targetRect.DOShakePosition(0.15f, new Vector2(amplitude, amplitude * 0.6f), Mathf.RoundToInt(frequency), 90f, false);
+                break;
+
+            case InteractionType.Hold:
+                if (InputManager.Instance != null && InputManager.Instance.IsTouching())
+                {
+                    // Pulse faster as we get closer to threshold
+                    float holdIntensity = Mathf.Clamp01(currentValue / currentInteraction.Threshold);
+                    float speed = Mathf.Lerp(1.5f, 0.4f, holdIntensity);
+                    if (!DOTween.IsTweening(targetRect))
+                    {
+                        targetRect.DOScale(1.2f, speed).SetEase(Ease.InOutSine).SetLoops(-1, LoopType.Yoyo);
+                    }
+                }
+                else
+                {
+                    targetRect.DOKill();
+                    targetRect.localScale = Vector3.one;
+                }
+                break;
+
+            case InteractionType.Draw:
+                if (InputManager.Instance != null && InputManager.Instance.IsTouching())
+                {
+                    // Rotate slightly while drawing
+                    if (!DOTween.IsTweening(targetRect))
+                    {
+                        targetRect.DORotate(new Vector3(0, 0, 15f), 0.3f).SetEase(Ease.InOutSine).SetLoops(-1, LoopType.Yoyo);
+                    }
+                }
+                else
+                {
+                    targetRect.DOKill();
+                    targetRect.localRotation = Quaternion.identity;
+                }
+                break;
+        }
     }
 
     private float GetCurrentValue()
@@ -271,6 +464,10 @@ public class InteractionHUDController : MonoBehaviour
         if (!isActive) return;
         isActive = false;
 
+        // SET expression based on result (PERSISTENT until next result)
+        if (succeeded) RestoreCharacterToDefaultExpression();
+        else UpdateCharacterToWarningExpression();
+
         float batteryDelta = currentInteraction.GetBatteryDelta(succeeded);
         float stomachDelta = currentInteraction.GetStomachDelta(succeeded);
         int eidiaReward = currentInteraction.GetEidReward(succeeded);
@@ -281,19 +478,47 @@ public class InteractionHUDController : MonoBehaviour
 
         OnInteractionFinished?.Invoke(currentInteraction, succeeded);
 
-        FlashResult(succeeded, () =>
-        {
-            MeterManager.Instance?.ModifyBattery(batteryDelta);
-            MeterManager.Instance?.ModifyStomach(stomachDelta);
-            if (eidiaReward > 0) OnEidiaEarned?.Invoke(eidiaReward);
+        // HIDE HUD IMMEDIATELY to prevent "ghost" panel during feedback/tutorials
+        HideHUD();
 
-            HidePanel(() =>
+        // FTUE: If failed in House 1, show the "Sad" tutorial as a consequence
+        // This is a blocking call - it will finish before we call the onCompleteCallback
+        Action processFinalize = () =>
+        {
+            FlashResult(succeeded, () =>
             {
-                onCompleteCallback?.Invoke(succeeded, batteryDelta, eidiaReward);
-                onCompleteCallback = null;
-                currentInteraction = null;
+                MeterManager.Instance?.ModifyBattery(batteryDelta);
+                MeterManager.Instance?.ModifyStomach(stomachDelta);
+                if (eidiaReward > 0) OnEidiaEarned?.Invoke(eidiaReward);
+
+                HidePanel(() =>
+                {
+                    onCompleteCallback?.Invoke(succeeded, batteryDelta, eidiaReward);
+                    onCompleteCallback = null;
+                    currentInteraction = null;
+                });
             });
-        });
+        };
+
+        bool isHouse1 = GameManager.Instance != null && GameManager.Instance.CurrentHouseLevel == 1;
+        bool hasSeenSadTutorial = SaveManager.Instance != null && SaveManager.Instance.HasSeenTutorial("TUT_SAD");
+
+        if (!succeeded && isHouse1 && !hasSeenSadTutorial)
+        {
+            UpdateCharacterToWarningExpression();
+            if (TutorialOverlayManager.Instance != null)
+            {
+                TutorialOverlayManager.Instance.PlayTutorial("TUT_SAD", () => {
+                    SaveManager.Instance?.MarkTutorialAsComplete("TUT_SAD");
+                    processFinalize();
+                });
+            }
+            else processFinalize();
+        }
+        else
+        {
+            processFinalize();
+        }
     }
 
     #endregion

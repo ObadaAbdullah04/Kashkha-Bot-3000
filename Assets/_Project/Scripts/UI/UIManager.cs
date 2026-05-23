@@ -39,10 +39,15 @@ public class UIManager : MonoBehaviour
     [Header("Meter UI")]
     [Tooltip("Battery slider (shows current social battery)")]
     [SerializeField] private Slider batterySlider;
+    public RectTransform BatterySliderRect => batterySlider != null ? batterySlider.GetComponent<RectTransform>() : null;
+
     [Tooltip("Stomach slider (shows current stomach fullness)")]
     [SerializeField] private Slider stomachSlider;
+    public RectTransform StomachSliderRect => stomachSlider != null ? stomachSlider.GetComponent<RectTransform>() : null;
+
     [Tooltip("Timer slider (shows per-card timer countdown)")]
     [SerializeField] private Slider timerSlider;
+    public RectTransform TimerSliderRect => timerSlider != null ? timerSlider.GetComponent<RectTransform>() : null;
 
     [Header("Game State Panels")]
     [Tooltip("Main menu start screen panel")]
@@ -94,8 +99,6 @@ public class UIManager : MonoBehaviour
     [SerializeField] private float feedbackDisplayDuration = 1.9f;
     [SerializeField] private float feedbackFadeOutDuration = 0.22f;
 
-    [Header("Card Idle Animation")]
-
     public static Action OnPlayAgain;
 
     #endregion
@@ -104,6 +107,7 @@ public class UIManager : MonoBehaviour
 
     private Sequence _feedbackSequence;
     private CanvasGroup _feedbackCanvasGroup;
+    private Tween _startBtnPulse;
 
     #endregion
 
@@ -111,6 +115,14 @@ public class UIManager : MonoBehaviour
 
     private void Start()
     {
+        // Register targets for tutorials
+        if (TutorialOverlayManager.Instance != null)
+        {
+            if (batterySlider != null) TutorialOverlayManager.Instance.RegisterTarget("SocialBattery", batterySlider.GetComponent<RectTransform>());
+            if (stomachSlider != null) TutorialOverlayManager.Instance.RegisterTarget("StomachMeter", stomachSlider.GetComponent<RectTransform>());
+            if (timerSlider != null) TutorialOverlayManager.Instance.RegisterTarget("QuestionTimer", timerSlider.GetComponent<RectTransform>());
+        }
+
         if (feedbackPanel != null)
         {
             _feedbackCanvasGroup = feedbackPanel.GetComponent<CanvasGroup>();
@@ -122,14 +134,33 @@ public class UIManager : MonoBehaviour
         if (startBtn != null)
         {
             startBtn.onClick.AddListener(() => {
+                StopStartButtonPulse();
                 AudioManager.Instance?.PlaySFX(AudioManager.SFXType.ButtonClick);
                 if (GameManager.Instance != null)
                     GameManager.Instance.StartRun();
             });
+
+            StartButtonPulse();
         }
 
         // Handle initial state
         HandleInitialState();
+    }
+
+    private void StartButtonPulse()
+    {
+        if (startBtn == null) return;
+        _startBtnPulse?.Kill();
+        _startBtnPulse = startBtn.transform.DOScale(1.1f, 0.8f)
+            .SetEase(Ease.InOutSine)
+            .SetLoops(-1, LoopType.Yoyo)
+            .SetUpdate(true);
+    }
+
+    private void StopStartButtonPulse()
+    {
+        _startBtnPulse?.Kill();
+        if (startBtn != null) startBtn.transform.localScale = Vector3.one;
     }
 
     /// <summary>
@@ -137,7 +168,7 @@ public class UIManager : MonoBehaviour
     /// </summary>
     private void OnPlayAgainClicked()
     {
-        Debug.Log("[UIManager] PLAY AGAIN CLICKED");
+        // Debug.Log("[UIManager] PLAY AGAIN CLICKED");
         AudioManager.Instance?.PlaySFX(AudioManager.SFXType.ButtonClick);
         OnPlayAgain?.Invoke();
     }
@@ -148,7 +179,7 @@ public class UIManager : MonoBehaviour
     /// </summary>
     private void OnExitToMainMenu()
     {
-        Debug.Log("[UIManager] EXIT TO MAIN MENU CLICKED");
+        // Debug.Log("[UIManager] EXIT TO MAIN MENU CLICKED");
         AudioManager.Instance?.PlaySFX(AudioManager.SFXType.ButtonClick);
 
         if (GameManager.Instance != null)
@@ -250,7 +281,7 @@ public class UIManager : MonoBehaviour
 
         InitializeUI();
         // Feedback panel might be active from a previous game over
-        feedbackPanel.SetActive(false);
+        if (feedbackPanel != null) feedbackPanel.SetActive(false);
         _feedbackSequence?.Kill();
     }
 
@@ -261,8 +292,8 @@ public class UIManager : MonoBehaviour
     private void InitializeUI()
     {
         HideAllPanels();
-        swipeEncounterPanel.SetActive(true);
-        feedbackPanel.SetActive(false);
+        if (swipeEncounterPanel != null) swipeEncounterPanel.SetActive(true);
+        if (feedbackPanel != null) feedbackPanel.SetActive(false);
 
         // Hide HUD meters by default - only shown during encounters
         SetHUDEnabled(false);
@@ -490,14 +521,14 @@ public class UIManager : MonoBehaviour
         canvasGroup.DOFade(1f, duration).SetDelay(delay).SetTarget(uiObject);
     }
 
-    private void HideAllPanels()
+    public void HideAllPanels()
     {
         if (mainMenuPanel != null) mainMenuPanel.SetActive(false);
-        gameOverPanel.SetActive(false);
-        winPanel.SetActive(false);
-        feedbackPanel.SetActive(false);
-        unifiedHubPanel.SetActive(false);
-        swipeEncounterPanel.SetActive(false);
+        if (gameOverPanel != null) gameOverPanel.SetActive(false);
+        if (winPanel != null) winPanel.SetActive(false);
+        if (feedbackPanel != null) feedbackPanel.SetActive(false);
+        if (unifiedHubPanel != null) unifiedHubPanel.SetActive(false);
+        if (swipeEncounterPanel != null) swipeEncounterPanel.SetActive(false);
     }
 
     #endregion
@@ -560,7 +591,7 @@ public class UIManager : MonoBehaviour
     public void ShowGameOver(int totalEidia)
     {
         HideAllPanels();
-        gameOverPanel.SetActive(true);
+        if (gameOverPanel != null) gameOverPanel.SetActive(true);
         if (gameOverEidiaText != null)
         {
             gameOverEidiaText.text = $"عيدية مجمعة: {totalEidia}";
@@ -572,7 +603,7 @@ public class UIManager : MonoBehaviour
     public void ShowWin(int totalEidia)
     {
         HideAllPanels();
-        winPanel.SetActive(true);
+        if (winPanel != null) winPanel.SetActive(true);
         if (winEidiaText != null)
         {
             winEidiaText.text = $"عيدية مجمعة: {totalEidia}";

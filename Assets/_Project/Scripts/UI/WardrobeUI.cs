@@ -89,6 +89,12 @@ public class WardrobeUI : MonoBehaviour
         {
             if (i >= WardrobeManager.Instance.AllOutfits.Count) break;
 
+            // Register the first slot as a target for the tutorial
+            if (i == 0 && TutorialOverlayManager.Instance != null && outfitButtons[0] != null)
+            {
+                TutorialOverlayManager.Instance.RegisterTarget("FirstOutfitSlot", outfitButtons[0].GetComponent<RectTransform>());
+            }
+
             OutfitData data = WardrobeManager.Instance.AllOutfits[i];
             int outfitID = data.ID;
 

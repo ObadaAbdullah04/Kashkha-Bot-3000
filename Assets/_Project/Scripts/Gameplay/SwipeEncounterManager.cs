@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using RTLTMPro;
 using DG.Tweening;
 using NaughtyAttributes;
@@ -31,7 +32,7 @@ public class SwipeEncounterManager : MonoBehaviour
 
     [Header("Timer UI")]
     [Tooltip("Timer slider for swipe decision")]
-    [SerializeField] private UnityEngine.UI.Slider timerSlider;
+    [SerializeField] private Slider timerSlider;
 
     [Tooltip("Timer text display (RTLTextMeshPro)")]
     [SerializeField] private RTLTextMeshPro timerText;
@@ -86,8 +87,10 @@ public class SwipeEncounterManager : MonoBehaviour
     private float timeRemaining;
     private bool isTimerRunning = false;
     private bool isProcessingSwipe = false;
-    private int currentStreak = 0;
-    private int streakBonusTotal = 0;
+    private bool _hasInteracted = false;
+    private bool _hasTriggeredInactivityFeedback = false;
+    // private int currentStreak = 0; // Commented out for now - will be standalone later
+    // private int streakBonusTotal = 0;
     private int currentCardIndex = 0;
 
     // Object pool for swipe cards
@@ -119,7 +122,39 @@ public class SwipeEncounterManager : MonoBehaviour
     {
         if (!isTimerRunning) return;
 
+        bool tutorialActive = TutorialOverlayManager.Instance != null && TutorialOverlayManager.Instance.IsTutorialActive;
+        
+        // PAUSE TIMER during tutorials
+        if (tutorialActive)
+        {
+            // Still check for interaction to advance tutorial if they start dragging
+            if (!_hasInteracted && activeCard != null && activeCard.HasBeenDragged)
+            {
+                _hasInteracted = true;
+                if (_hasTriggeredInactivityFeedback) RestoreCharacterToDefaultExpression();
+                TutorialOverlayManager.Instance.AdvanceTutorial();
+            }
+            return;
+        }
+
+        if (!_hasInteracted && activeCard != null && activeCard.HasBeenDragged)
+        {
+            _hasInteracted = true;
+            if (_hasTriggeredInactivityFeedback) RestoreCharacterToDefaultExpression();
+        }
+
+        // Removed the hardcoded return so that Time.deltaTime respects the CSV's TimeScale setting.
         timeRemaining -= Time.deltaTime;
+
+        // Removed inactivity timer to restore original logic
+        /*
+        float timeSinceStart = timePerCard - timeRemaining;
+        if (!_hasInteracted && !_hasTriggeredInactivityFeedback && timeSinceStart >= 2.0f)
+        {
+            _hasTriggeredInactivityFeedback = true;
+            UpdateCharacterToWarningExpression();
+        }
+        */
 
         if (timerSlider != null)
             timerSlider.value = Mathf.Clamp01(timeRemaining / timePerCard);
@@ -144,8 +179,39 @@ public class SwipeEncounterManager : MonoBehaviour
         if (timeRemaining <= 0)
         {
             timeRemaining = 0;
+            
+            // Dismiss any active tutorials on timeout
+            if (TutorialOverlayManager.Instance != null && TutorialOverlayManager.Instance.IsTutorialActive)
+            {
+                TutorialOverlayManager.Instance.AdvanceTutorial();
+            }
+            
             StopTimer();
             OnTimeRanOut?.Invoke();
+        }
+    }
+
+    private void RestoreCharacterToDefaultExpression()
+    {
+        if (activeCard == null || CinematicController.Instance == null) return;
+
+        var speaker = DataManager.Instance?.GetSpeakerByName(activeCard.Data.Speaker);
+        if (speaker != null)
+        {
+            CinematicController.Instance.UpdateExpressionExternally(speaker, "Default");
+        }
+    }
+
+    private void UpdateCharacterToWarningExpression()
+    {
+        if (activeCard == null || CinematicController.Instance == null) return;
+
+        var speaker = DataManager.Instance?.GetSpeakerByName(activeCard.Data.Speaker);
+        if (speaker != null)
+        {
+            // Swipe cards usually result in "Sad" if failed/ignored
+            // Explicitly pass false for showNamePanel
+            CinematicController.Instance.UpdateExpressionExternally(speaker, "Sad", 0, false);
         }
     }
 
@@ -175,6 +241,8 @@ public class SwipeEncounterManager : MonoBehaviour
 
         isProcessingSwipe = true;
         currentCardIndex = cardIndex;
+        _hasInteracted = false; 
+        _hasTriggeredInactivityFeedback = false; // Reset feedback flag for new card
 
         // Update card counter UI
         UpdateCardCounter(cardIndex + 1, totalCards);
@@ -192,8 +260,10 @@ public class SwipeEncounterManager : MonoBehaviour
             }
 
             activeCard.transform.localScale = Vector3.zero;
+            // FIX: SetUpdate(true) so entrance plays while game is paused for tutorial
             activeCard.transform.DOScale(Vector3.one, cardEntranceDuration)
-                .SetEase(Ease.OutBack);
+                .SetEase(Ease.OutBack)
+                .SetUpdate(true);
         }
 
         StartTimer();
@@ -218,19 +288,44 @@ public class SwipeEncounterManager : MonoBehaviour
 
             activeCard?.ShowResultFeedback(false, timeoutFeedbackText);
             
-            // BUG FIX #5: Show feedback panel in addition to card feedback
-            UIManager.Instance?.ShowFeedback(timeoutFeedbackText, false, null);
-            
-            OnCardProcessed?.Invoke(batteryDelta, eidiaReward, false);
+            // FTUE: If timed out in House 1, show the "Sad" tutorial as a consequence
+            // Blocking logic: wait for tutorial before finishing card
+            Action finalizeCard = () =>
+            {
+                // BUG FIX #5: Show feedback panel in addition to card feedback
+                UIManager.Instance?.ShowFeedback(timeoutFeedbackText, false, null);
+                
+                OnCardProcessed?.Invoke(batteryDelta, eidiaReward, false);
 
-            DOTween.Sequence()
-                .AppendInterval(feedbackDelay)
-                .OnComplete(() =>
+                // FIX: Use SetUpdate(true) so this delay finishes even if game is paused for a tutorial
+                DOTween.Sequence()
+                    .AppendInterval(feedbackDelay)
+                    .SetUpdate(true) 
+                    .OnComplete(() =>
+                    {
+                        isProcessingSwipe = false;
+                        if (activeCard != null) { ReturnCardToPool(activeCard); activeCard = null; }
+                        onComplete?.Invoke(batteryDelta, eidiaReward, false);
+                    });
+            };
+
+            bool isHouse1 = GameManager.Instance != null && GameManager.Instance.CurrentHouseLevel == 1;
+            if (isHouse1)
+            {
+                UpdateCharacterToWarningExpression();
+                if (TutorialOverlayManager.Instance != null && (SaveManager.Instance == null || !SaveManager.Instance.HasSeenTutorial("TUT_SAD")))
                 {
-                    isProcessingSwipe = false;
-                    if (activeCard != null) { ReturnCardToPool(activeCard); activeCard = null; }
-                    onComplete?.Invoke(batteryDelta, eidiaReward, false);
-                });
+                    TutorialOverlayManager.Instance.PlayTutorial("TUT_SAD", () => {
+                        SaveManager.Instance?.MarkTutorialAsComplete("TUT_SAD");
+                        finalizeCard();
+                    });
+                }
+                else finalizeCard();
+            }
+            else
+            {
+                finalizeCard();
+            }
         };
 
         swipeHandler = (card, direction) =>
@@ -248,9 +343,23 @@ public class SwipeEncounterManager : MonoBehaviour
             int eidiaReward = data.GetEidiaReward(swipedRight);
             string feedback = data.GetFeedback(swipedRight);
 
+            // RESTORE expression based on result
+            if (wasCorrect) RestoreCharacterToDefaultExpression();
+            else UpdateCharacterToWarningExpression();
+
             if (wasCorrect)
             {
+                /* STANDALONE COMBO SYSTEM - Commented for now
                 currentStreak++;
+
+                // FTUE: Streak Tutorial
+                if (currentStreak == 3 && SaveManager.Instance != null && !SaveManager.Instance.HasSeenTutorial("Tutorial_Streak"))
+                {
+                    TutorialOverlayManager.Instance.PlayTutorial("Tutorial_Streak", () => {
+                        SaveManager.Instance.MarkTutorialAsComplete("Tutorial_Streak");
+                    });
+                }
+
                 int bonus = CalculateStreakBonus(currentStreak);
                 if (bonus > 0)
                 {
@@ -261,10 +370,12 @@ public class SwipeEncounterManager : MonoBehaviour
                 {
                     AudioManager.Instance?.PlaySFX(AudioManager.SFXType.CorrectAnswer);
                 }
+                */
+                AudioManager.Instance?.PlaySFX(AudioManager.SFXType.CorrectAnswer);
             }
             else
             {
-                currentStreak = 0;
+                // currentStreak = 0;
                 AudioManager.Instance?.PlaySFX(AudioManager.SFXType.WrongAnswer);
             }
 
@@ -281,8 +392,10 @@ public class SwipeEncounterManager : MonoBehaviour
                 // Eidia Reward handling logic
             }
 
+            // FIX: Use SetUpdate(true) so this delay finishes even if game is paused for a tutorial
             DOTween.Sequence()
                 .AppendInterval(feedbackDelay)
+                .SetUpdate(true)
                 .OnComplete(() =>
                 {
                     isProcessingSwipe = false;
@@ -295,7 +408,9 @@ public class SwipeEncounterManager : MonoBehaviour
         OnTimeRanOut += timeoutHandler;
     }
 
+    /* STANDALONE COMBO SYSTEM - Commented for now
     public int GetStreakBonus() => streakBonusTotal;
+    */
 
     #endregion
 

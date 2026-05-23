@@ -13,6 +13,7 @@ public class SaveManager : MonoBehaviour
 
     [Header("Save")]
     [SerializeField] private string fileName = "save_data.json";
+    public bool forceTutorialsOn = false; // Debug flag to bypass tutorial completion checks
     [ReadOnly] [SerializeField] private SaveData currentSaveData;
 
     public SaveData CurrentData => currentSaveData;
@@ -26,16 +27,23 @@ public class SaveManager : MonoBehaviour
 
     private void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
         if (Instance == null)
         {
             Instance = this;
-            transform.SetParent(null);
-            DontDestroyOnLoad(gameObject);
+            
+            if (transform.parent != null)
+                transform.SetParent(null);
+
+            if (gameObject.scene.buildIndex != -1)
+                DontDestroyOnLoad(gameObject);
+
             LoadGame();
-        }
-        else
-        {
-            Destroy(gameObject);
         }
     }
 
@@ -123,7 +131,7 @@ public class SaveManager : MonoBehaviour
         }
     }
 
-    [Button("Reset")]
+    [Button("Reset Progress")]
     public void ResetProgress()
     {
         currentSaveData = new SaveData();
@@ -131,10 +139,35 @@ public class SaveManager : MonoBehaviour
         // Debug.Log("[Save] Progress reset.");
     }
 
+    [Button("Reset Tutorials Only")]
+    public void ResetTutorials()
+    {
+        currentSaveData.completedTutorials.Clear();
+        SaveGame();
+        Debug.Log("[Save] All tutorials reset. They will show again on next encounter.");
+    }
+
     [Button("Add 100 Scrap")]
     public void AddTempScrap()
     {
         AddScrap(100);    
     }
+
+    #region FTUE
+    public bool HasSeenTutorial(string tutorialKey)
+    {
+        if (forceTutorialsOn) return false;
+        return currentSaveData.completedTutorials.Contains(tutorialKey);
+    }
+
+    public void MarkTutorialAsComplete(string tutorialKey)
+    {
+        if (!currentSaveData.completedTutorials.Contains(tutorialKey))
+        {
+            currentSaveData.completedTutorials.Add(tutorialKey);
+            SaveGame();
+        }
+    }
+    #endregion
 
 }

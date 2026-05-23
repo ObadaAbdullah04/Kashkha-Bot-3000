@@ -19,4 +19,7 @@ public class SaveData
     // Wardrobe Progression
     public List<int> ownedOutfitIDs = new List<int>();  // IDs of purchased outfits
     public int equippedOutfitID = 0;                     // 0 = no outfit equipped
+
+    // FTUE Progression
+    public List<string> completedTutorials = new List<string>();
 }

@@ -2,6 +2,8 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using DG.Tweening;
 using RTLTMPro;
+using System;
+using System.Collections;
 
 /// <summary>
 /// PHASE 7 REFACTORED: Tinder-style swipe card with DOTween animations and result feedback.
@@ -129,6 +131,12 @@ public class SwipeCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
         cardIndex = index;
         totalCards = total;
 
+        // Register for tutorials
+        if (TutorialOverlayManager.Instance != null)
+        {
+            TutorialOverlayManager.Instance.RegisterTarget("CardContainer", GetComponent<RectTransform>());
+        }
+
         // Check if persistent portrait is already showing this character
         bool isAlreadyShowingNPC = CinematicController.Instance != null && 
                                   CinematicController.Instance.IsShowingCharacter(data.Speaker);
@@ -188,13 +196,55 @@ public class SwipeCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
         // Reset visual state
         ResetCard();
 
-        // JUICE: Elastic entrance
+        // JUICE: Elastic entrance - FIX: SetUpdate(true) to play while paused
         transform.localScale = Vector3.one * 0.8f;
-        transform.DOScale(Vector3.one, 0.5f).SetEase(Ease.OutElastic);
+        transform.DOScale(Vector3.one, 0.5f).SetEase(Ease.OutElastic).SetUpdate(true);
+
+        // FTUE: House Help Walkthrough (HOUSE 1 ONLY)
+        bool isHouse1 = GameManager.Instance != null && GameManager.Instance.CurrentHouseLevel == 1;
+
+        if (isHouse1 && !SaveManager.Instance.HasSeenTutorial("HouseIntro_Full") && index == 0)
+        {
+            Time.timeScale = 0f;
+            StartCoroutine(HouseIntroRoutine());
+        }
+        else if (isHouse1 && !SaveManager.Instance.HasSeenTutorial("HouseIntro_SwipeOnly") && index == 1)
+        {
+            Time.timeScale = 0f;
+            // requireClickToDismiss = false allows the user to swipe the card while the tutorial is showing
+            TutorialOverlayManager.Instance.ShowTutorial(transform, "اسحب مرة أخرى لاختيار إجابتك!", false, () =>
+            {
+                Time.timeScale = 1f;
+                SaveManager.Instance.MarkTutorialAsComplete("HouseIntro_SwipeOnly");
+            });
+        }
 
 #if UNITY_EDITOR
         // Debug.Log($"[SwipeCard] Setup: Card {index + 1}/{total} - Speaker: {data.Speaker}");
 #endif
+    }
+
+    private System.Collections.IEnumerator HouseIntroRoutine()
+    {
+        bool walkthroughComplete = false;
+        // Debug.Log("[SwipeCard] Starting House 1 Intro Tutorial...");
+
+        // Try to play the data-driven sequence "House1_Intro"
+        if (DataManager.Instance != null && DataManager.Instance.tutorialStepsByID.ContainsKey("House1_Intro"))
+        {
+            TutorialOverlayManager.Instance.PlayTutorial("House1_Intro", () => {
+                walkthroughComplete = true;
+                // Debug.Log("[SwipeCard] House 1 Intro Tutorial Finished.");
+            });
+            yield return new WaitUntil(() => walkthroughComplete);
+        }
+        else
+        {
+            Debug.LogError("[SwipeCard] 'House1_Intro' tutorial ID NOT FOUND in DataManager's dictionary! Check Tutorials.csv.");
+        }
+
+        Time.timeScale = 1f;
+        SaveManager.Instance.MarkTutorialAsComplete("HouseIntro_Full");
     }
 
     /// <summary>
@@ -259,6 +309,12 @@ public class SwipeCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
         if (isSwiped) return;
 
         _hasBeenDragged = true;
+
+        // SEAMLESS FTUE: Advance tutorial if active
+        if (TutorialOverlayManager.Instance != null && TutorialOverlayManager.Instance.IsTutorialActive)
+        {
+            TutorialOverlayManager.Instance.AdvanceTutorial();
+        }
 
         // Disable raycast blocking during drag
         if (canvasGroup != null)

@@ -29,9 +29,6 @@ MonoBehaviour:
   - Type: 2
     ElementID: SHAKE_Qahwa_1
     DesignerNote: 
-  - Type: 3
-    ElementID: Test
-    DesignerNote: 
   - Type: 0
     ElementID: Q3
     DesignerNote: 
@@ -49,4 +46,7 @@ MonoBehaviour:
     DesignerNote: 
   - Type: 0
     ElementID: Q6
+    DesignerNote: 
+  - Type: 3
+    ElementID: Test
     DesignerNote: 

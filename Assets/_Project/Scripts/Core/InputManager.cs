@@ -64,7 +64,12 @@ public class InputManager : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject);
+            
+            if (transform.parent != null)
+                transform.SetParent(null); // Ensure it's a root object for DontDestroyOnLoad
+            
+            if (gameObject.scene.name != "DontDestroyOnLoad")
+                DontDestroyOnLoad(gameObject);
 
             // Initialize DeviceControls programmatically (uses embedded JSON)
             if (deviceControls == null)
@@ -94,7 +99,7 @@ public class InputManager : MonoBehaviour
         else
         {
             Destroy(gameObject);
-            return;
+            return; // CRITICAL: Stop execution for duplicate instance
         }
     }
 

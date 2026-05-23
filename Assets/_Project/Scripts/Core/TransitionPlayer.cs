@@ -62,36 +62,55 @@ public class TransitionPlayer : MonoBehaviour
 
     private void Awake()
     {
+        // 1. Singleton Enforcement (Immediate)
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject);
             
-            // PHASE 18: Ensure transition is on top of everything
-            // Force add or get Canvas component to manage absolute sorting
-            Canvas canvas = GetComponent<Canvas>();
-            if (canvas == null) canvas = gameObject.AddComponent<Canvas>();
-            
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.overrideSorting = true;
-            canvas.sortingOrder = 9999;
+            // 2. Persistent Setup
+            if (transform.parent != null)
+            {
+                transform.SetParent(null);
+            }
 
-            // Add GraphicRaycaster to block input during transitions
-            if (GetComponent<UnityEngine.UI.GraphicRaycaster>() == null)
-                gameObject.AddComponent<UnityEngine.UI.GraphicRaycaster>();
+            // A buildIndex of -1 usually indicates the DontDestroyOnLoad scene
+            if (gameObject.scene.buildIndex != -1)
+            {
+                DontDestroyOnLoad(gameObject);
+            }
+
+            // 3. Component Setup (First-time only)
+            SetupComponents();
         }
-        else
-        {
-            Destroy(gameObject);
-        }
+    }
+
+    private void SetupComponents()
+    {
+        // PHASE 18: Ensure transition is on top of everything
+        Canvas canvas = GetComponent<Canvas>();
+        if (canvas == null) canvas = gameObject.AddComponent<Canvas>();
+        
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.overrideSorting = true;
+        canvas.sortingOrder = 9999;
+
+        if (GetComponent<UnityEngine.UI.GraphicRaycaster>() == null)
+            gameObject.AddComponent<UnityEngine.UI.GraphicRaycaster>();
 
         // Setup transition panel
         if (transitionPanel != null)
         {
-            // PHASE 18: Move panel to this root to ensure it uses our high-sorting Canvas
-            transitionPanel.transform.SetParent(this.transform, false);
+            if (transitionPanel.transform.parent != this.transform)
+            {
+                transitionPanel.transform.SetParent(this.transform, false);
+            }
             
-            // Ensure it fills the screen
             RectTransform rt = transitionPanel.GetComponent<RectTransform>();
             if (rt != null)
             {
@@ -109,7 +128,6 @@ public class TransitionPlayer : MonoBehaviour
             }
             fadeImage.color = fadeColor;
             
-            // Ensure alpha is zero at start
             if (fadeImage != null)
             {
                 Color c = fadeImage.color;
@@ -132,7 +150,8 @@ public class TransitionPlayer : MonoBehaviour
     /// <param name="onMidpoint">Callback when screen is fully black (perfect time to update backgrounds!)</param>
     /// <param name="overrideTextDuration">Optional: Override the default text duration (0 = use default)</param>
     /// <param name="onReady">Optional: Callback when text wait is done (perfect time to start gameplay action!)</param>
-    public void PlayTransition(string destinationTextAR, Action onMidpoint = null, float overrideTextDuration = 0f, Action onReady = null)
+    /// <param name="instant">If true, skips the fade-in animation and starts fully black.</param>
+    public void PlayTransition(string destinationTextAR, Action onMidpoint = null, float overrideTextDuration = 0f, Action onReady = null, bool instant = false)
     {
         // Force kill any existing transition WITHOUT completing it (to avoid callback flashes)
         if (_activeSequence != null && _activeSequence.IsActive())
@@ -153,7 +172,7 @@ public class TransitionPlayer : MonoBehaviour
         // // if (debugLogging) {} // Debug.Log($"[TransitionPlayer] Starting transition: '{destinationTextAR}' | Duration: {duration}s");
 
         // Start fade in sequence
-        PlayFadeSequence(onMidpoint, duration, onReady);
+        PlayFadeSequence(onMidpoint, duration, onReady, instant);
     }
 
     /// <summary>
@@ -176,7 +195,7 @@ public class TransitionPlayer : MonoBehaviour
 
     #region Animation Sequence
 
-    private void PlayFadeSequence(Action midPointAction, float duration, Action readyAction)
+    private void PlayFadeSequence(Action midPointAction, float duration, Action readyAction, bool instant = false)
     {
         if (transitionPanel == null)
         {
@@ -187,8 +206,8 @@ public class TransitionPlayer : MonoBehaviour
             return;
         }
 
-        // Play transition sound
-        AudioManager.Instance?.PlaySFX(AudioManager.SFXType.Transition);
+        // Play transition sound (only if not instant or if desired)
+        if (!instant) AudioManager.Instance?.PlaySFX(AudioManager.SFXType.Transition);
 
         // Ensure panel is active
         transitionPanel.SetActive(true);
@@ -199,11 +218,21 @@ public class TransitionPlayer : MonoBehaviour
         // Step 1: Fade in (black screen appears)
         if (fadeImage != null)
         {
-            _activeSequence.Append(fadeImage.DOFade(1f, fadeInDuration).SetUpdate(true));
+            if (instant)
+            {
+                Color c = fadeImage.color;
+                c.a = 1f;
+                fadeImage.color = c;
+                _activeSequence.AppendInterval(0.01f); // Tiny gap for sequence stability
+            }
+            else
+            {
+                _activeSequence.Append(fadeImage.DOFade(1f, fadeInDuration).SetUpdate(true));
+            }
         }
         else
         {
-            _activeSequence.AppendInterval(fadeInDuration);
+            _activeSequence.AppendInterval(instant ? 0.01f : fadeInDuration);
         }
 
         // Step 2: Show text
