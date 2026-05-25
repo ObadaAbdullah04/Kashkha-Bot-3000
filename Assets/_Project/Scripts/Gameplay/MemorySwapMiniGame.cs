@@ -80,6 +80,13 @@ public class MemorySwapMiniGame : MonoBehaviour
     [Tooltip("Score display text")]
     [SerializeField] private RTLTextMeshPro _scoreText;
 
+    [Header("Game Settings")]
+    [Tooltip("Time limit in seconds")]
+    [SerializeField] private float timeLimit = 45f;
+
+    [Tooltip("Timer text display (RTLTextMeshPro)")]
+    [SerializeField] private RTLTextMeshPro timerText;
+
     [Header("Scoring")]
     [Tooltip("Tech Scrap earned per correct match")]
     [SerializeField] private int techScrapPerMatch = 3;
@@ -95,6 +102,9 @@ public class MemorySwapMiniGame : MonoBehaviour
     private int _score = 0;
     private int _matchCount = 0;
     private int _totalPairs = 0;
+    private float _timeRemaining;
+    private bool _isPlaying = false;
+    private int _attempts = 0;
 
     // Track all tiles for hint system
     private List<GameObject> _allTiles = new List<GameObject>();
@@ -124,7 +134,10 @@ public class MemorySwapMiniGame : MonoBehaviour
         _totalPairs = _tiles.Length;
         _score = 0;
         _matchCount = 0;
+        _attempts = 0;
         _totalScrapAwarded = 0;
+        _timeRemaining = timeLimit;
+        
         UpdateScoreText();
 
         // Debug.Log($"[MemorySwapMiniGame] Starting game with {_totalPairs} pairs ({_totalPairs * 2} tiles)");
@@ -133,6 +146,39 @@ public class MemorySwapMiniGame : MonoBehaviour
         ConfigureCanvas();
 
         InitializeGrid();
+        
+        // Start the game loop after initial reveal
+        StartCoroutine(StartGameRoutine());
+    }
+
+    private IEnumerator StartGameRoutine()
+    {
+        // Wait for tiles to reveal and hide (memorization phase)
+        yield return new WaitForSeconds(_revealDuration + 1.5f);
+        _isPlaying = true;
+    }
+
+    private void Update()
+    {
+        if (!_isPlaying) return;
+
+        _timeRemaining -= Time.deltaTime;
+        
+        if (timerText != null)
+        {
+            int displayTime = Mathf.CeilToInt(_timeRemaining);
+            timerText.text = displayTime.ToString();
+            
+            if (_timeRemaining < 5f)
+                timerText.color = Color.red;
+        }
+
+        if (_timeRemaining <= 0)
+        {
+            _timeRemaining = 0;
+            _isPlaying = false;
+            EndGameEarly();
+        }
     }
 
     /// <summary>
@@ -293,6 +339,8 @@ public class MemorySwapMiniGame : MonoBehaviour
         // Second pick - check for match
         secondButton = tile;
         secondTileValue = tileValue;
+        _attempts++;
+        UpdateScoreText();
 
         // Lock input and resolve pair
         lockInput = true;
@@ -503,7 +551,11 @@ public class MemorySwapMiniGame : MonoBehaviour
     {
         if (_scoreText != null)
         {
-            _scoreText.text = $"{_score} ({_matchCount}/{_totalPairs})";
+            _scoreText.text = $"{_score} ({_matchCount}/{_totalPairs}) | المحاولات: {_attempts}";
+            // JUICE: Punch scale on score change
+            _scoreText.transform.DOKill();
+            _scoreText.transform.localScale = Vector3.one;
+            _scoreText.transform.DOPunchScale(Vector3.one * 0.15f, 0.3f).SetUpdate(true);
         }
     }
 

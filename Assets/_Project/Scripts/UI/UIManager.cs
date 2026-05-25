@@ -45,9 +45,12 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Slider stomachSlider;
     public RectTransform StomachSliderRect => stomachSlider != null ? stomachSlider.GetComponent<RectTransform>() : null;
 
-    [Tooltip("Timer slider (shows per-card timer countdown)")]
-    [SerializeField] private Slider timerSlider;
-    public RectTransform TimerSliderRect => timerSlider != null ? timerSlider.GetComponent<RectTransform>() : null;
+    [Tooltip("Timer text display (shows per-card numeric countdown)")]
+    [SerializeField] private RTLTextMeshPro timerText;
+
+    [Header("Resource HUD")]
+    [SerializeField] private RTLTextMeshPro runEidiaText;
+    [SerializeField] private RTLTextMeshPro totalScrapText;
 
     [Header("Game State Panels")]
     [Tooltip("Main menu start screen panel")]
@@ -120,7 +123,9 @@ public class UIManager : MonoBehaviour
         {
             if (batterySlider != null) TutorialOverlayManager.Instance.RegisterTarget("SocialBattery", batterySlider.GetComponent<RectTransform>());
             if (stomachSlider != null) TutorialOverlayManager.Instance.RegisterTarget("StomachMeter", stomachSlider.GetComponent<RectTransform>());
-            if (timerSlider != null) TutorialOverlayManager.Instance.RegisterTarget("QuestionTimer", timerSlider.GetComponent<RectTransform>());
+            if (timerText != null) TutorialOverlayManager.Instance.RegisterTarget("QuestionTimer", timerText.rectTransform);
+            if (runEidiaText != null) TutorialOverlayManager.Instance.RegisterTarget("RunEidia", runEidiaText.rectTransform);
+            if (totalScrapText != null) TutorialOverlayManager.Instance.RegisterTarget("TotalScrap", totalScrapText.rectTransform);
         }
 
         if (feedbackPanel != null)
@@ -238,6 +243,8 @@ public class UIManager : MonoBehaviour
     {
         GameManager.OnStateChanged += HandleStateChanged;
         GameManager.OnRunStarted += HandleRunStarted;
+        GameManager.OnRunEidiaUpdated += HandleRunEidiaUpdated;
+        SaveManager.OnScrapChanged += HandleTotalScrapUpdated;
         MeterManager.OnMetersChanged += HandleMetersChanged;
         MeterManager.OnBatteryModified += HandleBatteryModified;
         MeterManager.OnStomachModified += HandleStomachModified;
@@ -255,6 +262,8 @@ public class UIManager : MonoBehaviour
     {
         GameManager.OnStateChanged -= HandleStateChanged;
         GameManager.OnRunStarted -= HandleRunStarted;
+        GameManager.OnRunEidiaUpdated -= HandleRunEidiaUpdated;
+        SaveManager.OnScrapChanged -= HandleTotalScrapUpdated;
         MeterManager.OnMetersChanged -= HandleMetersChanged;
         MeterManager.OnBatteryModified -= HandleBatteryModified;
         MeterManager.OnStomachModified -= HandleStomachModified;
@@ -297,6 +306,11 @@ public class UIManager : MonoBehaviour
 
         // Hide HUD meters by default - only shown during encounters
         SetHUDEnabled(false);
+
+        // Initialize resource texts
+        if (runEidiaText != null) runEidiaText.text = "0";
+        if (totalScrapText != null && SaveManager.Instance != null)
+            totalScrapText.text = SaveManager.Instance.CurrentData.TotalScrap.ToString();
 
         // Set slider max values and refresh current values from MeterManager
         if (MeterManager.Instance != null)
@@ -450,7 +464,13 @@ public class UIManager : MonoBehaviour
     public void ShowSwipeEncounter()
     {
         if (swipeEncounterPanel != null)
+        {
             swipeEncounterPanel.SetActive(true);
+            
+            // PHASE 18: Ensure background is refreshed when panel is shown
+            var bgController = swipeEncounterPanel.GetComponentInChildren<HouseBackgroundController>();
+            if (bgController != null) bgController.RefreshBackground();
+        }
     }
 
     /// <summary>
@@ -548,8 +568,9 @@ public class UIManager : MonoBehaviour
             unifiedHubPanel.SetActive(true);
         }
 
-        // Hide HUD meters when in hub (no battery/stomach/timer visible)
-        SetHUDEnabled(false);
+        // PHASE 13 UPDATED: Show HUD meters in hub (Eidia/Scrap visible)
+        SetHUDEnabled(true);
+        RefreshMeters();
 
 #if UNITY_EDITOR
         // Debug.Log("[UIManager] Unified Hub panel shown.");
@@ -567,8 +588,9 @@ public class UIManager : MonoBehaviour
             unifiedHubPanel.SetActive(true);
         }
 
-        // Hide HUD meters when in hub (no battery/stomach/timer visible)
-        SetHUDEnabled(false);
+        // PHASE 13 UPDATED: Show HUD meters in hub (Eidia/Scrap visible)
+        SetHUDEnabled(true);
+        RefreshMeters();
 
 #if UNITY_EDITOR
         // Debug.Log("[UIManager] Unified Hub panel shown (overlay mode).");
@@ -626,8 +648,9 @@ public class UIManager : MonoBehaviour
             case GameState.HouseHub:
                 HideAllPanels();
                 // Both shown via unified hub - manager controls display
-                // Hide HUD meters when in hub
-                SetHUDEnabled(false);
+                // PHASE 13 UPDATED: Show HUD meters in hub (Eidia/Scrap visible)
+                SetHUDEnabled(true);
+                RefreshMeters();
                 break;
             case GameState.Encounter:
                 HideAllPanels();
@@ -641,7 +664,9 @@ public class UIManager : MonoBehaviour
             case GameState.InterHouseMiniGame:
                 HideAllPanels();
                 // All panels hidden - mini-game prefab handles its own UI
-                SetHUDEnabled(false);
+                // PHASE 13 UPDATED: Show HUD meters in mini-games
+                SetHUDEnabled(true);
+                RefreshMeters();
                 break;
             case GameState.GameOver:
                 // Now handled by ShowGameOver
@@ -653,7 +678,7 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Shows or hides the HUD meters (battery/stomach/timer sliders).
+    /// Shows or hides the HUD meters (battery/stomach sliders).
     /// </summary>
     private void SetHUDEnabled(bool enabled)
     {
@@ -663,8 +688,14 @@ public class UIManager : MonoBehaviour
         if (stomachSlider != null)
             stomachSlider.gameObject.SetActive(enabled);
 
-        if (timerSlider != null)
-            timerSlider.gameObject.SetActive(enabled);
+        if (timerText != null)
+            timerText.gameObject.SetActive(enabled);
+
+        if (runEidiaText != null)
+            runEidiaText.gameObject.SetActive(enabled);
+
+        if (totalScrapText != null)
+            totalScrapText.gameObject.SetActive(enabled);
     }
 
     /// <summary>
@@ -696,9 +727,38 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
+    /// Shows or hides the numeric timer text.
+    /// </summary>
+    public void SetTimerVisibility(bool visible)
+    {
+        if (timerText != null)
+        {
+            timerText.gameObject.SetActive(visible);
+        }
+    }
+
+    /// <summary>
     /// Public wrapper for RefreshMeters - called from GameManager when entering a house.
     /// </summary>
     public void RefreshMetersPublic() => RefreshMeters();
+
+    private void HandleRunEidiaUpdated(int totalEidia)
+    {
+        if (runEidiaText != null)
+        {
+            runEidiaText.text = totalEidia.ToString();
+            runEidiaText.transform.DOPunchScale(Vector3.one * 0.1f, 0.2f);
+        }
+    }
+
+    private void HandleTotalScrapUpdated(int totalScrap)
+    {
+        if (totalScrapText != null)
+        {
+            totalScrapText.text = totalScrap.ToString();
+            totalScrapText.transform.DOPunchScale(Vector3.one * 0.1f, 0.2f);
+        }
+    }
 
     private void HandleMetersChanged(float battery, float stomach)
     {
@@ -739,6 +799,14 @@ public class UIManager : MonoBehaviour
         
         // JUICE: Punch scale on modification
         batterySlider.transform.DOPunchScale(Vector3.one * 0.05f, 0.2f);
+
+        // PHASE 2: Floating Combat Text
+        if (FloatingTextManager.Instance != null && Mathf.Abs(delta) >= 1f)
+        {
+            string sign = delta > 0 ? "+" : "";
+            Color color = delta > 0 ? correctFeedbackColor : wrongFeedbackColor;
+            FloatingTextManager.Instance.SpawnTextOverUI($"{sign}{Mathf.RoundToInt(delta)}", BatterySliderRect, color);
+        }
     }
 
     /// <summary>
@@ -760,6 +828,15 @@ public class UIManager : MonoBehaviour
         
         // JUICE: Punch scale on modification
         stomachSlider.transform.DOPunchScale(Vector3.one * 0.05f, 0.2f);
+
+        // PHASE 2: Floating Combat Text
+        if (FloatingTextManager.Instance != null && Mathf.Abs(delta) >= 1f)
+        {
+            string sign = delta > 0 ? "+" : "";
+            // For stomach, POSITIVE delta is BAD (Red), NEGATIVE delta is GOOD (Green)
+            Color color = delta > 0 ? wrongFeedbackColor : correctFeedbackColor;
+            FloatingTextManager.Instance.SpawnTextOverUI($"{sign}{Mathf.RoundToInt(delta)}", StomachSliderRect, color);
+        }
     }
 
     #endregion

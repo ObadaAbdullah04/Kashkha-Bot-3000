@@ -78,6 +78,7 @@ public class GameManager : MonoBehaviour
 
     public static Action<GameState> OnStateChanged;
     public static Action OnRunStarted;
+    public static Action<int> OnRunEidiaUpdated;
     public GameState CurrentState => currentState;
     public int CurrentHouseLevel => currentHouseLevel;
     public bool IsHouse4Active => isHouse4Active;
@@ -145,6 +146,8 @@ public class GameManager : MonoBehaviour
         // Persist lifetime Eidia immediately (delta only)
         SaveManager.Instance?.AddRunRewards(amount);
         
+        OnRunEidiaUpdated?.Invoke(accumulatedEidia);
+        
         // Debug.Log($"[GameManager] Eidia Earned: +{amount}. Run Total: {accumulatedEidia}");
     }
 
@@ -180,9 +183,11 @@ public class GameManager : MonoBehaviour
         completedHouses = new bool[5];
         currentRunSeed = UnityEngine.Random.Range(int.MinValue, int.MaxValue);
 
+        OnRunEidiaUpdated?.Invoke(accumulatedEidia);
+
         // Debug.Log($"[GameManager] Run Seed: {currentRunSeed}");
 
-        // SYNC SCRAP at start of run so wardrobe shows correct values
+        // SYNC CURRENCY at start of run so wardrobe shows correct values
         WardrobeManager.Instance?.SyncScrap();
 
         // FloatingTextManager reference removed (unused)
@@ -405,10 +410,6 @@ public class GameManager : MonoBehaviour
         {
             completedHouses[currentHouseLevel] = true;
         }
-
-        // PHASE 18: Award scrap based on HOUSE eidia so player can buy things
-        int houseEidia = accumulatedEidia - eidiaAtStartOfHouse;
-        SaveManager.Instance?.AddScrap(houseEidia);
 
         // House 4 completion - trigger win immediately (no hub shown)
         if (currentHouseLevel == 4)

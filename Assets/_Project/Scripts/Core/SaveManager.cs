@@ -21,9 +21,20 @@ public class SaveManager : MonoBehaviour
 
     /// <summary>
     /// Fires when scrap currency is modified.
-    /// Used by UnifiedHubManager to refresh wardrobe/upgrade UI in real-time.
+    /// Used by UnifiedHubManager to refresh upgrade UI in real-time.
     /// </summary>
     public static Action<int> OnScrapChanged; // (newScrapTotal)
+
+    /// <summary>
+    /// Fires when eidia currency is modified.
+    /// Used by UnifiedHubManager to refresh wardrobe UI in real-time.
+    /// </summary>
+    public static Action<int> OnEidiaChanged; // (newEidiaTotal)
+
+    /// <summary>
+    /// Fires whenever any currency (Eidia or Scrap) is modified.
+    /// </summary>
+    public static Action OnCurrencyChanged;
 
     private void Awake()
     {
@@ -57,25 +68,15 @@ public class SaveManager : MonoBehaviour
 
         SaveGame();
         
-        // PHASE 18: Notify that Currency has changed (UI uses OnScrapChanged as the event)
-        OnScrapChanged?.Invoke(currentSaveData.TotalEidia);
-        
-        // Debug.Log($"[Save] Currency added: +{eidia}. Total Eidia: {currentSaveData.TotalEidia}");
-    }
-
-    /// <summary>
-    /// Redirects to AddRunRewards to maintain unified currency (Eidia).
-    /// </summary>
-    public void AddScrap(int amount)
-    {
-        AddRunRewards(amount);
+        OnEidiaChanged?.Invoke(currentSaveData.TotalEidia);
+        OnCurrencyChanged?.Invoke();
     }
 
     /// <summary>
     /// Deducts Eidia if player can afford it.
     /// Returns true if successful.
     /// </summary>
-    public bool SpendScrap(int amount)
+    public bool SpendEidia(int amount)
     {
         if (amount <= 0) return true;
         if (currentSaveData.TotalEidia < amount) return false;
@@ -83,10 +84,42 @@ public class SaveManager : MonoBehaviour
         currentSaveData.TotalEidia -= amount;
         SaveGame();
 
-        // Fire event to notify UI updates (Wardrobe, Upgrades, etc.)
-        OnScrapChanged?.Invoke(currentSaveData.TotalEidia);
+        // Fire event to notify UI updates (Wardrobe)
+        OnEidiaChanged?.Invoke(currentSaveData.TotalEidia);
+        OnCurrencyChanged?.Invoke();
 
-        // Debug.Log($"[Save] Currency spent: -{amount}. Remaining Eidia: {currentSaveData.TotalEidia}");
+        return true;
+    }
+
+    /// <summary>
+    /// Adds Scrap currency earned from Mini-games.
+    /// </summary>
+    public void AddScrap(int amount)
+    {
+        if (amount == 0) return;
+        currentSaveData.TotalScrap += amount;
+        SaveGame();
+        
+        OnScrapChanged?.Invoke(currentSaveData.TotalScrap);
+        OnCurrencyChanged?.Invoke();
+    }
+
+    /// <summary>
+    /// Deducts Scrap if player can afford it.
+    /// Returns true if successful.
+    /// </summary>
+    public bool SpendScrap(int amount)
+    {
+        if (amount <= 0) return true;
+        if (currentSaveData.TotalScrap < amount) return false;
+
+        currentSaveData.TotalScrap -= amount;
+        SaveGame();
+
+        // Fire event to notify UI updates (Wardrobe, Upgrades, etc.)
+        OnScrapChanged?.Invoke(currentSaveData.TotalScrap);
+        OnCurrencyChanged?.Invoke();
+
         return true;
     }
 
@@ -104,6 +137,18 @@ public class SaveManager : MonoBehaviour
         {
             // Debug.LogError($"[Save] Failed: {e.Message}");
         }
+    }
+
+    [Button("Clear Data (RESET ALL)")]
+    public void ClearData()
+    {
+        currentSaveData = new SaveData();
+        SaveGame();
+        
+        // Notify UI to update
+        OnScrapChanged?.Invoke(currentSaveData.TotalScrap);
+        
+        Debug.Log("[Save] All data has been RESET to defaults.");
     }
 
     [Button("📂 Load")]

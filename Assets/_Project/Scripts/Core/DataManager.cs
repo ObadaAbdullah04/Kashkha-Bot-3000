@@ -158,7 +158,6 @@ public class DataManager : MonoBehaviour
         }
     }
 
-    [Button("Parse All CSVs")]
     public void ParseAllCSVs()
     {
         questionPoolsByHouse.Clear();
@@ -176,7 +175,6 @@ public class DataManager : MonoBehaviour
         PrintSummary();
     }
 
-    [Button("Parse Tutorials")]
     private void ParseTutorialsCSV()
     {
         tutorialStepsByID.Clear();
@@ -226,7 +224,6 @@ public class DataManager : MonoBehaviour
         // Debug.Log($"[DataManager] ✅ Tutorials CSV: {parsed} steps parsed");
     }
 
-    [Button("Parse Cinematics CSV")]
     private void ParseCinematicsCSV()
     {
         if (cinematicsCSV == null)
@@ -312,7 +309,6 @@ public class DataManager : MonoBehaviour
              s.name.EndsWith(name, StringComparison.OrdinalIgnoreCase)));
     }
 
-    [Button("Parse Questions")]
     private void ParseQuestionsCSV()
     {
         questionPoolsByHouse.Clear();
@@ -383,7 +379,6 @@ public class DataManager : MonoBehaviour
         // Debug.Log($"[DataManager] Cinematics: {cinematicByID.Count} loaded from inspector");
     }
 
-    [Button("Parse Interactions")]
     private void ParseInteractionsCSV()
     {
         interactionPoolsByHouse.Clear();
@@ -427,58 +422,83 @@ public class DataManager : MonoBehaviour
         // Debug.Log($"[DataManager] Interactions: {parsed} parsed, {skipped} skipped");
     }
 
-    [Button("Preview All Data")]
+    [Button("Clear All")]
+    public void ClearAll()
+    {
+        questionPoolsByHouse.Clear();
+        cinematicByID.Clear();
+        interactionPoolsByHouse.Clear();
+        tutorialStepsByID.Clear();
+        Debug.Log("[DataManager] 🗑️ All data pools cleared.");
+    }
+
+    [Button("Parse All")]
+    public void ParseAll() => ParseAllCSVs();
+
+    [Button("Preview All")]
+    public void PreviewAll() => PreviewData();
+
     public void PreviewData()
     {
-        // Debug.Log("=== QUESTION POOLS ===");
+        Debug.Log("=== QUESTION POOLS ===");
         foreach (var kvp in questionPoolsByHouse)
         {
-            // Debug.Log($"House {kvp.Key}: {kvp.Value.Count} questions");
+            Debug.Log($"House {kvp.Key}: {kvp.Value.Count} questions");
             foreach (var q in kvp.Value)
             {
-                // Debug.Log($"  [{q.CardName}] \"{q.QuestionAR}\"");
-                // Debug.Log($"    Correct: {q.OptionCorrectAR} | Wrong: {q.OptionWrongAR}");
-                // Debug.Log($"    CorrectSide: {(q.RightIsCorrect ? "RIGHT" : "LEFT")} | BaseEid: {q.BaseEid}");
+                Debug.Log($"  [{q.ID}] \"{q.QuestionAR}\"");
             }
         }
 
-        // Debug.Log("=== CINEMATICS ===");
+        Debug.Log("=== CINEMATICS ===");
         foreach (var kvp in cinematicByID)
         {
-            // Debug.Log($"  [{kvp.Key}] Type:{kvp.Value.Type} | {(kvp.Value.Type == CinematicType.UnityTimeline ? kvp.Value.TimelineAssetName : kvp.Value.TextAR)}");
+            Debug.Log($"  [{kvp.Key}] Type:{kvp.Value.Type} | {(kvp.Value.Type == CinematicType.UnityTimeline ? kvp.Value.TimelineAssetName : kvp.Value.TextAR)}");
         }
 
-        // Debug.Log("=== INTERACTION POOLS ===");
+        Debug.Log("=== INTERACTION POOLS ===");
         foreach (var kvp in interactionPoolsByHouse)
         {
-            // Debug.Log($"House {kvp.Key}: {kvp.Value.Count} interactions");
+            Debug.Log($"House {kvp.Key}: {kvp.Value.Count} interactions");
             foreach (var i in kvp.Value)
             {
-                // Debug.Log($"  [{i.ID}] Type:{i.InteractionType} | Prompt:\"{i.PromptTextAR}\" | Duration:{i.Duration}s | Threshold:{i.Threshold}");
+                Debug.Log($"  [{i.ID}] Type:{i.InteractionType} | Prompt:\"{i.PromptTextAR}\"");
             }
         }
-        // Debug.Log("=== END PREVIEW ===");
+        
+        Debug.Log("=== TUTORIAL POOLS ===");
+        foreach (var kvp in tutorialStepsByID)
+        {
+            Debug.Log($"Tutorial {kvp.Key}: {kvp.Value.Count} steps");
+        }
+        
+        Debug.Log("=== END PREVIEW ===");
     }
+
+    #region Parse Helpers
+
+    private string SafeField(string[] f, int i) => (i >= 0 && i < f.Length) ? f[i].Trim('"').Trim() : "";
+    private int ParseInt(string v) { v = v.Trim().Trim('"'); return (v == "_" || string.IsNullOrEmpty(v)) ? 0 : (int.TryParse(v, NumberStyles.Any, CultureInfo.InvariantCulture, out int r) ? r : 0); }
+    private float ParseFloat(string v) { v = v.Trim().Trim('"'); return (v == "_" || string.IsNullOrEmpty(v)) ? 0f : (float.TryParse(v, NumberStyles.Any, CultureInfo.InvariantCulture, out float r) ? r : 0f); }
+
+    #endregion
 
     private SwipeCardData ParseQuestion(string[] fields, int row)
     {
         if (fields.Length < Q_TOTAL_COLS)
         {
-            // Debug.LogWarning($"[DataManager] Questions Line {row}: Expected {Q_TOTAL_COLS} cols, got {fields.Length}. Line: {string.Join(",", fields)}");
             return null;
         }
 
         string id = SafeField(fields, Q_COL_ID);
         if (string.IsNullOrWhiteSpace(id))
         {
-            // Debug.LogWarning($"[DataManager] Questions Line {row}: Empty ID");
             return null;
         }
 
         string question = SafeField(fields, Q_COL_QUESTION);
         if (string.IsNullOrWhiteSpace(question) || question == "_")
         {
-            // Debug.Log($"[DataManager] Questions Line {row}: Question skipped (empty)");
             return null;
         }
 
@@ -503,13 +523,6 @@ public class DataManager : MonoBehaviour
             BaseEid = ParseInt(SafeField(fields, Q_COL_BASE_EID))
         };
 
-#if UNITY_EDITOR
-        if (row <= 3) {} // Log first 3 questions for verification
-        {
-            // Debug.Log($"[DataManager] Parsed Q[{id}]: {cardData.CardName} | Sprite:{cardData.SpriteName} | House:{cardData.HouseLevel}");
-        }
-#endif
-
         return cardData;
     }
 
@@ -517,27 +530,23 @@ public class DataManager : MonoBehaviour
     {
         if (fields.Length < INT_TOTAL_COLS)
         {
-            // Debug.LogWarning($"[DataManager] Interactions Line {row}: Expected {INT_TOTAL_COLS} cols, got {fields.Length}");
             return null;
         }
 
         string id = SafeField(fields, INT_COL_ID);
         if (string.IsNullOrWhiteSpace(id))
         {
-            // Debug.LogWarning($"[DataManager] Interactions Line {row}: Empty ID");
             return null;
         }
 
         if (!Enum.TryParse<InteractionType>(SafeField(fields, INT_COL_INTERACTION_TYPE), true, out InteractionType interactionType))
         {
-            // Debug.LogWarning($"[DataManager] Interactions Line {row}: Invalid InteractionType '{SafeField(fields, INT_COL_INTERACTION_TYPE)}'");
             return null;
         }
 
         string promptText = SafeField(fields, INT_COL_PROMPT_TEXT);
         if (string.IsNullOrWhiteSpace(promptText) || promptText == "_")
         {
-            // Debug.LogWarning($"[DataManager] Interactions Line {row}: Empty PromptText");
             return null;
         }
 
@@ -566,14 +575,6 @@ public class DataManager : MonoBehaviour
         };
     }
 
-    #region Parse Helpers
-
-    private string SafeField(string[] f, int i) => (i >= 0 && i < f.Length) ? f[i].Trim('"').Trim() : "";
-    private int ParseInt(string v) { v = v.Trim().Trim('"'); return (v == "_" || string.IsNullOrEmpty(v)) ? 0 : (int.TryParse(v, NumberStyles.Any, CultureInfo.InvariantCulture, out int r) ? r : 0); }
-    private float ParseFloat(string v) { v = v.Trim().Trim('"'); return (v == "_" || string.IsNullOrEmpty(v)) ? 0f : (float.TryParse(v, NumberStyles.Any, CultureInfo.InvariantCulture, out float r) ? r : 0f); }
-
-    #endregion
-
     /// <summary>
     /// Gets a question by ID from the pool.
     /// </summary>
@@ -586,7 +587,6 @@ public class DataManager : MonoBehaviour
                 if (q.ID == id) return q;
             }
         }
-        // Debug.LogWarning($"[DataManager] Question not found: {id}");
         return null;
     }
 
@@ -622,7 +622,6 @@ public class DataManager : MonoBehaviour
                 if (i.ID == id) return i;
             }
         }
-        // Debug.LogWarning($"[DataManager] Interaction not found: {id}");
         return null;
     }
 
@@ -633,7 +632,6 @@ public class DataManager : MonoBehaviour
     {
         if (!interactionPoolsByHouse.ContainsKey(houseLevel))
         {
-            // Debug.LogWarning($"[DataManager] No interactions for House {houseLevel}!");
             return new List<InteractionData>();
         }
 
@@ -647,7 +645,6 @@ public class DataManager : MonoBehaviour
     {
         if (!questionPoolsByHouse.ContainsKey(houseLevel))
         {
-            // Debug.LogWarning($"[DataManager] No questions for House {houseLevel}!");
             return new List<SwipeCardData>();
         }
 
@@ -656,22 +653,10 @@ public class DataManager : MonoBehaviour
 
     private void PrintSummary()
     {
-        // Debug.Log("[DataManager] === PARSE SUMMARY ===");
         for (int h = 1; h <= 4; h++)
         {
             int qCount = questionPoolsByHouse.ContainsKey(h) ? questionPoolsByHouse[h].Count : 0;
             int intCount = interactionPoolsByHouse.ContainsKey(h) ? interactionPoolsByHouse[h].Count : 0;
-            // Debug.Log($"[DataManager]   House {h}: {qCount} questions, {intCount} interactions");
         }
-        // Debug.Log($"[DataManager]   Cinematics: {cinematicByID.Count} pre-defined");
-        // Debug.Log("[DataManager] === END SUMMARY ===");
-    }
-
-    [Button("Clear Data")]
-    public void ClearData()
-    {
-        questionPoolsByHouse.Clear();
-        cinematicByID.Clear();
-        interactionPoolsByHouse.Clear();
     }
 }

@@ -10,7 +10,7 @@ using System.Text.RegularExpressions;
 /// Manages exactly 4 choices: Default skin + 3 outfits.
 /// - Default skin (ID 0, always available)
 /// - 2 outfits available from start (ID 1, 2)
-/// - 1 outfit locked (ID 3, requires Tech Scrap)
+/// - 1 outfit locked (ID 3, requires Eidia)
 /// </summary>
 public class WardrobeManager : MonoBehaviour
 {
@@ -21,11 +21,11 @@ public class WardrobeManager : MonoBehaviour
 
     [Header("Runtime State")]
     [ReadOnly] [SerializeField] private List<OutfitData> allOutfits = new List<OutfitData>();
-    [ReadOnly] [SerializeField] private int currentScrap = 0;
+    [ReadOnly] [SerializeField] private int currentScrap = 0; // Represents Eidia balance for outfits
     [ReadOnly] [SerializeField] private int equippedOutfitID = 0;
 
     public static Action OnWardrobeDataLoaded;
-    public static Action OnScrapChanged;
+    public static Action OnScrapChanged; // Fired when Eidia balance changes (for wardrobe sync)
     public static Action OnOutfitPurchased;
     public static Action OnOutfitEquipped;
 
@@ -39,7 +39,7 @@ public class WardrobeManager : MonoBehaviour
         {
             Instance = this;
             transform.SetParent(null);
-            DontDestroyOnLoad(gameObject);
+            if (gameObject.scene.buildIndex != -1) DontDestroyOnLoad(gameObject);
             ParseOutfitsCSV();
             LoadEquippedOutfit();
         }
@@ -57,18 +57,17 @@ public class WardrobeManager : MonoBehaviour
     [Button("Parse Outfits CSV")]
     public void ParseOutfitsCSV()
     {
-        allOutfits.Clear();
         if (outfitsCSV == null) return;
-
-        string[] lines = outfitsCSV.text.Split('\n');
+        
+        allOutfits.Clear();
+        string[] lines = outfitsCSV.text.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
         for (int i = 1; i < lines.Length; i++)
         {
-            if (string.IsNullOrWhiteSpace(lines[i])) continue;
             string[] fields = Regex.Split(lines[i].Trim(), ",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
             if (fields.Length < 6) continue;
 
             int.TryParse(fields[0], out int id);
-            int.TryParse(fields[4], out int scrapCost);
+            int.TryParse(fields[4], out int eidiaCost);
             int.TryParse(fields[5], out int lockedInt);
 
             allOutfits.Add(new OutfitData
@@ -77,7 +76,7 @@ public class WardrobeManager : MonoBehaviour
                 internalName = fields[1].Trim('"').Trim(),
                 displayNameAR = fields[2].Trim('"').Trim(),
                 spriteName = fields[3].Trim('"').Trim(),
-                scrapCost = scrapCost,
+                scrapCost = eidiaCost, // Using the existing field name to avoid struct refactor
                 isLocked = (lockedInt == 1)
             });
         }
@@ -95,7 +94,6 @@ public class WardrobeManager : MonoBehaviour
         if (SaveManager.Instance != null)
         {
             currentScrap = SaveManager.Instance.CurrentData.TotalEidia;
-            // Debug.Log($"[WardrobeManager] Currency (Eidia) synced: {currentScrap}");
             OnScrapChanged?.Invoke();
         }
     }
@@ -105,7 +103,6 @@ public class WardrobeManager : MonoBehaviour
         if (id == 0) return true; // Default skin always owned
         if (SaveManager.Instance == null) return false;
 
-        // If ID 1 or 2, they should be marked isLocked = 0 in CSV
         OutfitData data = allOutfits.Find(o => o.ID == id);
         if (data != null && !data.isLocked) return true;
 
@@ -118,18 +115,23 @@ public class WardrobeManager : MonoBehaviour
         OutfitData outfit = allOutfits.Find(o => o.ID == id);
         if (outfit == null || !outfit.isLocked || OwnsOutfit(id)) return false;
 
+        // Sync local currency first to be sure
+        currentScrap = SaveManager.Instance.CurrentData.TotalEidia;
+
         if (currentScrap < outfit.scrapCost) return false;
 
-        if (!SaveManager.Instance.SpendScrap(outfit.scrapCost)) return false;
+        if (SaveManager.Instance.SpendEidia(outfit.scrapCost))
+        {
+            SaveManager.Instance.CurrentData.ownedOutfitIDs.Add(id);
+            SaveManager.Instance.SaveGame();
 
-        SaveManager.Instance.CurrentData.ownedOutfitIDs.Add(id);
-        SaveManager.Instance.SaveGame();
+            currentScrap = SaveManager.Instance.CurrentData.TotalEidia;
+            OnScrapChanged?.Invoke();
+            OnOutfitPurchased?.Invoke();
+            return true;
+        }
 
-        // Sync local scrap after purchase
-        currentScrap = SaveManager.Instance.CurrentData.TotalEidia;
-        OnScrapChanged?.Invoke();
-        OnOutfitPurchased?.Invoke();
-        return true;
+        return false;
     }
 
     public bool EquipOutfit(int id)

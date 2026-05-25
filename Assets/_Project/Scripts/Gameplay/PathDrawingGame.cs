@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using RTLTMPro;
+using DG.Tweening;
 
 /// <summary>
 /// PHASE 5C (REVISED v2): Path-Drawing Maze Mini-Game Manager.
@@ -520,6 +521,16 @@ public class PathDrawingGame : MonoBehaviour
 
         // Apply time penalty
         timeRemaining -= collisionPenalty;
+
+        // JUICE: Shake timer and flash red
+        if (timerText != null)
+        {
+            // Fix: DOShakeAnchorPos is the correct method for RectTransform shaking
+            timerText.rectTransform.DOShakeAnchorPos(0.4f, 10f);
+            
+            // Fix: Ensure proper DOTween syntax for color animation
+            timerText.DOColor(Color.red, 0.2f).OnComplete(() => timerText.DOColor(Color.white, 0.2f));
+        }
 
         // Clear the ENTIRE line - player must start fresh
         linePoints.Clear();

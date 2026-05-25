@@ -1,7 +1,7 @@
 ﻿ID,HouseLevel,InteractionType,PromptTextAR,Duration,Threshold,CorrectBat,IncorrectBat,CorrectStomach,IncorrectStomach,CorrectEid,IncorrectEid,SpeakerName,SuccessExpression,FailureExpression
-SHAKE_Qahwa_1,1,Shake,هز الجوال للقبول!,6,8,-5,-5,15,0,10,3,خالة,Happy,Sad
-HOLD_Maamoul_1,1,Hold,استمر بالضغط للقبول!,6,2,-5,-5,15,0,10,3,خالة,Happy,Sad
-TAP_Tamer_1,1,Tap,المس للقبول!,6,8,-5,-5,15,0,10,3,خالة,Happy,Sad
+SHAKE_Qahwa_1,1,Shake,هز الجوال للقبول!,8,6,-5,-5,15,0,10,3,خالة,Happy,Sad
+HOLD_Maamoul_1,1,Hold,استمر بالضغط للقبول!,8,1.5,-5,-5,15,0,10,3,خالة,Happy,Sad
+TAP_Tamer_1,1,Tap,المس للقبول!,8,6,-5,-5,15,0,10,3,خالة,Happy,Sad
 SHAKE_Aaseer_2,2,Shake,هز الجوال للقبول!,5,12,-5,-5,15,0,15,5,عمو,Happy,Sad
 HOLD_Sahoon_2,2,Hold,استمر بالضغط للقبول!,5,2.5,-5,-5,15,0,10,5,عمو,Happy,Sad
 TAP_Baklawa_2,2,Tap,المس للقبول!,5,12,-5,-5,15,0,10,5,عمو,Happy,Sad

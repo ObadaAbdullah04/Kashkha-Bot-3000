@@ -35,6 +35,8 @@ public class HouseBackgroundController : MonoBehaviour
 
     private void UpdateBackground(int houseLevel)
     {
+        if (_backgroundImage == null) _backgroundImage = GetComponent<Image>();
+        
         if (houseLevel <= 0)
         {
             if (defaultBackground != null) _backgroundImage.sprite = defaultBackground;
@@ -58,6 +60,17 @@ public class HouseBackgroundController : MonoBehaviour
 #if UNITY_EDITOR
             // Debug.LogWarning($"[HouseBackground] Resource {resourceName} not found. Using default.");
 #endif
+        }
+    }
+
+    /// <summary>
+    /// Force a background refresh based on the current GameManager state.
+    /// </summary>
+    public void RefreshBackground()
+    {
+        if (GameManager.Instance != null)
+        {
+            UpdateBackground(GameManager.Instance.CurrentHouseLevel);
         }
     }
 }

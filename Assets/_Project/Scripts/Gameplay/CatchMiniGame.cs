@@ -505,7 +505,11 @@ public class CatchMiniGame : MonoBehaviour
             // Caught Eidia (good)!
             _score++;
             if (scoreText != null)
+            {
                 scoreText.text = _score.ToString();
+                // JUICE: Punch scale on score increase
+                scoreText.transform.DOPunchScale(Vector3.one * 0.2f, 0.3f);
+            }
 
             // Visual feedback - punch effect
             if (playerBasket != null)
@@ -525,17 +529,17 @@ public class CatchMiniGame : MonoBehaviour
             // Caught Ma'amoul (bad)!
             _score = Mathf.Max(0, _score - 1);
             if (scoreText != null)
+            {
                 scoreText.text = _score.ToString();
+                // JUICE: Shake scale on score decrease
+                scoreText.transform.DOShakePosition(0.3f, 10f);
+            }
 
             // Visual feedback - shake effect
             if (playerBasket != null)
             {
                 playerBasket.DOShakeScale(avoidShakeDuration, avoidShakeStrength, avoidShakeVibrato, avoidShakeRandomness).SetUpdate(true);
             }
-
-            // JUICE: Floating Text
-            // FloatingTextManager reference removed (unused)
-
 
             // Play avoid sound (use enum-based system)
             AudioManager.Instance?.PlaySFX(AudioManager.SFXType.CatchBad);
@@ -553,18 +557,25 @@ public class CatchMiniGame : MonoBehaviour
     {
         _isPlaying = false;
 
-#if UNITY_EDITOR
-        // Debug.Log($"[CatchMiniGame] TIME'S UP! Final Score: {_score}");
-#endif
+        // JUICE: Show Time's Up feedback
+        if (timerText != null)
+        {
+            timerText.text = "انتهى الوقت!";
+            timerText.color = Color.red;
+            timerText.transform.DOPunchScale(Vector3.one * 0.5f, 0.5f).SetUpdate(true);
+        }
 
-        // Closing the Economic Loop (Phase 3)
-        // Balancing: 1 Eidia per score
-        int scrapReward = _score > 0 ? Mathf.Max(1, Mathf.FloorToInt(_score * scrapPerPoint)) : 0;
+        // Wait a brief moment for the player to see the feedback
+        DOVirtual.DelayedCall(1.5f, () => {
+            // Closing the Economic Loop (Phase 3)
+            // Balancing: 1 Eidia per score
+            int scrapReward = _score > 0 ? Mathf.Max(1, Mathf.FloorToInt(_score * scrapPerPoint)) : 0;
 
-        // Return to MiniGameManager - this will handle GameManager.OnMiniGameComplete
-        if (MiniGameManager.Instance != null)
-            MiniGameManager.Instance.EndMiniGame(_score, scrapReward);
+            // Return to MiniGameManager - this will handle GameManager.OnMiniGameComplete
+            if (MiniGameManager.Instance != null)
+                MiniGameManager.Instance.EndMiniGame(_score, scrapReward);
 
-        Destroy(gameObject);
+            Destroy(gameObject);
+        }).SetUpdate(true);
     }
 }

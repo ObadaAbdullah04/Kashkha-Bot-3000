@@ -305,6 +305,7 @@ public class UnifiedHubManager : MonoBehaviour
         WardrobeManager.OnOutfitEquipped += HandleOutfitEquipped;
         WardrobeManager.OnScrapChanged += RefreshWardrobeUI;
         SaveManager.OnScrapChanged += OnScrapChangedFromSaveManager; // Subscribe to scrap changes from mini-games
+        SaveManager.OnEidiaChanged += OnEidiaChangedFromSaveManager; // Subscribe to eidia changes from houses
         
         UpdateAllUI();
     }
@@ -315,7 +316,8 @@ public class UnifiedHubManager : MonoBehaviour
         WardrobeManager.OnOutfitPurchased -= RefreshWardrobeUI;
         WardrobeManager.OnOutfitEquipped -= HandleOutfitEquipped;
         WardrobeManager.OnScrapChanged -= RefreshWardrobeUI;
-        SaveManager.OnScrapChanged -= OnScrapChangedFromSaveManager; // Unsubscribe from scrap changes
+        SaveManager.OnScrapChanged -= OnScrapChangedFromSaveManager;
+        SaveManager.OnEidiaChanged -= OnEidiaChangedFromSaveManager;
         
         StopActivePulse();
     }
@@ -676,12 +678,20 @@ public class UnifiedHubManager : MonoBehaviour
 
     /// <summary>
     /// Wrapper for SaveManager.OnScrapChanged (Action<int>) to match refresh requirements.
-    /// Updates both Wardrobe and Upgrades tabs to reflect new scrap totals.
+    /// Updates Upgrades tab to reflect new scrap totals.
     /// </summary>
     private void OnScrapChangedFromSaveManager(int newScrapTotal)
     {
-        RefreshWardrobeUI();
         RefreshUpgradeUI();
+    }
+
+    /// <summary>
+    /// Wrapper for SaveManager.OnEidiaChanged (Action<int>) to match refresh requirements.
+    /// Updates Wardrobe tab to reflect new eidia totals.
+    /// </summary>
+    private void OnEidiaChangedFromSaveManager(int newEidiaTotal)
+    {
+        RefreshWardrobeUI();
     }
 
     private void RefreshWardrobeUI()
@@ -692,10 +702,6 @@ public class UnifiedHubManager : MonoBehaviour
         if (wardrobeUI != null)
         {
             wardrobeUI.RefreshUI();
-        }
-        else
-        {
-            // Debug.LogWarning("[UnifiedHub] WardrobeUI not assigned in inspector!");
         }
     }
 
@@ -730,14 +736,14 @@ public class UnifiedHubManager : MonoBehaviour
 
     private void RefreshUpgradeUI()
     {
-        int playerEidia = SaveManager.Instance != null ? SaveManager.Instance.CurrentData.TotalEidia : 0;
+        int playerScrap = SaveManager.Instance != null ? SaveManager.Instance.CurrentData.TotalScrap : 0;
 
         UpdateUpgradeUI(
             UpgradeType.RechargeBattery,
             rechargeBatteryButton,
             rechargeCostText,
             rechargeLevelText,
-            playerEidia,
+            playerScrap,
             maxRechargePurchases
         );
 
@@ -746,7 +752,7 @@ public class UnifiedHubManager : MonoBehaviour
             expandBatteryButton,
             expandCostText,
             expandLevelText,
-            playerEidia,
+            playerScrap,
             maxRechargePurchases
         );
 
@@ -755,7 +761,7 @@ public class UnifiedHubManager : MonoBehaviour
             titaniumStomachButton,
             titaniumCostText,
             titaniumLevelText,
-            playerEidia,
+            playerScrap,
             maxTitaniumPurchases
         );
     }
@@ -774,8 +780,8 @@ public class UnifiedHubManager : MonoBehaviour
         int level = upgradePurchaseCounts[type];
         bool isMaxed = level >= maxPurchases;
 
-        // Update cost text
-        costText.text = isMaxed ? "الحد الأقصى" : $"{currentCost} عيدية";
+        // Update cost text - Use "خردة" (Scrap) for upgrades
+        costText.text = isMaxed ? "الحد الأقصى" : $"{currentCost} خردة";
 
         // Update level text
         levelText.text = isMaxed ? $"MAX ({maxPurchases}/{maxPurchases})" : $"{level}/{maxPurchases}";
@@ -812,11 +818,11 @@ public class UnifiedHubManager : MonoBehaviour
         }
 
         int currentCost = GetCurrentCost(upgradeType);
-        int playerEidia = SaveManager.Instance != null ? SaveManager.Instance.CurrentData.TotalEidia : 0;
+        int playerScrap = SaveManager.Instance != null ? SaveManager.Instance.CurrentData.TotalScrap : 0;
 
-        if (playerEidia < currentCost)
+        if (playerScrap < currentCost)
         {
-            // Debug.LogWarning($"[UnifiedHub] Can't afford {upgradeType}. Need {currentCost}, have {playerEidia}");
+            // Debug.LogWarning($"[UnifiedHub] Can't afford {upgradeType}. Need {currentCost}, have {playerScrap}");
             return;
         }
 

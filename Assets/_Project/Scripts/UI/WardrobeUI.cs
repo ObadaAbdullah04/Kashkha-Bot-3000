@@ -19,7 +19,7 @@ public class WardrobeUI : MonoBehaviour
     [SerializeField] private RTLTextMeshPro[] costTexts;
 
     [Header("UI Info")]
-    [SerializeField] private RTLTextMeshPro scrapText;
+    [SerializeField] private RTLTextMeshPro scrapText; // Restored field name to keep Inspector reference
     [SerializeField] private RTLTextMeshPro selectedOutfitNameText;
 
     private int _selectedID = 0;
@@ -30,7 +30,7 @@ public class WardrobeUI : MonoBehaviour
         WardrobeManager.OnOutfitEquipped += RefreshUI;
         WardrobeManager.OnOutfitPurchased += RefreshUI;
         WardrobeManager.OnScrapChanged += RefreshUI;
-        SaveManager.OnScrapChanged += HandleGlobalScrapChanged;
+        SaveManager.OnEidiaChanged += HandleGlobalCurrencyChanged;
     }
 
     private void OnDisable()
@@ -38,32 +38,13 @@ public class WardrobeUI : MonoBehaviour
         WardrobeManager.OnOutfitEquipped -= RefreshUI;
         WardrobeManager.OnOutfitPurchased -= RefreshUI;
         WardrobeManager.OnScrapChanged -= RefreshUI;
-        SaveManager.OnScrapChanged -= HandleGlobalScrapChanged;
+        SaveManager.OnEidiaChanged -= HandleGlobalCurrencyChanged;
     }
 
-    private void HandleGlobalScrapChanged(int newTotal)
+    private void HandleGlobalCurrencyChanged(int newTotal)
     {
-        // Debug.Log($"[WardrobeUI] HandleGlobalScrapChanged called with: {newTotal}");
-        
-        if (scrapText != null)
-        {
-            scrapText.text = newTotal.ToString();
-            // Debug.Log($"[WardrobeUI] Scrap text updated to: {newTotal}");
-        }
-        else
-        {
-            // Debug.LogWarning("[WardrobeUI] scrapText is null!");
-        }
-        
-        if (WardrobeManager.Instance != null)
-        {
-            WardrobeManager.Instance.SyncScrap();
-        }
-        else
-        {
-            // Debug.LogWarning("[WardrobeUI] WardrobeManager.Instance is null!");
-            RefreshUI();
-        }
+        if (scrapText != null) scrapText.text = newTotal.ToString();
+        RefreshUI();
     }
 
     public void RefreshUI()
@@ -72,16 +53,13 @@ public class WardrobeUI : MonoBehaviour
 
         _selectedID = WardrobeManager.Instance.EquippedOutfitID;
 
-        if (scrapText != null && WardrobeManager.Instance.AllOutfits.Count > 0)
-        {
-            scrapText.text = WardrobeManager.Instance.CurrentScrap.ToString();
-        }
-        else if (scrapText != null && SaveManager.Instance != null)
+        // Display Player Eidia balance (using restored field name scrapText)
+        if (scrapText != null && SaveManager.Instance != null)
         {
             scrapText.text = SaveManager.Instance.CurrentData.TotalEidia.ToString();
         }
 
-        // Update preview
+        // Update preview image
         UpdatePreview();
 
         // Update buttons
@@ -92,16 +70,16 @@ public class WardrobeUI : MonoBehaviour
             // Register the first slot as a target for the tutorial
             if (i == 0 && TutorialOverlayManager.Instance != null && outfitButtons[0] != null)
             {
-                TutorialOverlayManager.Instance.RegisterTarget("FirstOutfitSlot", outfitButtons[0].GetComponent<RectTransform>());
+                TutorialOverlayManager.Instance.RegisterTarget("FirstOutfitSlot", outfitButtons[0].GetComponent<RectTransform>()); 
             }
 
             OutfitData data = WardrobeManager.Instance.AllOutfits[i];
             int outfitID = data.ID;
 
             bool isOwned = WardrobeManager.Instance.OwnsOutfit(outfitID);
-            bool isEquipped = (_selectedID == outfitID);
+            bool isEquipped = (outfitID == _selectedID);
 
-            // Setup button listener once
+            // Click listener
             int idCopy = outfitID;
             outfitButtons[i].onClick.RemoveAllListeners();
             outfitButtons[i].onClick.AddListener(() => OnOutfitClicked(idCopy));
@@ -113,17 +91,12 @@ public class WardrobeUI : MonoBehaviour
                 lockOverlays[i].SetActive(shouldShowLock);
             }
 
-            if (i < costTexts.Length && costTexts[i] != null)
-            {
-                costTexts[i].text = (shouldShowLock && data.scrapCost > 0) ? $"{data.scrapCost} عيدية" : "";
-            }
-
-            // Update button sprite automatically
+            // Update button icon
             if (outfitButtons[i].image != null)
             {
                 if (!string.IsNullOrEmpty(data.spriteName))
                 {
-                    Sprite btnSprite = Resources.Load<Sprite>("CharacterSprites/" + data.spriteName);
+                    Sprite btnSprite = Resources.Load<Sprite>($"CharacterSprites/{data.spriteName}");
                     if (btnSprite != null)
                     {
                         outfitButtons[i].image.sprite = btnSprite;
@@ -132,81 +105,122 @@ public class WardrobeUI : MonoBehaviour
                     else
                     {
                         outfitButtons[i].image.enabled = false;
-                        // Debug.LogWarning($"[WardrobeUI] Sprite not found: CharacterSprites/{data.spriteName}");
                     }
                 }
                 else
                 {
                     outfitButtons[i].image.enabled = false;
                 }
+
+                // Highlight equipped button
+                outfitButtons[i].image.color = isEquipped ? new Color(0.8f, 1f, 0.8f) : Color.white;
             }
 
-            // Visual highlight for equipped (using clear colors)
-            if (outfitButtons[i].image != null)
+            // Update cost / state text
+            if (i < costTexts.Length && costTexts[i] != null)
             {
-                // Ensure alpha is 1.0 (Color.white is 1,1,1,1)
-                outfitButtons[i].image.color = isEquipped ? Color.green : Color.white;
+                if (isEquipped)
+                {
+                    costTexts[i].text = "مرتدي";
+                    costTexts[i].color = new Color(0.2f, 0.8f, 0.2f); // Green
+                }
+                else if (isOwned)
+                {
+                    costTexts[i].text = "مملوك";
+                    costTexts[i].color = Color.white;
+                }
+                else
+                {
+                    costTexts[i].text = $"{data.scrapCost} عيدية";
+                    bool canAfford = SaveManager.Instance != null && SaveManager.Instance.CurrentData.TotalEidia >= data.scrapCost;
+                    costTexts[i].color = canAfford ? Color.green : Color.red;
+                }
             }
         }
     }
 
-    public void OnOutfitClicked(int id)
+    private void OnOutfitClicked(int id)
     {
-        if (WardrobeManager.Instance == null) return;
-
-        OutfitData data = WardrobeManager.Instance.AllOutfits.Find(o => o.ID == id);
-        if (data == null) return;
-
-        if (!WardrobeManager.Instance.OwnsOutfit(id) && id != 0)
+        // Play click sound
+        if (AudioManager.Instance != null)
         {
-            // Try to purchase
-            if (WardrobeManager.Instance.UnlockOutfit(id))
+            AudioManager.Instance.PlaySFX(AudioManager.SFXType.ButtonClick);
+        }
+
+        // Find the button for juice
+        Button clickedButton = null;
+        for (int i = 0; i < outfitButtons.Length; i++)
+        {
+            if (i < WardrobeManager.Instance.AllOutfits.Count && WardrobeManager.Instance.AllOutfits[i].ID == id)
             {
-                WardrobeManager.Instance.EquipOutfit(id);
+                clickedButton = outfitButtons[i];
+                break;
+            }
+        }
+
+        if (WardrobeManager.Instance.OwnsOutfit(id))
+        {
+            if (WardrobeManager.Instance.EquipOutfit(id))
+            {
+                // Juice: Punch scale on successful equip
+                clickedButton?.transform.DOPunchScale(Vector3.one * 0.1f, 0.2f).SetUpdate(true);
             }
         }
         else
         {
-            // Already owned, just equip
-            WardrobeManager.Instance.EquipOutfit(id);
+            // Attempt to buy
+            if (WardrobeManager.Instance.UnlockOutfit(id))
+            {
+                WardrobeManager.Instance.EquipOutfit(id);
+                // Juice: Punch scale on successful purchase
+                clickedButton?.transform.DOPunchScale(Vector3.one * 0.15f, 0.3f).SetUpdate(true);
+            }
+            else
+            {
+                // Visual feedback: Shake the button if can't afford
+                clickedButton?.transform.DOShakePosition(0.3f, 10f).SetUpdate(true);
+            }
         }
 
-        RefreshUI();
-        
-        // Bounce animation
+        // Juice for the preview character
         if (characterPreviewImage != null)
         {
             characterPreviewImage.transform.DOKill();
             characterPreviewImage.transform.localScale = Vector3.one;
-            characterPreviewImage.transform.DOPunchScale(Vector3.one * 0.1f, 0.2f);
+            characterPreviewImage.transform.DOPunchScale(Vector3.one * 0.05f, 0.2f).SetUpdate(true);
         }
+
+        RefreshUI();
     }
 
     private void UpdatePreview()
     {
-        if (characterPreviewImage == null) return;
-
         OutfitData data = WardrobeManager.Instance.AllOutfits.Find(o => o.ID == _selectedID);
-        if (data != null && !string.IsNullOrEmpty(data.spriteName))
+
+        // Update preview image
+        if (characterPreviewImage != null)
         {
-            Sprite s = Resources.Load<Sprite>("CharacterSprites/" + data.spriteName);
-            if (s != null)
+            if (data != null && !string.IsNullOrEmpty(data.spriteName))
             {
-                characterPreviewImage.sprite = s;
-                characterPreviewImage.enabled = true;
+                // Try load sprite from Resources/CharacterSprites/
+                Sprite s = Resources.Load<Sprite>($"CharacterSprites/{data.spriteName}");
+                if (s != null)
+                {
+                    characterPreviewImage.sprite = s;
+                    characterPreviewImage.gameObject.SetActive(true);
+                }
+                else
+                {
+                    characterPreviewImage.sprite = defaultCharacterSprite;
+                }
             }
             else
             {
-                // Debug.LogWarning($"[WardrobeUI] Could not load sprite: CharacterSprites/{data.spriteName}");
                 characterPreviewImage.sprite = defaultCharacterSprite;
             }
         }
-        else
-        {
-            characterPreviewImage.sprite = defaultCharacterSprite;
-        }
 
-        // Update text
+        // Update name text
         if (selectedOutfitNameText != null)
         {
             selectedOutfitNameText.text = data != null ? data.displayNameAR : "الشكل الافتراضي";

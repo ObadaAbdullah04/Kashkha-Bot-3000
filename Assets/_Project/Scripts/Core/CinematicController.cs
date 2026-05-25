@@ -72,9 +72,6 @@ public class CinematicController : MonoBehaviour
     [Tooltip("Interaction HUD panel - hidden during cinematics")]
     [SerializeField] private GameObject interactionHUDPanel;
 
-    [Tooltip("Timer slider - hidden during cinematics")]
-    [SerializeField] private UnityEngine.UI.Slider timerSlider;
-
     [Header("Timeline Loading")]
     [Tooltip("Resources path for timeline assets (relative to any Resources/ folder)")]
     [SerializeField] private string timelinesResourcesPath = "Timelines";
@@ -129,7 +126,7 @@ public class CinematicController : MonoBehaviour
     // Track gameplay UI state to restore after cinematic
     private bool wasSwipePanelActive = false;
     private bool wasInteractionPanelActive = false;
-    private bool wasTimerActive = false;
+    // private bool wasTimerActive = false;
 
     #endregion
 
@@ -854,13 +851,6 @@ public class CinematicController : MonoBehaviour
             interactionHUDPanel.SetActive(false);
         }
 
-        // Save state and hide timer slider
-        if (timerSlider != null)
-        {
-            wasTimerActive = timerSlider.gameObject.activeSelf;
-            timerSlider.gameObject.SetActive(false);
-        }
-
         // // if (debugLogging) {} // Debug.Log("[CinematicController] Gameplay UI hidden - EXCLUSIVE mode");
     }
 
@@ -881,16 +871,10 @@ public class CinematicController : MonoBehaviour
             interactionHUDPanel.SetActive(true);
         }
 
-        // Restore timer slider if it was active
-        if (timerSlider != null && wasTimerActive)
-        {
-            timerSlider.gameObject.SetActive(true);
-        }
-
         // Reset state tracking
         wasSwipePanelActive = false;
         wasInteractionPanelActive = false;
-        wasTimerActive = false;
+        // wasTimerActive = false;
 
         // // if (debugLogging) {} // Debug.Log("[CinematicController] Gameplay UI restored");
     }
@@ -1116,14 +1100,15 @@ public class CinematicController : MonoBehaviour
             videoPlayer.prepareCompleted -= OnVideoPrepared;
             if (!isPlaying) return;
 
-            // NOW show the panel and display
+            // NOW show the panel and display with a fade-in
             if (cutscenePanel != null)
             {
                 cutscenePanel.SetActive(true);
                 CanvasGroup cg = cutscenePanel.GetComponent<CanvasGroup>();
                 if (cg != null)
                 {
-                    cg.alpha = 1f;
+                    cg.alpha = 0f;
+                    cg.DOFade(1f, 0.5f).SetUpdate(true);
                     cg.blocksRaycasts = true;
                 }
             }
@@ -1141,7 +1126,24 @@ public class CinematicController : MonoBehaviour
         {
             videoPlayer.loopPointReached -= OnVideoFinished;
             videoPlayer.errorReceived -= OnVideoError;
-            FinishVideo(videoName);
+
+            // Fade out before finishing
+            if (cutscenePanel != null)
+            {
+                CanvasGroup cg = cutscenePanel.GetComponent<CanvasGroup>();
+                if (cg != null)
+                {
+                    cg.DOFade(0f, 0.5f).SetUpdate(true).OnComplete(() => FinishVideo(videoName));
+                }
+                else
+                {
+                    FinishVideo(videoName);
+                }
+            }
+            else
+            {
+                FinishVideo(videoName);
+            }
         }
 
         void OnVideoError(UnityEngine.Video.VideoPlayer vp, string message)
@@ -1220,8 +1222,23 @@ public class CinematicController : MonoBehaviour
 
                 if (holdTimer >= videoSkipHoldTime)
                 {
-                    videoPlayer.Stop();
-                    FinishVideo(videoName);
+                    // Juice: Fade out even on skip for smoothness
+                    if (cutscenePanel != null)
+                    {
+                        CanvasGroup cg = cutscenePanel.GetComponent<CanvasGroup>();
+                        if (cg != null)
+                        {
+                            cg.DOFade(0f, 0.5f).SetUpdate(true).OnComplete(() => FinishVideo(videoName));
+                        }
+                        else
+                        {
+                            FinishVideo(videoName);
+                        }
+                    }
+                    else
+                    {
+                        FinishVideo(videoName);
+                    }
                     yield break;
                 }
             }

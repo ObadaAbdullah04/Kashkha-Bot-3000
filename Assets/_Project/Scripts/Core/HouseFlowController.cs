@@ -161,6 +161,10 @@ public class HouseFlowController : MonoBehaviour
                         cinematicController.EnsurePortraitsVisible();
                         cinematicController.ToggleDialogueBox(false);
                     }
+                    
+                    // PHASE 19: Show timer only during questions
+                    UIManager.Instance?.SetTimerVisibility(true);
+
                     yield return PlayQuestion(element.ElementID, questionIndex, totalQuestions);
                     questionIndex++;
                     break;
@@ -172,6 +176,10 @@ public class HouseFlowController : MonoBehaviour
                         cinematicController.EnsurePortraitsVisible();
                         cinematicController.ToggleDialogueBox(true);
                     }
+
+                    // PHASE 19: Hide timer during dialogue/cinematics
+                    UIManager.Instance?.SetTimerVisibility(false);
+
                     yield return PlayCinematic(element.ElementID);
                     break;
 
@@ -181,12 +189,18 @@ public class HouseFlowController : MonoBehaviour
                     {
                         cinematicController.EnsurePortraitsVisible();
                     }
+
+                    // PHASE 19: Hide timer during QTE interactions
+                    UIManager.Instance?.SetTimerVisibility(false);
+
                     yield return PlayInteraction(element.ElementID);
                     
                     // Panel stays visible until the entire house sequence ends (handled below)
                     break;
 
                 case ElementType.Video:
+                    // PHASE 19: Hide timer during full-screen videos
+                    UIManager.Instance?.SetTimerVisibility(false);
                     yield return PlayVideo(element.ElementID);
                     break;
 

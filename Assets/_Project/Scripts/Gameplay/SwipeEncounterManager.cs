@@ -31,9 +31,6 @@ public class SwipeEncounterManager : MonoBehaviour
     [SerializeField] private Transform cardParent;
 
     [Header("Timer UI")]
-    [Tooltip("Timer slider for swipe decision")]
-    [SerializeField] private Slider timerSlider;
-
     [Tooltip("Timer text display (RTLTextMeshPro)")]
     [SerializeField] private RTLTextMeshPro timerText;
 
@@ -155,9 +152,6 @@ public class SwipeEncounterManager : MonoBehaviour
             UpdateCharacterToWarningExpression();
         }
         */
-
-        if (timerSlider != null)
-            timerSlider.value = Mathf.Clamp01(timeRemaining / timePerCard);
 
         if (timerText != null)
             timerText.text = Mathf.CeilToInt(timeRemaining).ToString();
@@ -285,6 +279,8 @@ public class SwipeEncounterManager : MonoBehaviour
             MeterManager.Instance?.ModifyBattery(batteryDelta);
             CameraShakeManager.Instance?.ShakeWrongAnswer();
             AudioManager.Instance?.PlaySFX(AudioManager.SFXType.WrongAnswer);
+            ScreenFlash.Instance?.FlashWrong();
+            HapticFeedback.Instance?.MediumTap();
 
             activeCard?.ShowResultFeedback(false, timeoutFeedbackText);
             
@@ -349,34 +345,14 @@ public class SwipeEncounterManager : MonoBehaviour
 
             if (wasCorrect)
             {
-                /* STANDALONE COMBO SYSTEM - Commented for now
-                currentStreak++;
-
-                // FTUE: Streak Tutorial
-                if (currentStreak == 3 && SaveManager.Instance != null && !SaveManager.Instance.HasSeenTutorial("Tutorial_Streak"))
-                {
-                    TutorialOverlayManager.Instance.PlayTutorial("Tutorial_Streak", () => {
-                        SaveManager.Instance.MarkTutorialAsComplete("Tutorial_Streak");
-                    });
-                }
-
-                int bonus = CalculateStreakBonus(currentStreak);
-                if (bonus > 0)
-                {
-                    streakBonusTotal += bonus;
-                    AudioManager.Instance?.PlaySFXCombo(AudioManager.SFXType.CorrectAnswer, AudioManager.SFXType.StreakBonus);
-                }
-                else
-                {
-                    AudioManager.Instance?.PlaySFX(AudioManager.SFXType.CorrectAnswer);
-                }
-                */
                 AudioManager.Instance?.PlaySFX(AudioManager.SFXType.CorrectAnswer);
+                ScreenFlash.Instance?.FlashCorrect();
             }
             else
             {
-                // currentStreak = 0;
                 AudioManager.Instance?.PlaySFX(AudioManager.SFXType.WrongAnswer);
+                ScreenFlash.Instance?.FlashWrong();
+                HapticFeedback.Instance?.MediumTap();
             }
 
             MeterManager.Instance?.ModifyBattery(batteryDelta);
@@ -444,7 +420,6 @@ public class SwipeEncounterManager : MonoBehaviour
     {
         timeRemaining = timePerCard;
         isTimerRunning = true;
-        if (timerSlider != null) { timerSlider.maxValue = timePerCard; timerSlider.value = 1f; }
         if (timerText != null) { timerText.text = Mathf.CeilToInt(timeRemaining).ToString(); timerText.color = Color.white; }
     }
 

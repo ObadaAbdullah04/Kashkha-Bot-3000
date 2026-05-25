@@ -453,7 +453,7 @@ public class InteractionHUDController : MonoBehaviour
     {
         float currentValue = GetCurrentValue();
         bool succeeded = currentInteraction.CheckThreshold(currentValue);
-        bool timedOut = currentInteraction.Duration > 0 && elapsed >= currentInteraction.Duration;
+        bool timedOut = currentInteraction.Duration > 0 && elapsed >= currentInteraction.Duration + 0.2f;
 
         if (succeeded) CompleteInteraction(true);
         else if (timedOut) CompleteInteraction(currentValue >= currentInteraction.Threshold * 0.5f);
