@@ -83,6 +83,9 @@ public class CinematicController : MonoBehaviour
     [Tooltip("RawImage to display the video texture")]
     [SerializeField] private UnityEngine.UI.RawImage videoDisplay;
 
+    [Tooltip("Optional: Background panel for video (if not assigned, uses videoDisplay's parent)")]
+    [SerializeField] private GameObject videoPanel;
+
     [Tooltip("Resources path for video assets")]
     [SerializeField] private string videoResourcesPath = "Videos";
 
@@ -1039,6 +1042,20 @@ public class CinematicController : MonoBehaviour
     }
 
     /// <summary>
+    /// Resolves the panel that should be shown/hidden during video playback.
+    /// Prefers the explicit videoPanel, falls back to videoDisplay's parent if it's not the controller itself.
+    /// </summary>
+    private GameObject GetVideoPanel()
+    {
+        if (videoPanel != null) return videoPanel;
+        if (videoDisplay != null && videoDisplay.transform.parent != null && videoDisplay.transform.parent.gameObject != gameObject)
+        {
+            return videoDisplay.transform.parent.gameObject;
+        }
+        return null;
+    }
+
+    /// <summary>
     /// Plays a Video element using the VideoPlayer component.
     /// Loads the video from Resources and plays it full-screen.
     /// </summary>
@@ -1082,12 +1099,14 @@ public class CinematicController : MonoBehaviour
         if (visualImage != null) visualImage.gameObject.SetActive(false);
         if (playerImage != null) playerImage.gameObject.SetActive(false);
         
-        // PHASE 18: Keep panel HIDDEN until prepared to avoid NPC/UI flashes
+        // PHASE 18: Keep panels HIDDEN until prepared to avoid NPC/UI flashes
         if (cutscenePanel != null)
         {
             cutscenePanel.SetActive(false); 
         }
 
+        var vPanel = GetVideoPanel();
+        if (vPanel != null) vPanel.SetActive(false);
         videoDisplay.gameObject.SetActive(false);
 
         videoPlayer.clip = clip;
@@ -1113,6 +1132,7 @@ public class CinematicController : MonoBehaviour
                 }
             }
 
+            if (vPanel != null) vPanel.SetActive(true);
             videoDisplay.texture = videoPlayer.texture;
             videoDisplay.gameObject.SetActive(true);
             videoDisplay.transform.SetAsLastSibling();
@@ -1179,6 +1199,10 @@ public class CinematicController : MonoBehaviour
 
         videoPlayer.Stop();
         videoDisplay.gameObject.SetActive(false);
+        
+        var vPanel = GetVideoPanel();
+        if (vPanel != null) vPanel.SetActive(false);
+
         if (videoSkipIndicator != null)
         {
             videoSkipIndicator.SetActive(false);

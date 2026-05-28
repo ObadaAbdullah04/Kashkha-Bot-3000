@@ -251,6 +251,7 @@ public class UnifiedHubManager : MonoBehaviour
     private bool[] completedHouses = new bool[5]; // Index 1-4
     private bool isFullRunComplete = false;
     private int nextHouseLevelToPlay = 1;
+    private Coroutine walkthroughRoutine;
 
     // Juice tracking
     private Tween activePulseTween;
@@ -600,11 +601,8 @@ public class UnifiedHubManager : MonoBehaviour
         // DEBOUNCE: Disable all buttons immediately to prevent double-click during transition
         DisableAllNavigation();
 
-        // REACTION FIX: Advance tutorial if player selects house manually
-        if (TutorialOverlayManager.Instance != null && TutorialOverlayManager.Instance.IsTutorialActive)
-        {
-            TutorialOverlayManager.Instance.AdvanceTutorial();
-        }
+        // REACTION FIX: Ensure all tutorials are stopped before leaving the hub
+        StopTutorial();
 
         OnStartNextHouse?.Invoke(houseLevel);
     }
@@ -625,11 +623,8 @@ public class UnifiedHubManager : MonoBehaviour
         // DEBOUNCE: Disable all buttons immediately to prevent double-click during transition
         DisableAllNavigation();
 
-        // REACTION FIX: Advance tutorial if player selects mini-game manually
-        if (TutorialOverlayManager.Instance != null && TutorialOverlayManager.Instance.IsTutorialActive)
-        {
-            TutorialOverlayManager.Instance.AdvanceTutorial();
-        }
+        // REACTION FIX: Ensure all tutorials are stopped before leaving the hub
+        StopTutorial();
 
         OnStartMiniGame?.Invoke(miniGameIndex);
     }
@@ -1041,7 +1036,25 @@ public class UnifiedHubManager : MonoBehaviour
     {
         if (gameObject.activeInHierarchy)
         {
-            StartCoroutine(HubWalkthroughRoutine());
+            if (walkthroughRoutine != null) StopCoroutine(walkthroughRoutine);
+            walkthroughRoutine = StartCoroutine(HubWalkthroughRoutine());
+        }
+    }
+
+    /// <summary>
+    /// Forcefully stops the hub walkthrough and hides the tutorial overlay.
+    /// </summary>
+    public void StopTutorial()
+    {
+        if (walkthroughRoutine != null)
+        {
+            StopCoroutine(walkthroughRoutine);
+            walkthroughRoutine = null;
+        }
+
+        if (TutorialOverlayManager.Instance != null)
+        {
+            TutorialOverlayManager.Instance.StopTutorial();
         }
     }
 

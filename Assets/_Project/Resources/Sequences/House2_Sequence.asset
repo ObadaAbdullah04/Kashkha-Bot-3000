@@ -14,6 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   HouseLevel: 2
   Sequence:
+  - Type: 3
+    ElementID: ToHouse
+    DesignerNote: 
   - Type: 0
     ElementID: Q7
     DesignerNote: 
@@ -49,4 +52,7 @@ MonoBehaviour:
     DesignerNote: 
   - Type: 2
     ElementID: TAP_Baklawa_2
+    DesignerNote: 
+  - Type: 3
+    ElementID: ExitHouse
     DesignerNote: 

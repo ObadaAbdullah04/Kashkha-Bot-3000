@@ -64,6 +64,7 @@ public class TutorialOverlayManager : MonoBehaviour
     private Tween instructionFloatTween;
     private bool forceAdvance = false;
     private bool isRoutineRunning = false;
+    private Coroutine tutorialRoutine;
     private Image overlayImage;
 
     public bool IsTutorialActive => isRoutineRunning || (tutorialCanvas != null && tutorialCanvas.gameObject.activeSelf);
@@ -180,7 +181,26 @@ public class TutorialOverlayManager : MonoBehaviour
             return;
         }
 
-        StartCoroutine(TutorialSequenceRoutine(tutorialID, DataManager.Instance.tutorialStepsByID[tutorialID], onComplete));
+        if (tutorialRoutine != null) StopCoroutine(tutorialRoutine);
+        tutorialRoutine = StartCoroutine(TutorialSequenceRoutine(tutorialID, DataManager.Instance.tutorialStepsByID[tutorialID], onComplete));
+    }
+
+    /// <summary>
+    /// Forcefully stops any active tutorial sequence and hides the UI immediately.
+    /// </summary>
+    public void StopTutorial()
+    {
+        if (tutorialRoutine != null)
+        {
+            StopCoroutine(tutorialRoutine);
+            tutorialRoutine = null;
+        }
+
+        isRoutineRunning = false;
+        forceAdvance = false;
+        onTutorialComplete = null;
+        
+        HideTutorialImmediate();
     }
 
     private IEnumerator TutorialSequenceRoutine(string tutorialID, List<TutorialStepData> steps, Action onComplete)

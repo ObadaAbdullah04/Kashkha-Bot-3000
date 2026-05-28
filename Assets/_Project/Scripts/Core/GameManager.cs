@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using DG.Tweening;
 using NaughtyAttributes;
 
@@ -551,20 +552,33 @@ public class GameManager : MonoBehaviour
 
     private void HandlePlayAgain()
     {
-        // Debug.Log("[GameManager] Play Again!");
+        // Debug.Log("[GameManager] Play Again - Reloading Scene...");
 
         if (TransitionPlayer.Instance != null)
         {
             TransitionPlayer.Instance.PlayTransition(playAgainTransitionText, () =>
             {
-                UIManager.Instance?.HideUnifiedHub();
-                StartRun();
+                // Lambda to handle StartRun after scene load
+                void OnRestartSceneLoaded(Scene scene, LoadSceneMode mode)
+                {
+                    SceneManager.sceneLoaded -= OnRestartSceneLoaded;
+                    StartRun();
+                }
+
+                SceneManager.sceneLoaded += OnRestartSceneLoaded;
+                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
             }, instant: true); // PHASE 18: Instant black
         }
         else
         {
-            UIManager.Instance?.HideUnifiedHub();
-            StartRun();
+            void OnRestartSceneLoaded(Scene scene, LoadSceneMode mode)
+            {
+                SceneManager.sceneLoaded -= OnRestartSceneLoaded;
+                StartRun();
+            }
+
+            SceneManager.sceneLoaded += OnRestartSceneLoaded;
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         }
     }
 

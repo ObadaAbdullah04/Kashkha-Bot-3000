@@ -15,7 +15,7 @@ MonoBehaviour:
   HouseLevel: 1
   Sequence:
   - Type: 3
-    ElementID: Test
+    ElementID: ToHouse
     DesignerNote: 
   - Type: 0
     ElementID: Q1
@@ -48,5 +48,5 @@ MonoBehaviour:
     ElementID: Q6
     DesignerNote: 
   - Type: 3
-    ElementID: Test
+    ElementID: ExitHouse
     DesignerNote: 

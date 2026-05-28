@@ -560,7 +560,7 @@ public class CatchMiniGame : MonoBehaviour
         // JUICE: Show Time's Up feedback
         if (timerText != null)
         {
-            timerText.text = "انتهى الوقت!";
+            timerText.text = "00";
             timerText.color = Color.red;
             timerText.transform.DOPunchScale(Vector3.one * 0.5f, 0.5f).SetUpdate(true);
         }

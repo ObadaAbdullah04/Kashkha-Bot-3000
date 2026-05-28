@@ -55,6 +55,7 @@ public class TransitionPlayer : MonoBehaviour
 
     private UnityEngine.UI.Image fadeImage;
     private Sequence _activeSequence;
+    private static bool _isPersistent = false; // Tracks if the engine call has been made
 
     #endregion
 
@@ -62,32 +63,37 @@ public class TransitionPlayer : MonoBehaviour
 
     private void Awake()
     {
-        // 1. Singleton Enforcement (Immediate)
+        // 1. Singleton Check - Immediate cleanup of duplicates
         if (Instance != null && Instance != this)
         {
-            Destroy(gameObject);
+            DestroyImmediate(gameObject);
             return;
         }
 
-        if (Instance == null)
+        Instance = this;
+        
+        // 2. Persistence Setup - The most robust check
+        if (Application.isPlaying && !_isPersistent)
         {
-            Instance = this;
-            
-            // 2. Persistent Setup
+            // Detach from parent to ensure we are a root object (required for DDOL)
             if (transform.parent != null)
             {
                 transform.SetParent(null);
             }
 
-            // A buildIndex of -1 usually indicates the DontDestroyOnLoad scene
-            if (gameObject.scene.buildIndex != -1)
-            {
-                DontDestroyOnLoad(gameObject);
-            }
-
-            // 3. Component Setup (First-time only)
-            SetupComponents();
+            // Only call DDOL if the static flag is false
+            // This prevents the internal Unity "m_GameObjects.find" assertion failure
+            DontDestroyOnLoad(gameObject);
+            _isPersistent = true;
         }
+        else if (Instance == this && !_isPersistent)
+        {
+            // This case handles initialization in the first scene if not playing
+            // Or if Instance was set but DDOL wasn't called yet
+        }
+
+        // 3. Component Setup
+        SetupComponents();
     }
 
     private void SetupComponents()
