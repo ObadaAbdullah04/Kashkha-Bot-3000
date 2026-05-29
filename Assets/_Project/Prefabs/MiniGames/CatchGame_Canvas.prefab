@@ -282,14 +282,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   moveSpeed: 6
   moveAction: {fileID: 662236770826178773, guid: 6c27b00bf5cb63644b71095f19e59292, type: 3}
-  spawnInterval: 1.5
-  eidiaSpawnChance: 0.7
+  spawnInterval: 1.25
+  eidiaSpawnChance: 1
   playerBasketPrefab: {fileID: 6239234416966507841, guid: 6d3d9bf70235737448588927b2db48f1, type: 3}
   _playerY: -3
   itemsParent: {fileID: 7688687103935134998}
   fallingItemPrefab: {fileID: 9162825055974178795, guid: addc989a93c391949afc95a862dc9a22, type: 3}
   fallingBadItemPrefab: {fileID: 1353245660014738834}
-  fallingBadItemPrefab2: {fileID: 1353245660014738834}
   catchPunchScale: {x: 0.2, y: 0.2, z: 1}
   catchPunchDuration: 0.3
   avoidShakeDuration: 0.3

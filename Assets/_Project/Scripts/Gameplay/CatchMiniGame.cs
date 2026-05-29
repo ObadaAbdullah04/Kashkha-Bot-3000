@@ -77,9 +77,6 @@ public class CatchMiniGame : MonoBehaviour
     [Tooltip("Falling item prefab (Ma'amoul - standard 2D sprite)")]
     [SerializeField] private GameObject fallingBadItemPrefab;
 
-    [Tooltip("Second falling item prefab (Ma'amoul variant - standard 2D sprite)")]
-    [SerializeField] private GameObject fallingBadItemPrefab2;
-
     [Header("Feedback Settings")]
     [SerializeField] private Vector3 catchPunchScale = new Vector3(0.2f, 0.2f, 1f);
     [SerializeField] private float catchPunchDuration = 0.3f;
@@ -418,20 +415,7 @@ public class CatchMiniGame : MonoBehaviour
         }
         else
         {
-            // Pick randomly between the two bad item prefabs
-            if (fallingBadItemPrefab2 != null)
-            {
-                float rand = Random.value;
-                prefabToSpawn = rand < 0.5f ? fallingBadItemPrefab : fallingBadItemPrefab2;
-                
-                #if UNITY_EDITOR
-                // // Debug.Log($"[CatchMiniGame] Selected Bad Prefab: {(rand < 0.5f ? "1" : "2")}");
-                #endif
-            }
-            else
-            {
                 prefabToSpawn = fallingBadItemPrefab;
-            }
         }
 
         if (prefabToSpawn == null)
