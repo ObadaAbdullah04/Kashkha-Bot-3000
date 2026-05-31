@@ -157,31 +157,32 @@ public class AudioManager : MonoBehaviour
 
     private void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-            transform.SetParent(null);
-            DontDestroyOnLoad(gameObject);
-
-            // Validate or create audio sources
-            if (musicSource == null) musicSource = CreateOrGetSource("MusicSource");
-            musicSource.loop = true;
-            musicSource.volume = musicVolume;
-
-            if (sfxSource == null) sfxSource = CreateOrGetSource("SFXSource");
-            sfxSource.loop = false;
-            sfxSource.volume = sfxVolume;
-
-            if (panicTimerSource == null) panicTimerSource = CreateOrGetSource("PanicTimerSource");
-            panicTimerSource.loop = false;
-            panicTimerSource.volume = sfxVolume * 0.8f; // Relative to SFX
-
-            MapClips();
-        }
-        else
+        if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
+            return;
         }
+        Instance = this;
+
+        // Validate or create audio sources
+        if (musicSource == null) musicSource = CreateOrGetSource("MusicSource");
+        musicSource.loop = true;
+        musicSource.volume = musicVolume;
+
+        if (sfxSource == null) sfxSource = CreateOrGetSource("SFXSource");
+        sfxSource.loop = false;
+        sfxSource.volume = sfxVolume;
+
+        if (panicTimerSource == null) panicTimerSource = CreateOrGetSource("PanicTimerSource");
+        panicTimerSource.loop = false;
+        panicTimerSource.volume = sfxVolume * 0.8f; // Relative to SFX
+
+        MapClips();
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
     }
 
     /// <summary>
@@ -360,6 +361,16 @@ public class AudioManager : MonoBehaviour
                 musicSource.volume = 1f;
             }
         });
+    }
+
+    /// <summary>
+    /// Stops all ongoing SFX and panic timers.
+    /// Does not affect background music.
+    /// </summary>
+    public void StopAllSFX()
+    {
+        if (sfxSource != null) sfxSource.Stop();
+        StopPanicTicks();
     }
 
     #endregion

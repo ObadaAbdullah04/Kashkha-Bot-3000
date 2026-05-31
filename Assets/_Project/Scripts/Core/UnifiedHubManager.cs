@@ -270,31 +270,41 @@ public class UnifiedHubManager : MonoBehaviour
 
     private void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-
-            // Force all tab panels OFF regardless of scene checkbox settings
-            if (housesTabPanel != null) housesTabPanel.SetActive(false);
-            if (wardrobeTabPanel != null) wardrobeTabPanel.SetActive(false);
-            if (upgradesTabPanel != null) upgradesTabPanel.SetActive(false);
-
-            // Start with Houses tab active
-            activeTab = HubTab.Houses;
-            if (housesTabPanel != null) housesTabPanel.SetActive(true);
-
-            // Register tab buttons and House 1 button for tutorials
-            if (TutorialOverlayManager.Instance != null)
-            {
-                if (upgradesTabButton != null) TutorialOverlayManager.Instance.RegisterTarget("Tab_Upgrades", upgradesTabButton.GetComponent<RectTransform>());
-                if (wardrobeTabButton != null) TutorialOverlayManager.Instance.RegisterTarget("Tab_Wardrobe", wardrobeTabButton.GetComponent<RectTransform>());
-                if (housesTabButton != null) TutorialOverlayManager.Instance.RegisterTarget("Tab_Houses", housesTabButton.GetComponent<RectTransform>());
-                if (house1Button != null) TutorialOverlayManager.Instance.RegisterTarget("Btn_House1", house1Button.GetComponent<RectTransform>());
-            }
-        }
-        else
+        if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+
+        // Force all tab panels OFF regardless of scene checkbox settings
+        if (housesTabPanel != null) housesTabPanel.SetActive(false);
+        if (wardrobeTabPanel != null) wardrobeTabPanel.SetActive(false);
+        if (upgradesTabPanel != null) upgradesTabPanel.SetActive(false);
+
+        // Start with Houses tab active
+        activeTab = HubTab.Houses;
+        if (housesTabPanel != null) housesTabPanel.SetActive(true);
+
+        // Register tab buttons and House 1 button for tutorials
+        if (TutorialOverlayManager.Instance != null)
+        {
+            if (upgradesTabButton != null) TutorialOverlayManager.Instance.RegisterTarget("Tab_Upgrades", upgradesTabButton.GetComponent<RectTransform>());
+            if (wardrobeTabButton != null) TutorialOverlayManager.Instance.RegisterTarget("Tab_Wardrobe", wardrobeTabButton.GetComponent<RectTransform>());
+            if (housesTabButton != null) TutorialOverlayManager.Instance.RegisterTarget("Tab_Houses", housesTabButton.GetComponent<RectTransform>());
+            if (house1Button != null) TutorialOverlayManager.Instance.RegisterTarget("Btn_House1", house1Button.GetComponent<RectTransform>());
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            OnStartNextHouse = null;
+            OnStartMiniGame = null;
+            OnPlayAgain = null;
+            OnOutfitEquipped = null;
+            Instance = null;
         }
     }
 
@@ -337,17 +347,29 @@ public class UnifiedHubManager : MonoBehaviour
 
     private void RegisterButtonListeners()
     {
-        // Tab buttons
-        if (housesTabButton != null) housesTabButton.onClick.AddListener(() => SwitchTab(HubTab.Houses));
-        if (wardrobeTabButton != null) wardrobeTabButton.onClick.AddListener(() => SwitchTab(HubTab.Wardrobe));
-        if (upgradesTabButton != null) upgradesTabButton.onClick.AddListener(() => SwitchTab(HubTab.Upgrades));
+        // Tab buttons with Tactile Feedback
+        if (housesTabButton != null) housesTabButton.onClick.AddListener(() => {
+            SwitchTab(HubTab.Houses);
+            PlayButtonJuice(housesTabButton);
+        });
+        if (wardrobeTabButton != null) wardrobeTabButton.onClick.AddListener(() => {
+            SwitchTab(HubTab.Wardrobe);
+            PlayButtonJuice(wardrobeTabButton);
+        });
+        if (upgradesTabButton != null) upgradesTabButton.onClick.AddListener(() => {
+            SwitchTab(HubTab.Upgrades);
+            PlayButtonJuice(upgradesTabButton);
+        });
 
         // House buttons
         for (int i = 0; i < houseButtons.Length; i++)
         {
             int houseLevel = i + 1;
             if (houseButtons[i] != null)
-                houseButtons[i].onClick.AddListener(() => SelectHouse(houseLevel));
+                houseButtons[i].onClick.AddListener(() => {
+                    SelectHouse(houseLevel);
+                    PlayButtonJuice(houseButtons[houseLevel - 1]);
+                });
         }
 
         // Mini-game buttons
@@ -355,7 +377,10 @@ public class UnifiedHubManager : MonoBehaviour
         {
             int miniGameIndex = i;
             if (miniGameButtons[i] != null)
-                miniGameButtons[i].onClick.AddListener(() => SelectMiniGame(miniGameIndex));
+                miniGameButtons[i].onClick.AddListener(() => {
+                    SelectMiniGame(miniGameIndex);
+                    PlayButtonJuice(miniGameButtons[miniGameIndex]);
+                });
         }
 
         // Upgrade buttons
@@ -364,7 +389,18 @@ public class UnifiedHubManager : MonoBehaviour
         if (titaniumStomachButton != null) titaniumStomachButton.onClick.AddListener(() => PurchaseUpgrade(UpgradeType.TitaniumStomach));
 
         // Action button
-        if (actionButton != null) actionButton.onClick.AddListener(OnActionButtonClicked);
+        if (actionButton != null) actionButton.onClick.AddListener(() => {
+            OnActionButtonClicked();
+            PlayButtonJuice(actionButton);
+        });
+    }
+
+    private void PlayButtonJuice(Button target)
+    {
+        if (target == null) return;
+        target.transform.DOKill();
+        target.transform.localScale = Vector3.one;
+        target.transform.DOPunchScale(Vector3.one * -0.05f, 0.15f, 10, 1f).SetUpdate(true);
     }
 
     private void UnregisterButtonListeners()

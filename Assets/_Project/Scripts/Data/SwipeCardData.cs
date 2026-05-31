@@ -71,11 +71,12 @@ public class SwipeCardData
     /// <summary>
     /// Returns eidia reward based on whether the swipe was correct.
     /// Note: Streak bonus is applied at runtime by SwipeEncounterManager.
+    /// PHASE 18: Modified to ONLY award Eidia if the answer was correct.
     /// </summary>
     public int GetEidiaReward(bool swipedRight)
     {
         bool wasCorrect = (swipedRight && RightIsCorrect) || (!swipedRight && !RightIsCorrect);
-        return wasCorrect ? BaseEid : Mathf.CeilToInt(BaseEid / 2f); // Wrong answer gets half (rounded up)
+        return wasCorrect ? BaseEid : 0; // Only award if correct
     }
     
     /// <summary>

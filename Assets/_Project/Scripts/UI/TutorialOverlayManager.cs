@@ -105,23 +105,28 @@ public class TutorialOverlayManager : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
-            
-            if (transform.parent != null)
-                transform.SetParent(null);
-            
-            if (gameObject.scene.buildIndex != -1)
-                DontDestroyOnLoad(gameObject);
-            
+
             if (graphicRaycaster == null)
                 graphicRaycaster = tutorialCanvas.GetComponent<GraphicRaycaster>();
 
             overlayImage = overlayBackground.GetComponent<Image>();
 
+            if (dismissButton != null)
+                dismissButton.onClick.AddListener(OnDismissClicked);
+
             InitializeTargets();
             HideTutorialImmediate();
         }
+    }
 
-        dismissButton.onClick.AddListener(OnDismissClicked);
+    private void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            if (dismissButton != null)
+                dismissButton.onClick.RemoveListener(OnDismissClicked);
+            Instance = null;
+        }
     }
 
     [Button("Initialize & Validate Targets")]

@@ -138,6 +138,12 @@ public class ScreenFlash : MonoBehaviour
             });
     }
 
+    private void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+        _flashTween?.Kill();
+    }
+
     #endregion
 
     #region Inspector Test Buttons

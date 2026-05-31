@@ -35,17 +35,26 @@ public class WardrobeManager : MonoBehaviour
 
     private void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-            transform.SetParent(null);
-            if (gameObject.scene.buildIndex != -1) DontDestroyOnLoad(gameObject);
-            ParseOutfitsCSV();
-            LoadEquippedOutfit();
-        }
-        else
+        if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+        
+        ParseOutfitsCSV();
+        LoadEquippedOutfit();
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            OnWardrobeDataLoaded = null;
+            OnScrapChanged = null;
+            OnOutfitPurchased = null;
+            OnOutfitEquipped = null;
+            Instance = null;
         }
     }
 

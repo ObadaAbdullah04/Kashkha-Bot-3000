@@ -130,6 +130,13 @@ public class InteractionHUDController : MonoBehaviour
         entranceTween?.Kill();
         exitTween?.Kill();
         iconShakeTween?.Kill();
+
+        if (Instance == this)
+        {
+            OnInteractionFinished = null;
+            OnEidiaEarned = null;
+            Instance = null;
+        }
     }
     
     #endregion
@@ -308,28 +315,37 @@ public class InteractionHUDController : MonoBehaviour
         
         CheckForInteractionAdvance(tutorialActive);
 
-        // Removed the hardcoded return so that Time.deltaTime respects the CSV's TimeScale setting.
         elapsed += Time.deltaTime;
         
         float duration = currentInteraction.Duration > 0 ? currentInteraction.Duration : defaultDuration;
         float remaining = Mathf.Max(0, duration - elapsed);
         float progress = remaining / duration;
 
-        // Removed inactivity timer to restore original logic
-        /*
-        if (!hasInteracted && !hasTriggeredInactivityFeedback && elapsed >= 2.0f)
-        {
-            hasTriggeredInactivityFeedback = true;
-            UpdateCharacterToWarningExpression();
-        }
-        */
-
         if (timerBar != null)
         {
             timerBar.fillAmount = progress;
-            if (remaining <= warningThreshold) timerBar.color = dangerColor;
-            else if (remaining <= warningThreshold * 2) timerBar.color = warningColor;
-            else timerBar.color = normalColor;
+            
+            // URGENCY PULSE: If time is low, pulse the timer bar or icon
+            if (remaining <= warningThreshold)
+            {
+                timerBar.color = dangerColor;
+                if (!DOTween.IsTweening(timerBar.transform))
+                {
+                    timerBar.transform.DOPunchScale(Vector3.one * 0.1f, 0.4f, 5, 0.5f).SetLoops(-1, LoopType.Restart);
+                }
+            }
+            else if (remaining <= warningThreshold * 2)
+            {
+                timerBar.color = warningColor;
+                timerBar.transform.DOKill();
+                timerBar.transform.localScale = Vector3.one;
+            }
+            else
+            {
+                timerBar.color = normalColor;
+                timerBar.transform.DOKill();
+                timerBar.transform.localScale = Vector3.one;
+            }
         }
     }
 
@@ -557,11 +573,20 @@ public class InteractionHUDController : MonoBehaviour
     {
         if (timerBar == null) { onComplete?.Invoke(); return; }
         timerBar.DOKill();
+        
+        // JUICE: Scale punch the whole panel on result
+        if (hudPanel != null)
+        {
+            hudPanel.DOKill();
+            hudPanel.DOPunchScale(Vector3.one * (succeeded ? 0.15f : -0.1f), 0.3f, 10, 1f).SetUpdate(true);
+        }
+
         Color targetColor = succeeded ? successColor : failureColor;
         Sequence flashSeq = DOTween.Sequence();
         flashSeq.Append(timerBar.DOColor(targetColor, 0.15f).SetEase(Ease.OutQuad));
         flashSeq.Append(timerBar.DOColor(normalColor, 0.3f).SetEase(Ease.InQuad));
         flashSeq.OnComplete(() => onComplete?.Invoke());
+        flashSeq.SetUpdate(true);
     }
 
     #endregion

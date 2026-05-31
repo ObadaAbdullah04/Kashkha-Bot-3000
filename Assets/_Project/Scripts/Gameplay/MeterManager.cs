@@ -71,15 +71,24 @@ public class MeterManager : MonoBehaviour
 
     private void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-            transform.SetParent(null);
-            DontDestroyOnLoad(gameObject);
-        }
-        else
+        if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            OnBatteryDrained = null;
+            OnStomachFull = null;
+            OnMetersChanged = null;
+            OnBatteryModified = null;
+            OnStomachModified = null;
+            Instance = null;
         }
     }
 

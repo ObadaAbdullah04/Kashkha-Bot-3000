@@ -115,6 +115,16 @@ public class SwipeEncounterManager : MonoBehaviour
         }
     }
 
+    private void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            OnCardProcessed = null;
+            OnTimeRanOut = null;
+            Instance = null;
+        }
+    }
+
     private void Update()
     {
         if (!isTimerRunning) return;

@@ -44,17 +44,19 @@ public class SaveManager : MonoBehaviour
             return;
         }
 
-        if (Instance == null)
+        Instance = this;
+        
+        LoadGame();
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
         {
-            Instance = this;
-            
-            if (transform.parent != null)
-                transform.SetParent(null);
-
-            if (gameObject.scene.buildIndex != -1)
-                DontDestroyOnLoad(gameObject);
-
-            LoadGame();
+            OnScrapChanged = null;
+            OnEidiaChanged = null;
+            OnCurrencyChanged = null;
+            Instance = null;
         }
     }
 

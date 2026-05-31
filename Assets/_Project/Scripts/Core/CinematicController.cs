@@ -196,6 +196,13 @@ public class CinematicController : MonoBehaviour
         InteractionHUDController.OnInteractionFinished -= HandleInteractionFinished;
         WardrobeManager.OnOutfitEquipped -= UpdatePlayerPortrait;
         HouseFlowController.OnHouseStarted -= InitializeHousePortraits;
+
+        if (Instance == this)
+        {
+            OnCinematicStarted = null;
+            OnCinematicCompleted = null;
+            Instance = null;
+        }
     }
 
     private void InitializeHousePortraits(int houseLevel)
@@ -349,6 +356,43 @@ public class CinematicController : MonoBehaviour
         {
             ApplyAnimation(visualImage.transform, AnimationType.Bounce);
         }
+    }
+
+    /// <summary>
+    /// Forcefully stops any active cinematic and hides the UI immediately.
+    /// Called by UIManager on Game Over/Win for strict isolation.
+    /// </summary>
+    public void StopCinematic()
+    {
+        if (playbackCoroutine != null)
+        {
+            StopCoroutine(playbackCoroutine);
+            playbackCoroutine = null;
+        }
+
+        if (videoPlayer != null && videoPlayer.isPlaying)
+        {
+            videoPlayer.Stop();
+        }
+
+        if (director != null && director.state == PlayState.Playing)
+        {
+            director.Stop();
+        }
+
+        isPlaying = false;
+        currentCinematicID = null;
+        onCompleteCallback = null;
+        isExpressionLockedByCinematic = false;
+
+        HideCutsceneUI(true);
+        if (dialogueRoot != null) dialogueRoot.SetActive(false);
+        if (visualImage != null) visualImage.gameObject.SetActive(false);
+        if (playerImage != null) playerImage.gameObject.SetActive(false);
+        
+        var vPanel = GetVideoPanel();
+        if (vPanel != null) vPanel.SetActive(false);
+        if (videoDisplay != null) videoDisplay.gameObject.SetActive(false);
     }
 
     #endregion

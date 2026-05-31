@@ -1,13 +1,13 @@
 ﻿ID,HouseLevel,InteractionType,PromptTextAR,Duration,Threshold,CorrectBat,IncorrectBat,CorrectStomach,IncorrectStomach,CorrectEid,IncorrectEid,SpeakerName,SuccessExpression,FailureExpression
-SHAKE_Qahwa_1,1,Shake,هز الجوال للقبول!,8,6,-5,-5,15,0,10,3,خالة,Happy,Sad
-HOLD_Maamoul_1,1,Hold,استمر بالضغط للقبول!,8,1.5,-5,-5,15,0,10,3,خالة,Happy,Sad
-TAP_Tamer_1,1,Tap,المس للقبول!,8,6,-5,-5,15,0,10,3,خالة,Happy,Sad
-SHAKE_Aaseer_2,2,Shake,هز الجوال للقبول!,5,12,-5,-5,15,0,15,5,عمو,Happy,Sad
-HOLD_Sahoon_2,2,Hold,استمر بالضغط للقبول!,5,2.5,-5,-5,15,0,10,5,عمو,Happy,Sad
-TAP_Baklawa_2,2,Tap,المس للقبول!,5,12,-5,-5,15,0,10,5,عمو,Happy,Sad
-HOLD_Mansaf_3,3,Hold,استمر بالضغط للقبول!,5,3.5,-8,-8,15,0,10,8,جدو,Happy,Sad
-SHAKE_Knafeh_3,3,Shake,هز الجوال للقبول!,5,18,-8,-8,15,0,10,8,جدو,Happy,Sad
-TAP_Halawiyyat_3,3,Tap,المس للقبول!,4,14,-8,-8,15,0,10,8,جدو,Happy,Sad
-HOLD_BigPlate_4,4,Hold,استمر بالضغط للقبول!,4,3.2,-10,-10,25,0,25,10,ابن العم,Happy,Sad
-TAP_ForceEat_4,4,Tap,المس للقبول!,4,20,-10,-10,25,0,25,10,ابن العم,Happy,Sad
-SHAKE_Dessert_4,4,Shake,هز الجوال للقبول!,4,20,-10,-10,25,0,25,10,ابن العم,Happy,Sad
+SHAKE_Qahwa_1,1,Shake,هز الجوال للقبول!,8,5,0,-5,10,0,0,0,خالة,Happy,Sad
+HOLD_Maamoul_1,1,Hold,استمر بالضغط للقبول!,8,1.5,0,-5,10,0,0,0,خالة,Happy,Sad
+TAP_Tamer_1,1,Tap,المس للقبول!,8,6,0,-5,10,0,0,0,خالة,Happy,Sad
+SHAKE_Aaseer_2,2,Shake,هز الجوال للقبول!,5,12,0,-5,15,0,0,0,عمو,Happy,Sad
+HOLD_Sahoon_2,2,Hold,استمر بالضغط للقبول!,5,2.5,0,-5,15,0,0,0,عمو,Happy,Sad
+TAP_Baklawa_2,2,Tap,المس للقبول!,5,12,0,-5,15,0,0,0,عمو,Happy,Sad
+HOLD_Mansaf_3,3,Hold,استمر بالضغط للقبول!,5,3.5,0,-5,20,0,0,0,جدو,Happy,Sad
+SHAKE_Knafeh_3,3,Shake,هز الجوال للقبول!,5,18,0,-5,20,0,0,0,جدو,Happy,Sad
+TAP_Halawiyyat_3,3,Tap,المس للقبول!,4,14,0,-5,20,0,0,0,جدو,Happy,Sad
+HOLD_BigPlate_4,4,Hold,استمر بالضغط للقبول!,4,3.2,0,-10,25,0,0,0,ابن العم,Happy,Sad
+TAP_ForceEat_4,4,Tap,المس للقبول!,4,20,0,-10,25,0,0,0,ابن العم,Happy,Sad
+SHAKE_Dessert_4,4,Shake,هز الجوال للقبول!,4,20,0,-10,25,0,0,0,ابن العم,Happy,Sad

@@ -27,19 +27,15 @@ public class CameraShakeManager : MonoBehaviour
 
     private Tween _shakeTween;
     private Vector3 _originalCameraPos;
-
     private void Awake()
     {
         if (Instance == null)
         {
             Instance = this;
-            transform.SetParent(null);
-            DontDestroyOnLoad(gameObject);
         }
         else
         {
             Destroy(gameObject);
-            return;
         }
 
         if (targetCamera == null)
@@ -50,6 +46,12 @@ public class CameraShakeManager : MonoBehaviour
 
         // Validate references
         ValidateReferences();
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+        _shakeTween?.Kill();
     }
 
     /// <summary>

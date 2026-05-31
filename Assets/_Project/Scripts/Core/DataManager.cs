@@ -123,24 +123,25 @@ public class DataManager : MonoBehaviour
 
     private void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-            transform.SetParent(null);
-            DontDestroyOnLoad(gameObject);
-            
-            // Automatically find character data if pool is empty
-            if (characterDataPool == null || characterDataPool.Count == 0)
-            {
-                LoadCharactersFromResources();
-            }
-            
-            ParseAllCSVs();
-        }
-        else
+        if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
+            return;
         }
+        Instance = this;
+        
+        // Automatically find character data if pool is empty
+        if (characterDataPool == null || characterDataPool.Count == 0)
+        {
+            LoadCharactersFromResources();
+        }
+        
+        ParseAllCSVs();
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
     }
 
     private void LoadCharactersFromResources()

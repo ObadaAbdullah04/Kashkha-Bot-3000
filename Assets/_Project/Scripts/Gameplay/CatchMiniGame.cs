@@ -1,124 +1,107 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
+using UnityEngine.UI;
+using RTLTMPro;
 using DG.Tweening;
+using NaughtyAttributes;
+using UnityEngine.InputSystem;
 using System.Collections.Generic;
 
 /// <summary>
-/// Catch Mini-Game Manager - WORLD SPACE EDITION.
-///
-/// ARCHITECTURE PIVOT:
-/// - Player and Items are standard 2D GameObjects (Transform, SpriteRenderer)
-/// - UI Canvas is ONLY for Score and Timer text overlays
-/// - World space movement eliminates all UI input bleed and anchor issues
-/// - Screen Halves touch input + Keyboard fallback
-/// - Input Action assigned via Inspector
+/// World-space mini-game where the player moves a basket to catch falling items.
 /// </summary>
 public class CatchMiniGame : MonoBehaviour
 {
     #region Singleton
 
-    /// <summary>
-    /// Singleton instance for FallingItem scripts to call.
-    /// </summary>
     public static CatchMiniGame Instance { get; private set; }
 
     private void Awake()
     {
-        // Singleton setup
         if (Instance == null)
         {
             Instance = this;
         }
         else
         {
-            // Debug.LogWarning("[CatchMiniGame] Multiple instances detected! Destroying duplicate.");
             Destroy(gameObject);
             return;
-        }
-
-        // Validate input action assignment
-        if (moveAction == null || moveAction.action == null)
-        {
-            // Debug.LogWarning("[CatchMiniGame] moveAction not assigned! Please assign MoveHorizontal from DeviceControls in Inspector.");
         }
     }
 
     #endregion
 
+    [Header("Game Duration")]
+    [Tooltip("Total time for the mini-game (seconds). Hardcoded here to ignore external values.")]
+    [SerializeField] private float gameDuration = 30f;
+
     [Header("Movement Settings")]
-    [Tooltip("Player basket horizontal movement speed (world units per second)")]
+    [Tooltip("Player basket horizontal movement speed (world units per second).")]
     [SerializeField] private float moveSpeed = 8f;
 
     [Header("Input")]
-    [Tooltip("Input Action for horizontal movement (assign MoveHorizontal from DeviceControls)")]
+    [Tooltip("Input Action for horizontal movement.")]
     [SerializeField] private InputActionReference moveAction;
 
-    [Header("Spawner Settings")]
-    [Tooltip("Time between item spawns (lower = more items)")]
-    [SerializeField] private float spawnInterval = 0.8f;
+    [Header("Spawner Progressive Scaling")]
+    [Tooltip("Item spawn interval at the START of the game.")]
+    [SerializeField] private float startSpawnInterval = 1.0f;
+    [Tooltip("Item spawn interval at the END of the game.")]
+    [SerializeField] private float endSpawnInterval = 0.4f;
 
-    [Tooltip("Chance to spawn Eidia (good item) vs Ma'amoul (bad item)")]
+    [Space]
+    [Tooltip("Item fall speed at the START of the game.")]
+    [SerializeField] private float startFallSpeed = 6f;
+    [Tooltip("Item fall speed at the END of the game.")]
+    [SerializeField] private float endFallSpeed = 12f;
+
+    [Space]
+    [Tooltip("Chance to spawn two items at once at the END of the game.")]
     [Range(0f, 1f)]
-    [SerializeField] private float eidiaSpawnChance = 0.75f;
+    [SerializeField] private float maxMultipleSpawnChance = 0.4f;
 
     [Header("World Space References")]
-    [Tooltip("Player basket prefab to instantiate at runtime (standard 2D sprite, NOT UI)")]
+    [Tooltip("Visual prefab for the player's basket.")]
     [SerializeField] private GameObject playerBasketPrefab;
 
-    [Tooltip("Y position for player basket in world space")]
+    [Tooltip("The fixed vertical position of the basket.")]
     [SerializeField] private float _playerY = -3f;
 
-    [Tooltip("Parent transform for spawned items (empty GameObject)")]
+    [Tooltip("Empty parent transform to keep the scene hierarchy clean.")]
     [SerializeField] private Transform itemsParent;
 
-    [Tooltip("Falling item prefab (Eidia - standard 2D sprite)")]
+    [Tooltip("Positive reward prefab (Eidia).")]
     [SerializeField] private GameObject fallingItemPrefab;
-
-    [Tooltip("Falling item prefab (Ma'amoul - standard 2D sprite)")]
-    [SerializeField] private GameObject fallingBadItemPrefab;
 
     [Header("Feedback Settings")]
     [SerializeField] private Vector3 catchPunchScale = new Vector3(0.2f, 0.2f, 1f);
     [SerializeField] private float catchPunchDuration = 0.3f;
-    [SerializeField] private float avoidShakeDuration = 0.3f;
-    [SerializeField] private float avoidShakeStrength = 0.3f;
-    [SerializeField] private int avoidShakeVibrato = 22;
-    [SerializeField] private float avoidShakeRandomness = 90f;
 
     [Header("Reward Balancing")]
-    [Tooltip("Scrap earned per score point (e.g., 0.5 = 1 scrap per 2 points)")]
+    [Tooltip("Calculated scrap conversion rate from game score.")]
     [SerializeField] private float scrapPerPoint = 0.5f;
 
-    // World space references (set at runtime)
     private Transform playerBasket;
 
     [Header("UI Overlays (Text Only)")]
     [SerializeField] private RTLTMPro.RTLTextMeshPro timerText;
     [SerializeField] private RTLTMPro.RTLTextMeshPro scoreText;
 
-    // World space boundaries (calculated at runtime)
     private float _minX;
     private float _maxX;
     private float _spawnY;
     private float _destroyY;
 
-    // Game state - TIME ATTACK
     private float _timeRemaining;
-    private int _lastCachedSecond = -1; // NEW: Cache for timer text
+    private int _lastCachedSecond = -1;
     private int _score = 0;
     private bool _isPlaying = false;
     private float _spawnTimer = 0f;
 
-    // Active items tracking (for cleanup only)
     private List<Transform> _activeItems = new List<Transform>();
 
-    // Track spawned player basket for cleanup
     private GameObject _spawnedPlayerBasket;
     private SpriteRenderer _playerSpriteRenderer;
 
-    /// <summary>
-    /// Enable input action when component is enabled.
-    /// </summary>
     private void OnEnable()
     {
         if (moveAction != null && moveAction.action != null)
@@ -127,72 +110,44 @@ public class CatchMiniGame : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Clean up all DOTween sequences, disable input, and destroy spawned objects.
-    /// </summary>
     private void OnDisable()
     {
-        // Disable input action
         if (moveAction != null && moveAction.action != null)
         {
             moveAction.action.Disable();
         }
 
-        // Kill all tweens on playerBasket
         if (playerBasket != null)
         {
             playerBasket.DOKill();
         }
 
-        // Kill all tweens on active items
         foreach (var item in _activeItems)
         {
             if (item != null)
                 item.DOKill();
         }
 
-        // Destroy spawned player basket
         if (_spawnedPlayerBasket != null)
         {
             Destroy(_spawnedPlayerBasket);
         }
 
-        // Clear tracking list to prevent stale references
         _activeItems.Clear();
     }
 
     private void Start()
     {
-        // === DIAGNOSTIC LOGGER ===
-#if UNITY_EDITOR
-        // Debug.Log("=== [CatchMiniGame] WORLD SPACE SETUP ===");
-        // Debug.Log($"[CatchMiniGame] playerBasketPrefab: {(playerBasketPrefab != null ? "ASSIGNED" : "NULL!")}");
-        // Debug.Log($"[CatchMiniGame] itemsParent: {(itemsParent != null ? "ASSIGNED" : "NULL!")}");
-        // Debug.Log($"[CatchMiniGame] fallingItemPrefab: {(fallingItemPrefab != null ? "ASSIGNED" : "NULL!")}");
-        // Debug.Log($"[CatchMiniGame] fallingBadItemPrefab: {(fallingBadItemPrefab != null ? "ASSIGNED" : "NULL!")}");
-        // Debug.Log($"[CatchMiniGame] moveAction: {(moveAction != null ? "ASSIGNED" : "NULL! Assign in Inspector!")}");
-        // Debug.Log($"[CatchMiniGame] _playerY: {_playerY}");
-
-        // Debug.Log($"[CatchMiniGame] Spawn Interval: {spawnInterval}s | Eidia Chance: {eidiaSpawnChance * 100:F0}%");
-        // Debug.Log("========================================");
-#endif
-
-        // Calculate world space boundaries from camera
         CalculateWorldBoundaries();
-
-#if UNITY_EDITOR
-        // Debug.Log("[CatchMiniGame] Waiting for Initialize() call from MiniGameManager...");
-#endif
     }
 
     /// <summary>
-    /// Task 1: Calculate world space boundaries using Camera viewport.
+    /// Calculates the horizontal movement constraints based on the camera's viewport and player sprite size.
     /// </summary>
     private void CalculateWorldBoundaries()
     {
         if (Camera.main == null)
         {
-            // Debug.LogError("[CatchMiniGame] Main Camera not found! Using fallback values.");
             _minX = -4f;
             _maxX = 4f;
             _spawnY = 6f;
@@ -200,12 +155,10 @@ public class CatchMiniGame : MonoBehaviour
             return;
         }
 
-        // Calculate screen edges in world space
         Vector3 leftEdge = Camera.main.ViewportToWorldPoint(new Vector3(0, 0, Camera.main.nearClipPlane));
         Vector3 rightEdge = Camera.main.ViewportToWorldPoint(new Vector3(1, 0, Camera.main.nearClipPlane));
 
-        // Get player sprite width for padding (from prefab if basket not spawned yet)
-        float playerHalfWidth = 0.5f; // Default fallback
+        float playerHalfWidth = 0.5f; 
         SpriteRenderer sr = null;
 
         if (playerBasket != null)
@@ -222,26 +175,18 @@ public class CatchMiniGame : MonoBehaviour
             playerHalfWidth = sr.sprite.bounds.extents.x;
         }
 
-        // Set boundaries with padding (so player doesn't go off-screen)
         _minX = leftEdge.x + playerHalfWidth;
         _maxX = rightEdge.x - playerHalfWidth;
 
-        // Spawn Y: just above the top of the screen (1.1 = 10% above viewport)
         _spawnY = Camera.main.ViewportToWorldPoint(new Vector3(0, 1.1f, 0)).y;
-
-        // Destroy Y: just below the bottom of the screen
         _destroyY = Camera.main.ViewportToWorldPoint(new Vector3(0, -0.1f, 0)).y;
-
-#if UNITY_EDITOR
-        // Debug.Log($"[CatchMiniGame] World Boundaries: minX={_minX:F2}, maxX={_maxX:F2}, spawnY={_spawnY:F2}, destroyY={_destroyY:F2}");
-#endif
     }
 
     /// <summary>
-    /// Initialize the mini-game with duration from MiniGameManager.
-    /// Spawns the player basket prefab in world space.
+    /// Starts the mini-game, setting the timer and spawning the player basket.
+    /// Note: The passed duration is ignored in favor of the local hardcoded gameDuration.
     /// </summary>
-    public void Initialize(float gameDuration)
+    public void Initialize(float ignoredDuration)
     {
         _timeRemaining = gameDuration;
         _score = 0;
@@ -249,48 +194,31 @@ public class CatchMiniGame : MonoBehaviour
         _spawnTimer = 0f;
         _activeItems.Clear();
 
-        // Ensure touch actions are enabled for mobile direct-follow
         if (InputManager.Instance != null)
         {
+            InputManager.Instance.EnableAction("MoveHorizontal");
             InputManager.Instance.EnableAction("TouchPosition");
             InputManager.Instance.EnableAction("TouchStart");
         }
 
-        // Spawn the basket in the WORLD, not the canvas!
         if (playerBasketPrefab != null)
         {
             GameObject basketGo = Instantiate(playerBasketPrefab, new Vector3(0, _playerY, 0), Quaternion.identity);
             playerBasket = basketGo.transform;
             _spawnedPlayerBasket = basketGo;
             _playerSpriteRenderer = basketGo.GetComponentInChildren<SpriteRenderer>();
-#if UNITY_EDITOR
-            // Debug.Log($"[CatchMiniGame] PlayerBasket spawned at (0, {_playerY}, 0)");
-#endif
-        }
-        else
-        {
-            // Debug.LogError("[CatchMiniGame] playerBasketPrefab not assigned!");
         }
 
         if (scoreText != null)
             scoreText.text = "0";
-
-#if UNITY_EDITOR
-        // Debug.Log($"[CatchMiniGame] TIME ATTACK STARTED! Duration: {gameDuration}s");
-#endif
     }
 
-    /// <summary>
-    /// Main update loop - handles timer, spawning, and item movement.
-    /// </summary>
     private void Update()
     {
         if (!_isPlaying) return;
 
-        // === TIME ATTACK TIMER ===
         _timeRemaining -= Time.deltaTime;
 
-        // Update UI timer (CACHED to reduce GC)
         int currentSecond = Mathf.CeilToInt(_timeRemaining);
         if (currentSecond != _lastCachedSecond)
         {
@@ -299,34 +227,39 @@ public class CatchMiniGame : MonoBehaviour
                 timerText.text = _lastCachedSecond.ToString();
         }
 
-        // === SPAWNER LOOP ===
         if (_timeRemaining > 0f)
         {
+            float difficultyProgress = 1f - (_timeRemaining / gameDuration);
+            float currentSpawnInterval = Mathf.Lerp(startSpawnInterval, endSpawnInterval, difficultyProgress);
+
             _spawnTimer += Time.deltaTime;
-            if (_spawnTimer >= spawnInterval)
+            if (_spawnTimer >= currentSpawnInterval)
             {
                 _spawnTimer = 0f;
-                SpawnItem();
+                
+                // Spawn one or two items based on progress
+                SpawnItem(difficultyProgress);
+                
+                float multiSpawnChance = Mathf.Lerp(0, maxMultipleSpawnChance, difficultyProgress);
+                if (Random.value < multiSpawnChance)
+                {
+                    SpawnItem(difficultyProgress);
+                }
             }
         }
         else
         {
-            // Time's up!
             _timeRemaining = 0f;
             EndGame();
             return;
         }
 
-        // === PLAYER MOVEMENT ===
         HandlePlayerMovement();
-
-        // === UPDATE FALLING ITEMS ===
         UpdateFallingItems();
     }
 
     /// <summary>
-    /// Smooth World Space Movement using New Input System + Touch follow override.
-    /// IMPROVED: Now uses direct follow for mobile, making it much more responsive.
+    /// Processes movement inputs, prioritizing direct touch follow on mobile with snappy responsiveness.
     /// </summary>
     private void HandlePlayerMovement()
     {
@@ -337,137 +270,86 @@ public class CatchMiniGame : MonoBehaviour
         bool isDirectTouch = false;
         float targetWorldX = playerBasket.position.x;
 
-        // 1. MOBILE/POINTER OVERRIDE: Direct Follow
-        // Check if player is touching or clicking anywhere on screen
         if (InputManager.Instance.IsTouching())
         {
             isDirectTouch = true;
             Vector2 screenPos = InputManager.Instance.GetTouchPosition();
             
-            // Convert to world space
             if (Camera.main != null)
             {
-                // We only care about the X coordinate
                 Vector3 worldPos = Camera.main.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, Camera.main.nearClipPlane));
                 targetWorldX = worldPos.x;
             }
         }
         else
         {
-            // 2. KEYBOARD/JOYSTICK INPUT (Fallback)
-            // Read input from InputManager wrapper
             moveInput = InputManager.Instance.GetMoveHorizontalValue().x;
         }
 
-        // === APPLY MOVEMENT ===
         float currentX = playerBasket.position.x;
         float nextX = currentX;
 
         if (isDirectTouch)
         {
-            // For touch, move TOWARD the target world X at a high speed
-            // This feels much better than binary left/right buttons
-            // Use a higher speed multiplier for touch follow to make it feel snappy
             const float TOUCH_MOVE_MULTIPLIER = 1.5f; 
             nextX = Mathf.MoveTowards(currentX, targetWorldX, moveSpeed * TOUCH_MOVE_MULTIPLIER * Time.deltaTime);
-            
-            // Calculate effective moveInput for flipping sprite
             moveInput = (nextX - currentX) / Time.deltaTime;
         }
         else if (moveInput != 0f)
         {
-            // For keyboard/joystick, move by delta
             nextX = currentX + (moveInput * moveSpeed * Time.deltaTime);
         }
 
-        // === CLAMP TO BOUNDARIES ===
         nextX = Mathf.Clamp(nextX, _minX, _maxX);
 
-        // === SPRITE FLIPPING ===
         if (_playerSpriteRenderer != null)
         {
-            // Use moveInput for flipping (either keyboard input or touch delta)
-            if (moveInput > 0.1f) _playerSpriteRenderer.flipX = false; // Face Right
-            else if (moveInput < -0.1f) _playerSpriteRenderer.flipX = true; // Face Left
+            if (moveInput > 0.1f) _playerSpriteRenderer.flipX = false; 
+            else if (moveInput < -0.1f) _playerSpriteRenderer.flipX = true; 
         }
 
-        // === APPLY POSITION ===
         playerBasket.position = new Vector3(nextX, playerBasket.position.y, playerBasket.position.z);
     }
 
     /// <summary>
-    /// Task 2: Spawn items in World Space.
-    private void SpawnItem()
+    /// Spawns a new falling item at a random horizontal position.
+    /// Now supports progressive fall speed.
+    /// </summary>
+    private void SpawnItem(float difficultyProgress)
     {
-        if (fallingItemPrefab == null && fallingBadItemPrefab == null)
+        if (fallingItemPrefab == null)
         {
-            // Debug.LogWarning("[CatchMiniGame] No item prefabs assigned!");
             return;
         }
 
-        // Random chance: 75% Eidia (good), 25% Ma'amoul (bad)
-        bool isEidia = Random.value < eidiaSpawnChance;
-        GameObject prefabToSpawn = null;
-
-        if (isEidia)
-        {
-            prefabToSpawn = fallingItemPrefab;
-        }
-        else
-        {
-                prefabToSpawn = fallingBadItemPrefab;
-        }
-
-        if (prefabToSpawn == null)
-        {
-            // Debug.LogWarning($"[CatchMiniGame] Prefab to spawn is null! isEidia={isEidia}");
-            return;
-        }
-
-        #if UNITY_EDITOR
-        // // Debug.Log($"[CatchMiniGame] Spawning: {prefabToSpawn.name}");
-        #endif
-
-        // Random X between boundaries
         float randomX = Random.Range(_minX, _maxX);
-
-        // Spawn position in world space
         Vector3 spawnPos = new Vector3(randomX, _spawnY, 0f);
 
-        // Instantiate in world space
-        GameObject newItem = Instantiate(prefabToSpawn, spawnPos, Quaternion.identity);
+        GameObject newItem = Instantiate(fallingItemPrefab, spawnPos, Quaternion.identity);
         
-        // Ensure Z is exactly 0 and sorting order is high for visibility
-        newItem.transform.position = new Vector3(randomX, _spawnY, 0f);
+        // Apply progressive fall speed
+        FallingItem itemScript = newItem.GetComponent<FallingItem>();
+        if (itemScript != null)
+        {
+            float currentFallSpeed = Mathf.Lerp(startFallSpeed, endFallSpeed, difficultyProgress);
+            itemScript.SetSpeed(currentFallSpeed);
+        }
+
         SpriteRenderer sr = newItem.GetComponentInChildren<SpriteRenderer>();
         if (sr != null)
         {
-            sr.sortingOrder = 100; // Items well above background
+            sr.sortingOrder = 100;
         }
 
-        // JUICE: Scale up animation (preserve prefab's original scale)
         Vector3 originalScale = newItem.transform.localScale;
         newItem.transform.localScale = Vector3.zero;
         newItem.transform.DOScale(originalScale, 0.3f).SetEase(Ease.OutBack);
 
-        // NOTE: Items stay in world space (no parent) to prevent Canvas transform issues.
-        // If you need organization, create a world-space empty GameObject as container.
-
-        // Track for cleanup
         _activeItems.Add(newItem.transform);
-
-#if UNITY_EDITOR
-        // Debug.Log($"[CatchMiniGame] Spawned {(isEidia ? "Eidia" : "Ma'amoul")} at X={randomX:F2}");
-#endif
     }
 
-    /// <summary>
-    /// Update falling items - cleanup destroyed references only.
-    /// Movement and collision handled by FallingItem script on each prefab.
-    /// </summary>
     private void UpdateFallingItems()
     {
-        // Cleanup destroyed items from tracking list
         for (int i = _activeItems.Count - 1; i >= 0; i--)
         {
             if (_activeItems[i] == null)
@@ -478,70 +360,39 @@ public class CatchMiniGame : MonoBehaviour
     }
 
     /// <summary>
-    /// Called by FallingItem script when an item is caught.
+    /// Callback from falling items when they collide with the basket.
+    /// Triggers scoring, SFX, and visual feedback.
     /// </summary>
-    public void OnItemCaught(bool isEidia)
+    public void OnItemCaught()
     {
         if (!_isPlaying) return;
 
-        if (isEidia)
+        _score++;
+        if (scoreText != null)
         {
-            // Caught Eidia (good)!
-            _score++;
-            if (scoreText != null)
-            {
-                scoreText.text = _score.ToString();
-                // JUICE: Punch scale on score increase
-                scoreText.transform.DOPunchScale(Vector3.one * 0.2f, 0.3f);
-            }
-
-            // Visual feedback - punch effect
-            if (playerBasket != null)
-            {
-                playerBasket.DOPunchScale(catchPunchScale, catchPunchDuration).SetUpdate(true);
-            }
-
-            // Play catch sound (use enum-based system)
-            AudioManager.Instance?.PlaySFX(AudioManager.SFXType.CatchGood);
-
-#if UNITY_EDITOR
-            // Debug.Log($"[CatchMiniGame] Eidia caught! Score: {_score}");
-#endif
+            scoreText.text = _score.ToString();
+            scoreText.transform.DOKill();
+            scoreText.transform.localScale = Vector3.one;
+            scoreText.transform.DOPunchScale(Vector3.one * 0.2f, 0.3f);
         }
-        else
+
+        if (playerBasket != null)
         {
-            // Caught Ma'amoul (bad)!
-            _score = Mathf.Max(0, _score - 1);
-            if (scoreText != null)
-            {
-                scoreText.text = _score.ToString();
-                // JUICE: Shake scale on score decrease
-                scoreText.transform.DOShakePosition(0.3f, 10f);
-            }
-
-            // Visual feedback - shake effect
-            if (playerBasket != null)
-            {
-                playerBasket.DOShakeScale(avoidShakeDuration, avoidShakeStrength, avoidShakeVibrato, avoidShakeRandomness).SetUpdate(true);
-            }
-
-            // Play avoid sound (use enum-based system)
-            AudioManager.Instance?.PlaySFX(AudioManager.SFXType.CatchBad);
-
-#if UNITY_EDITOR
-            // Debug.Log($"[CatchMiniGame] Ma'amoul caught! Score: {_score}");
-#endif
+            playerBasket.DOKill();
+            playerBasket.localScale = Vector3.one;
+            playerBasket.DOPunchScale(catchPunchScale, catchPunchDuration).SetUpdate(true);
         }
+
+        AudioManager.Instance?.PlaySFX(AudioManager.SFXType.CatchGood);
     }
 
     /// <summary>
-    /// End the mini-game and transition to next house.
+    /// Ends the mini-game session, calculates rewards, and notifies the manager.
     /// </summary>
     private void EndGame()
     {
         _isPlaying = false;
 
-        // JUICE: Show Time's Up feedback
         if (timerText != null)
         {
             timerText.text = "00";
@@ -549,13 +400,9 @@ public class CatchMiniGame : MonoBehaviour
             timerText.transform.DOPunchScale(Vector3.one * 0.5f, 0.5f).SetUpdate(true);
         }
 
-        // Wait a brief moment for the player to see the feedback
         DOVirtual.DelayedCall(1.5f, () => {
-            // Closing the Economic Loop (Phase 3)
-            // Balancing: 1 Eidia per score
             int scrapReward = _score > 0 ? Mathf.Max(1, Mathf.FloorToInt(_score * scrapPerPoint)) : 0;
 
-            // Return to MiniGameManager - this will handle GameManager.OnMiniGameComplete
             if (MiniGameManager.Instance != null)
                 MiniGameManager.Instance.EndMiniGame(_score, scrapReward);
 

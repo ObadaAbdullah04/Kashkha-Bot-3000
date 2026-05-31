@@ -55,7 +55,6 @@ public class TransitionPlayer : MonoBehaviour
 
     private UnityEngine.UI.Image fadeImage;
     private Sequence _activeSequence;
-    private static bool _isPersistent = false; // Tracks if the engine call has been made
 
     #endregion
 
@@ -72,28 +71,17 @@ public class TransitionPlayer : MonoBehaviour
 
         Instance = this;
         
-        // 2. Persistence Setup - The most robust check
-        if (Application.isPlaying && !_isPersistent)
-        {
-            // Detach from parent to ensure we are a root object (required for DDOL)
-            if (transform.parent != null)
-            {
-                transform.SetParent(null);
-            }
-
-            // Only call DDOL if the static flag is false
-            // This prevents the internal Unity "m_GameObjects.find" assertion failure
-            DontDestroyOnLoad(gameObject);
-            _isPersistent = true;
-        }
-        else if (Instance == this && !_isPersistent)
-        {
-            // This case handles initialization in the first scene if not playing
-            // Or if Instance was set but DDOL wasn't called yet
-        }
-
         // 3. Component Setup
         SetupComponents();
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            OnTransitionComplete = null;
+            Instance = null;
+        }
     }
 
     private void SetupComponents()

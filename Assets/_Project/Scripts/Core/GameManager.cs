@@ -21,23 +21,48 @@ public class GameManager : MonoBehaviour
 
     public static GameManager Instance { get; private set; }
 
+    /// <summary>
+    /// Static flag to trigger a run start after a scene reload.
+    /// Used for "Try Again" functionality.
+    /// </summary>
+    public static bool StartRunOnLoad = false;
+
     private void Awake()
     {
+        // Robust Singleton Pattern
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+
         // Optimization: Cap frame rate at 60 for mobile performance
         Application.targetFrameRate = 60;
 
         DOTween.Init(recycleAllByDefault: true, useSafeMode: false, logBehaviour: LogBehaviour.ErrorsOnly)
                .SetCapacity(200, 50);
+    }
 
-        if (Instance == null)
+    private void Start()
+    {
+        if (StartRunOnLoad)
         {
-            Instance = this;
-            transform.SetParent(null);
-            DontDestroyOnLoad(gameObject);
+            StartRunOnLoad = false;
+            StartRun();
         }
-        else
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
         {
-            Destroy(gameObject);
+            // PHASE 18: Clear static events to prevent ghost references between scene reloads
+            OnStateChanged = null;
+            OnRunStarted = null;
+            OnRunEidiaUpdated = null;
+            
+            Instance = null;
         }
     }
 
@@ -62,7 +87,6 @@ public class GameManager : MonoBehaviour
     [SerializeField] private string pathDrawingTransitionText = "تحدي المتاهة!";
     [SerializeField] private string memorySwapTransitionText = "تحدي الذاكرة!";
     [SerializeField] private string backToHubTransitionText = "العودة للمجلس...";
-    [SerializeField] private string playAgainTransitionText = "بدء جولة جديدة...";
 
     #endregion
 
@@ -126,11 +150,12 @@ public class GameManager : MonoBehaviour
 
     #region State Management
 
+    /// <summary>
+    /// Updates the game state and notifies all listeners.
+    /// </summary>
     public void ChangeState(GameState newState)
     {
-        GameState previous = currentState;
         currentState = newState;
-        // Debug.Log($"[GameManager] State: {previous} → {currentState}");
         OnStateChanged?.Invoke(currentState);
     }
 
@@ -138,23 +163,23 @@ public class GameManager : MonoBehaviour
 
     #region Eidia & Reward Tracking
 
+    /// <summary>
+    /// Adds earned Eidia to the current run total and persists the reward delta.
+    /// </summary>
     private void HandleEidiaEarned(int amount)
     {
         if (amount <= 0) return;
         
         accumulatedEidia += amount;
-        
-        // Persist lifetime Eidia immediately (delta only)
         SaveManager.Instance?.AddRunRewards(amount);
-        
         OnRunEidiaUpdated?.Invoke(accumulatedEidia);
-        
-        // Debug.Log($"[GameManager] Eidia Earned: +{amount}. Run Total: {accumulatedEidia}");
     }
 
+    /// <summary>
+    /// Processes rewards and visual feedback when a card encounter is swiped.
+    /// </summary>
     private void HandleCardProcessed(float batteryDelta, int eidia, bool wasCorrect)
     {
-        // Prevent eidia accumulation after game over or win
         if (currentState == GameState.GameOver || currentState == GameState.Win) return;
 
         if (eidia > 0)
@@ -163,21 +188,22 @@ public class GameManager : MonoBehaviour
         }
 
         PlayFeedbackEffects(wasCorrect);
-
-        // Debug.Log($"[GameManager] Card: {(wasCorrect ? "CORRECT" : "INCORRECT")} | +{eidia} Eidia");
     }
 
     #endregion
 
     #region Run Lifecycle
 
+    /// <summary>
+    /// Initializes a fresh game session, resetting all meters, house progress, and currencies.
+    /// Starts the FTUE (First Time User Experience) video sequence for new players.
+    /// </summary>
     public void StartRun()
     {
-        // PHASE 18: Ensure a clean state when restarting
         HouseFlowController.Instance?.CancelActiveSequence();
         MiniGameManager.Instance?.CleanupActiveMiniGame();
 
-        currentHouseLevel = 0; // Reset to 0 so next house is 1
+        currentHouseLevel = 0; 
         isHouse4Active = false;
         accumulatedEidia = 0;
         encounterStreakBonus = 0;
@@ -186,38 +212,21 @@ public class GameManager : MonoBehaviour
 
         OnRunEidiaUpdated?.Invoke(accumulatedEidia);
 
-        // Debug.Log($"[GameManager] Run Seed: {currentRunSeed}");
-
-        // SYNC CURRENCY at start of run so wardrobe shows correct values
         WardrobeManager.Instance?.SyncScrap();
-
-        // FloatingTextManager reference removed (unused)
-
         MeterManager.Instance?.ResetMeters();
-        
-        // CRITICAL: Reset post-processing on restart
         URPPostProcessing.Instance?.ResetEffects();
 
         OnRunStarted?.Invoke();
 
-        // Show unified hub (Houses tab) to start the run
-        // FTUE: Play Intro Video and start walkthrough on first run
         if (SaveManager.Instance != null && !SaveManager.Instance.HasSeenTutorial("HubWalkthrough"))
         {
-            // 1. INSTANTLY hide everything to avoid flashes
             UIManager.Instance?.HideAllPanels();
             
-            // 2. Play transition and STAY BLACK while video starts
             if (TransitionPlayer.Instance != null)
             {
-                // We use a very long duration (10s) and 'instant: true' to hold 
-                // a solid black screen with no fades until the video is ready.
                 TransitionPlayer.Instance.PlayTransition(introTransitionText, onMidpoint: () => {
-                    
-                    // 3. Trigger video while screen is fully black
                     CinematicController.Instance?.PlayVideo("Intro", (videoID) =>
                     {
-                        // Video finished callback
                         ShowUnifiedHub();
                         if (UnifiedHubManager.Instance != null)
                         {
@@ -225,14 +234,12 @@ public class GameManager : MonoBehaviour
                         }
                     }, 
                     onPrepared: () => {
-                        // 4. Video is ready! INSTANTLY remove the black blind
                         TransitionPlayer.Instance.SkipTransition();
                     });
                 }, overrideTextDuration: 10f, instant: true); 
             }
             else
             {
-                // Fallback if no transition player
                 CinematicController.Instance?.PlayVideo("Intro", (videoID) => {
                     ShowUnifiedHub();
                     UnifiedHubManager.Instance?.StartHubTutorial();
@@ -250,23 +257,17 @@ public class GameManager : MonoBehaviour
     #region House Management
 
     /// <summary>
-    /// PHASE 9.6: Starts a house using self-driving coroutine flow.
-    /// Loads the house sequence and hands control to HouseFlowController.
+    /// Starts a house visit by triggering transitions and resetting house-specific counters.
+    /// Hand control to HouseFlowController for sequence execution.
     /// </summary>
     public void StartHouse(int houseLevel)
     {
         currentHouseLevel = houseLevel;
         encounterStreakBonus = 0;
-        eidiaAtStartOfHouse = accumulatedEidia; // Capture for scrap delta
+        eidiaAtStartOfHouse = accumulatedEidia;
         MeterManager.Instance?.ResetHouseCounters();
 
-        // Debug.Log($"[GameManager] Starting House {currentHouseLevel}!");
-
-        // REFRESH HUD BEFORE ANYTHING HAPPENS (ensure meters show correct values)
         UIManager.Instance?.RefreshMetersPublic();
-
-        // CRITICAL FIX: Hide gameplay HUD before transition so nothing shows behind it
-        // BUT don't hide the hub yet - it will be covered by the transition fade-in
         UIManager.Instance?.HideSwipeEncounter();
         UIManager.Instance?.HideInteractionHUD();
 
@@ -276,8 +277,6 @@ public class GameManager : MonoBehaviour
             TransitionPlayer.Instance.PlayTransition(text, 
                 onMidpoint: () =>
                 {
-                    // This callback fires when screen is fully black (mid-point)
-                    // IDEAL FOR SETUP: Hide hub and change state while hidden
                     UIManager.Instance?.HideUnifiedHub();
                     ChangeState(GameState.Encounter);
                     UIManager.Instance?.ShowSwipeEncounter();
@@ -285,11 +284,9 @@ public class GameManager : MonoBehaviour
                 overrideTextDuration: 0f, 
                 onReady: () =>
                 {
-                    // This callback fires when wait duration is OVER (just before fade-out)
-                    // IDEAL FOR STARTING ACTION: Start the actual house flow here
                     StartHouseFlowController(houseLevel);
                 },
-                instant: true); // PHASE 18: Instant black
+                instant: true);
         }
         else
         {
@@ -301,14 +298,12 @@ public class GameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// PHASE 9.6: Starts the self-driving house flow coroutine.
-    /// HouseFlowController drives itself via coroutines.
+    /// Initiates the house sequence via the HouseFlowController.
     /// </summary>
     private void StartHouseFlowController(int houseLevel)
     {
         if (HouseFlowController.Instance == null)
         {
-            // Debug.LogError("[GameManager] HouseFlowController not available! Cannot start house.");
             EndHouse();
             return;
         }
@@ -317,29 +312,23 @@ public class GameManager : MonoBehaviour
 
         if (sequence == null || sequence.Sequence == null || sequence.Sequence.Count == 0)
         {
-            // Debug.LogError($"[GameManager] No sequence data for House {houseLevel}!");
             EndHouse();
             return;
         }
 
-        // Start the self-driving coroutine
         StartCoroutine(HouseFlowController.Instance.PlayHouseSequence(houseLevel, sequence));
     }
 
     /// <summary>
-    /// PHASE 9.6: Gets the HouseSequenceData for a house level.
-    /// Loads from Resources folder (Sequences/House{level}_Sequence.asset).
-    /// Falls back to auto-generated test sequence if not found.
+    /// Loads the house sequence asset from Resources or generates a test sequence if missing.
     /// </summary>
     private HouseSequenceData GetHouseSequenceForLevel(int houseLevel)
     {
-        // Resources.Load searches relative to any Resources/ folder
         string path = $"Sequences/House{houseLevel}_Sequence";
         HouseSequenceData sequence = Resources.Load<HouseSequenceData>(path);
 
         if (sequence == null)
         {
-            // Debug.LogWarning($"[GameManager] HouseSequenceData not found at '{path}'. Generating test sequence.");
             sequence = ScriptableObject.CreateInstance<HouseSequenceData>();
             sequence.name = $"House{houseLevel}_Test";
             sequence.HouseLevel = houseLevel;
@@ -350,8 +339,7 @@ public class GameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// PHASE 9.6: Creates a test sequence from CSV question pool.
-    /// Used as fallback when HouseSequenceData assets aren't available.
+    /// Creates a fallback test sequence from the question pool.
     /// </summary>
     private List<SequenceElement> CreateTestSequence(int houseLevel)
     {
@@ -360,7 +348,6 @@ public class GameManager : MonoBehaviour
         var questions = DataManager.Instance?.GetQuestionsForHouse(houseLevel);
         if (questions != null && questions.Count > 0)
         {
-            // Pick first 4 questions as a simple test
             int count = Mathf.Min(4, questions.Count);
             for (int i = 0; i < count; i++)
             {
@@ -369,8 +356,6 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-            // Debug.LogWarning($"[GameManager] No questions in CSV for House {houseLevel}!");
-            // Add a dummy element so the sequence isn't empty
             elements.Add(new SequenceElement(ElementType.Question, "Q1"));
         }
 
@@ -394,60 +379,39 @@ public class GameManager : MonoBehaviour
     #region House Completion
 
     /// <summary>
-    /// PHASE 9: Called when HouseFlowController completes a house.
+    /// Called when the HouseFlowController finishes a house sequence.
     /// </summary>
     private void HandleHouseFlowCompleted(int houseLevel)
     {
-        // Debug.Log($"[GameManager] House {houseLevel} flow completed!");
-        
-        // House complete - move to next
         EndHouse();
     }
 
+    /// <summary>
+    /// Marks the house as complete and either wins the game (if House 4) or returns to the Hub.
+    /// </summary>
     private void EndHouse()
     {
-        // Mark house as complete if valid house level
         if (currentHouseLevel >= 1 && currentHouseLevel <= 4)
         {
             completedHouses[currentHouseLevel] = true;
         }
 
-        // House 4 completion - trigger win immediately (no hub shown)
         if (currentHouseLevel == 4)
         {
-            // Debug.Log("[GameManager] House 4 completed! Triggering win...");
-            if (isHouse4Active)
-            {
-                // Debug.Log("[GameManager] INSANE MODE COMPLETE!");
-                WinGame(isHouse4Clear: true);
-            }
-            else
-            {
-                // Debug.Log("[GameManager] Normal House 4 complete - winning!");
-                WinGame(isHouse4Clear: false);
-            }
+            WinGame(isHouse4Clear: isHouse4Active);
             return;
         }
 
-        // Debug.Log($"[GameManager] House {currentHouseLevel} complete! Going to Hub...");
-
-        // Mark this house as complete in the Unified Hub
         UnifiedHubManager.Instance?.MarkHouseComplete(currentHouseLevel);
-
-        // Show hub for next action
         ShowUnifiedHub();
     }
 
+    /// <summary>
+    /// Called when an inter-house mini-game finishes.
+    /// </summary>
     public void OnMiniGameComplete(int eidiaEarned)
     {
-        // Debug.Log($"[GameManager] === OnMiniGameComplete === Eidia earned: {eidiaEarned}");
-        
-        // Use centralized handler
         HandleEidiaEarned(eidiaEarned);
-
-        // NOTE: Scrap is already awarded by MiniGameManager.EndMiniGame using the specific scrapEarned calculation.
-
-        // Debug.Log($"[GameManager] Accumulated Eidia: {accumulatedEidia}");
         ShowUnifiedHub();
     }
 
@@ -456,26 +420,20 @@ public class GameManager : MonoBehaviour
     #region Unified Hub Flow
 
     /// <summary>
-    /// Shows the unified hub panel and updates game state.
-    /// Called after each house/mini-game completion.
+    /// Returns the player to the Unified Hub and triggers the transition.
     /// </summary>
     private void ShowUnifiedHub()
     {
-        // PHASE 18: Transition back to hub
         if (TransitionPlayer.Instance != null && currentState != GameState.HouseHub && currentState != GameState.MainMenu)
         {
             TransitionPlayer.Instance.PlayTransition(backToHubTransitionText, () =>
             {
-                // Mid-point (screen is black)
-                
-                // CRITICAL: Cleanup any active mini-game instance here
                 MiniGameManager.Instance?.CleanupActiveMiniGame();
-
                 ChangeState(GameState.HouseHub);
                 int next = currentHouseLevel + 1;
                 UnifiedHubManager.Instance?.InitializeHub(next, completedHouses);
                 UIManager.Instance?.ShowUnifiedHub();
-            }, instant: true); // PHASE 18: Instant black
+            }, instant: true);
         }
         else
         {
@@ -485,44 +443,41 @@ public class GameManager : MonoBehaviour
             UnifiedHubManager.Instance?.InitializeHub(next, completedHouses);
             UIManager.Instance?.ShowUnifiedHub();
         }
-
-        // Debug.Log($"[GameManager] Unified Hub. Next: {currentHouseLevel + 1}");
     }
 
+    /// <summary>
+    /// Validates house entry and starts the selected house flow.
+    /// </summary>
     private void EnterHouse(int houseLevel)
     {
         if (houseLevel > currentHouseLevel + 1 && !completedHouses[houseLevel - 1])
         {
-            // Debug.LogWarning($"[GameManager] Cannot enter House {houseLevel} - previous not complete!");
             return;
         }
 
-        // DON'T hide hub here anymore - StartHouse handles it via transition callback
         StartHouse(houseLevel);
     }
 
+    /// <summary>
+    /// Starts an inter-house mini-game selected from the hub.
+    /// </summary>
     private void HandleMiniGameSelected(int miniGameIndex)
     {
-        // Debug.Log($"[GameManager] Mini-game {miniGameIndex + 1} selected from Hub.");
-
         if (TransitionPlayer.Instance != null)
         {
             string text = GetMiniGameTransitionText(miniGameIndex);
-            // PHASE 18: Use explicit duration for mini-games (2.5s) to ensure they show long enough
             TransitionPlayer.Instance.PlayTransition(text, 
                 onMidpoint: () =>
                 {
-                    // SETUP: Hide hub and change state while hidden
                     UIManager.Instance?.HideUnifiedHub();
                     ChangeState(GameState.InterHouseMiniGame);
                 }, 
                 overrideTextDuration: 2.5f, 
                 onReady: () =>
                 {
-                    // START: Action begins as transition starts fading out
                     MiniGameManager.Instance?.StartAssignedMiniGame(miniGameIndex);
                 },
-                instant: true); // PHASE 18: Instant black
+                instant: true);
         }
         else
         {
@@ -532,9 +487,11 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Returns the transition text associated with the assigned mini-game in a specific hub slot.
+    /// </summary>
     private string GetMiniGameTransitionText(int index)
     {
-        // PHASE 18: Get the actual game type assigned to this slot from MiniGameManager
         if (MiniGameManager.Instance != null)
         {
             MiniGameType type = MiniGameManager.Instance.GetMiniGameTypeForSlot(index);
@@ -550,51 +507,27 @@ public class GameManager : MonoBehaviour
         return "وقت اللعب!";
     }
 
+    /// <summary>
+    /// Performs a clean scene reload to restart the game, returning to the main menu.
+    /// </summary>
     private void HandlePlayAgain()
     {
-        // Debug.Log("[GameManager] Play Again - Reloading Scene...");
-
-        if (TransitionPlayer.Instance != null)
-        {
-            TransitionPlayer.Instance.PlayTransition(playAgainTransitionText, () =>
-            {
-                // Lambda to handle StartRun after scene load
-                void OnRestartSceneLoaded(Scene scene, LoadSceneMode mode)
-                {
-                    SceneManager.sceneLoaded -= OnRestartSceneLoaded;
-                    StartRun();
-                }
-
-                SceneManager.sceneLoaded += OnRestartSceneLoaded;
-                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
-            }, instant: true); // PHASE 18: Instant black
-        }
-        else
-        {
-            void OnRestartSceneLoaded(Scene scene, LoadSceneMode mode)
-            {
-                SceneManager.sceneLoaded -= OnRestartSceneLoaded;
-                StartRun();
-            }
-
-            SceneManager.sceneLoaded += OnRestartSceneLoaded;
-            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
-        }
+        DOTween.KillAll();
+        StartRunOnLoad = false;
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
+    /// <summary>
+    /// Handles cosmetic outfit changes from the wardrobe.
+    /// </summary>
     private void HandleOutfitEquipped(int outfitID)
     {
-        // Debug.Log($"[GameManager] Outfit equipped (ID: {outfitID}).");
-
-        // For now, outfits are cosmetic only
-        // Stat bonuses will be re-added later when needed
+        // Cosmetic only for now
     }
 
     private void OnTransitionFinished()
     {
-#if UNITY_EDITOR
-        // Debug.Log("[GameManager] Transition finished.");
-#endif
+        // Transition complete hook
     }
 
     #endregion
@@ -604,43 +537,36 @@ public class GameManager : MonoBehaviour
     private void HandleBatteryDrained() => HandleGameOver("Battery");
     private void HandleStomachFull() => HandleGameOver("Stomach");
 
+    /// <summary>
+    /// Triggers the terminal Game Over state, halting sequences and showing results.
+    /// </summary>
     private void HandleGameOver(string reason)
     {
-        string msg = reason switch
-        {
-            "Battery" => "Game Over: Social Shutdown",
-            "Stomach" => "Game Over: Ma'amoul Explosion",
-            _ => "Game Over!"
-        };
+        if (currentState == GameState.GameOver || currentState == GameState.Win) return;
 
-        // Debug.Log($"[GameManager] {msg}");
+        TransitionPlayer.Instance?.SkipTransition();
+        AudioManager.Instance?.StopAllSFX();
         AudioManager.Instance?.PlaySFX(AudioManager.SFXType.GameOver);
         PlayGameOverEffects(reason);
 
-        // CRITICAL FIX: Put hub in post-game mode BEFORE changing state
         UnifiedHubManager.Instance?.EnterGameOverMode();
-
         ChangeState(GameState.GameOver);
-        
-        // PHASE 18: Show results with total eidia
         UIManager.Instance?.ShowGameOver(accumulatedEidia);
     }
 
+    /// <summary>
+    /// Triggers the terminal Win state, halting sequences and showing results.
+    /// </summary>
     public void WinGame(bool isHouse4Clear = false)
     {
-        string msg = isHouse4Clear
-            ? "INSANE MODE CLEAR! You survived House 4!"
-            : "You survived Eid! Congratulations!";
+        if (currentState == GameState.GameOver || currentState == GameState.Win) return;
 
-        // Debug.Log($"[GameManager] {msg}");
+        TransitionPlayer.Instance?.SkipTransition();
+        AudioManager.Instance?.StopAllSFX();
         AudioManager.Instance?.PlaySFX(AudioManager.SFXType.Win);
 
-        // CRITICAL FIX: Put hub in win mode BEFORE changing state
         UnifiedHubManager.Instance?.EnterWinMode();
-
         ChangeState(GameState.Win);
-
-        // PHASE 18: Show results with total eidia
         UIManager.Instance?.ShowWin(accumulatedEidia);
     }
 
@@ -648,6 +574,9 @@ public class GameManager : MonoBehaviour
 
     #region Helpers
 
+    /// <summary>
+    /// Triggers visual and audio feedback for correct/incorrect actions.
+    /// </summary>
     private void PlayFeedbackEffects(bool isCorrect, bool includeCameraShake = true)
     {
         if (ScreenFlash.Instance != null)
@@ -671,6 +600,9 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Triggers haptics and screen shake associated with game-over reasons.
+    /// </summary>
     private void PlayGameOverEffects(string reason)
     {
         if (reason == "Stomach")

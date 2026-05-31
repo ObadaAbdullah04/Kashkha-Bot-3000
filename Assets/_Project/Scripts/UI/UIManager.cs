@@ -16,15 +16,20 @@ public class UIManager : MonoBehaviour
 
     private void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-            transform.SetParent(null);
-            DontDestroyOnLoad(gameObject);
-        }
-        else
+        if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            OnPlayAgain = null;
+            Instance = null;
         }
     }
 
@@ -57,6 +62,8 @@ public class UIManager : MonoBehaviour
     [SerializeField] private GameObject mainMenuPanel;
     [Tooltip("Start button on the main menu")]
     [SerializeField] private Button startBtn;
+    [Tooltip("Toggle to reset progress and tutorial on start")]
+    [SerializeField] private Toggle resetProgressToggle;
     [Tooltip("Swipe encounter panel (PHASE 16+ active swipe UI)")]
     [SerializeField] private GameObject swipeEncounterPanel;
     [SerializeField] private GameObject gameOverPanel;
@@ -141,6 +148,12 @@ public class UIManager : MonoBehaviour
             startBtn.onClick.AddListener(() => {
                 StopStartButtonPulse();
                 AudioManager.Instance?.PlaySFX(AudioManager.SFXType.ButtonClick);
+
+                if (resetProgressToggle != null && resetProgressToggle.isOn)
+                {
+                    SaveManager.Instance?.ClearData();
+                }
+
                 if (GameManager.Instance != null)
                     GameManager.Instance.StartRun();
             });
@@ -169,39 +182,32 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Called when the player clicks Play Again on Game Over or Win panel.
+    /// Invoked when the player clicks the 'Play Again' button on a results panel.
     /// </summary>
     private void OnPlayAgainClicked()
     {
-        // Debug.Log("[UIManager] PLAY AGAIN CLICKED");
         AudioManager.Instance?.PlaySFX(AudioManager.SFXType.ButtonClick);
         OnPlayAgain?.Invoke();
     }
 
     /// <summary>
-    /// Called when the player clicks Exit on Game Over or Win panel.
-    /// Returns to main menu state.
+    /// Invoked when the player clicks 'Exit' on a results panel.
+    /// Triggers a clean scene reload to return to the main menu state.
     /// </summary>
     private void OnExitToMainMenu()
     {
-        // Debug.Log("[UIManager] EXIT TO MAIN MENU CLICKED");
         AudioManager.Instance?.PlaySFX(AudioManager.SFXType.ButtonClick);
-
-        if (GameManager.Instance != null)
-        {
-            // Reset everything and go back to main menu
-            GameManager.Instance.ChangeState(GameState.MainMenu);
-        }
+        GameManager.StartRunOnLoad = false;
+        UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex);
     }
 
     /// <summary>
-    /// Quits the application.
+    /// Gracefully exits the application or stops editor playback.
     /// </summary>
     public void QuitGame()
     {
         AudioManager.Instance?.PlaySFX(AudioManager.SFXType.ButtonClick);
         
-        // Debug.Log("[UIManager] Quitting Game...");
 #if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
 #else
@@ -210,12 +216,12 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Public wrapper for Inspector OnClick event assignment.
+    /// Public wrapper for Inspector button events.
     /// </summary>
     public void ExitToMainMenu() => OnExitToMainMenu();
 
     /// <summary>
-    /// Handles the initial game state on startup.
+    /// Determines which UI panels to show based on the current game state at startup.
     /// </summary>
     private void HandleInitialState()
     {
@@ -224,9 +230,7 @@ public class UIManager : MonoBehaviour
         if (GameManager.Instance != null)
         {
             GameState initialState = GameManager.Instance.CurrentState;
-            // Debug.Log($"[UIManager] Initial state: {initialState}");
 
-            // Show appropriate panel based on initial state
             if (initialState == GameState.MainMenu)
             {
                 if (mainMenuPanel != null) mainMenuPanel.SetActive(true);
@@ -249,11 +253,9 @@ public class UIManager : MonoBehaviour
         MeterManager.OnBatteryModified += HandleBatteryModified;
         MeterManager.OnStomachModified += HandleStomachModified;
 
-        // Exit buttons
-        if (gameOverExitButton != null) gameOverExitButton.onClick.AddListener(OnExitToMainMenu);
-        if (winExitButton != null) winExitButton.onClick.AddListener(OnExitToMainMenu);
+        if (gameOverExitButton != null) gameOverExitButton.onClick.AddListener(QuitGame);
+        if (winExitButton != null) winExitButton.onClick.AddListener(QuitGame);
 
-        // Play Again buttons
         if (gameOverPlayAgainButton != null) gameOverPlayAgainButton.onClick.AddListener(OnPlayAgainClicked);
         if (winPlayAgainButton != null) winPlayAgainButton.onClick.AddListener(OnPlayAgainClicked);
     }
@@ -264,19 +266,17 @@ public class UIManager : MonoBehaviour
         GameManager.OnRunStarted -= HandleRunStarted;
         GameManager.OnRunEidiaUpdated -= HandleRunEidiaUpdated;
         SaveManager.OnScrapChanged -= HandleTotalScrapUpdated;
+        SaveManager.OnEidiaChanged -= HandleTotalScrapUpdated; 
         MeterManager.OnMetersChanged -= HandleMetersChanged;
         MeterManager.OnBatteryModified -= HandleBatteryModified;
         MeterManager.OnStomachModified -= HandleStomachModified;
 
-        // Exit buttons
-        if (gameOverExitButton != null) gameOverExitButton.onClick.RemoveListener(OnExitToMainMenu);
-        if (winExitButton != null) winExitButton.onClick.RemoveListener(OnExitToMainMenu);
+        if (gameOverExitButton != null) gameOverExitButton.onClick.RemoveListener(QuitGame);
+        if (winExitButton != null) winExitButton.onClick.RemoveListener(QuitGame);
 
-        // Play Again buttons
         if (gameOverPlayAgainButton != null) gameOverPlayAgainButton.onClick.RemoveListener(OnPlayAgainClicked);
         if (winPlayAgainButton != null) winPlayAgainButton.onClick.RemoveListener(OnPlayAgainClicked);
 
-        // Kill all active tweens to prevent memory leaks
         _feedbackSequence?.Kill();
 
         if (mainPanel != null)
@@ -285,11 +285,9 @@ public class UIManager : MonoBehaviour
 
     private void HandleRunStarted()
     {
-        // Play gameplay music on run start
         AudioManager.Instance?.PlayGameplayMusic();
 
         InitializeUI();
-        // Feedback panel might be active from a previous game over
         if (feedbackPanel != null) feedbackPanel.SetActive(false);
         _feedbackSequence?.Kill();
     }
@@ -298,21 +296,21 @@ public class UIManager : MonoBehaviour
 
     #region Initialization
 
+    /// <summary>
+    /// Resets the UI for a fresh run, initializing meters and resource displays.
+    /// </summary>
     private void InitializeUI()
     {
         HideAllPanels();
         if (swipeEncounterPanel != null) swipeEncounterPanel.SetActive(true);
         if (feedbackPanel != null) feedbackPanel.SetActive(false);
 
-        // Hide HUD meters by default - only shown during encounters
         SetHUDEnabled(false);
 
-        // Initialize resource texts
         if (runEidiaText != null) runEidiaText.text = "0";
         if (totalScrapText != null && SaveManager.Instance != null)
             totalScrapText.text = SaveManager.Instance.CurrentData.TotalScrap.ToString();
 
-        // Set slider max values and refresh current values from MeterManager
         if (MeterManager.Instance != null)
         {
             if (batterySlider != null)
@@ -336,7 +334,6 @@ public class UIManager : MonoBehaviour
         }
         else
         {
-            // Fallback if MeterManager not available
             if (batterySlider != null)
             {
                 batterySlider.minValue = 0f;
@@ -357,17 +354,18 @@ public class UIManager : MonoBehaviour
 
     #region Public Display Methods
 
+    /// <summary>
+    /// Displays a temporary feedback popup for correct or incorrect actions.
+    /// </summary>
     public void ShowFeedback(string text, bool isCorrect, Action onComplete)
     {
         if (feedbackPanel == null)
         {
-            // Debug.LogError("[UIManager] FeedbackPanel not assigned!");
             return;
         }
 
         EnsureFeedbackComponents();
 
-        // KILL existing sequence and force reset
         _feedbackSequence?.Kill();
         
         Image feedbackImage = feedbackPanel.GetComponent<Image>();
@@ -376,7 +374,6 @@ public class UIManager : MonoBehaviour
 
         Color targetColor = isCorrect ? correctFeedbackColor : wrongFeedbackColor;
 
-        // Force active and reset alpha
         feedbackPanel.SetActive(true);
         _feedbackCanvasGroup.alpha = 0f;
         _feedbackCanvasGroup.interactable = false;
@@ -405,7 +402,7 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Shows a neutral instruction text (blue color).
+    /// Displays a neutral instruction text overlay.
     /// </summary>
     public void ShowInstruction(string text, Action onComplete = null)
     {
@@ -427,7 +424,7 @@ public class UIManager : MonoBehaviour
         _feedbackSequence = DOTween.Sequence()
             .Append(_feedbackCanvasGroup.DOFade(1f, feedbackFadeInDuration).SetUpdate(true))
             .Join(feedbackImage.DOFade(instructionColor.a, feedbackFadeInDuration).SetUpdate(true))
-            .AppendInterval(2.5f) // Slightly longer for instructions
+            .AppendInterval(2.5f) 
             .Append(_feedbackCanvasGroup.DOFade(0f, feedbackFadeOutDuration).SetUpdate(true))
             .Join(feedbackImage.DOFade(0f, feedbackFadeOutDuration).SetUpdate(true))
             .OnComplete(() =>
@@ -439,8 +436,7 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Hides all UI panels during the inter-house mini-game.
-    /// Called by MiniGameManager before instantiating the catch game prefab.
+    /// Hides all active UI panels to prepare for a mini-game.
     /// </summary>
     public void HideAllPanelsForMiniGame()
     {
@@ -448,8 +444,7 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Hides the swipe encounter panel specifically.
-    /// Called before house transitions to prevent stale content showing.
+    /// Explicitly hides the swipe encounter UI.
     /// </summary>
     public void HideSwipeEncounter()
     {
@@ -458,8 +453,7 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Shows the swipe encounter panel.
-    /// Called during house transition midpoint (while screen is black).
+    /// Explicitly shows the swipe encounter UI and refreshes its background.
     /// </summary>
     public void ShowSwipeEncounter()
     {
@@ -467,27 +461,31 @@ public class UIManager : MonoBehaviour
         {
             swipeEncounterPanel.SetActive(true);
             
-            // PHASE 18: Ensure background is refreshed when panel is shown
             var bgController = swipeEncounterPanel.GetComponentInChildren<HouseBackgroundController>();
             if (bgController != null) bgController.RefreshBackground();
         }
     }
 
     /// <summary>
-    /// Hides the interaction HUD specifically.
-    /// Called before house transitions to prevent stale content showing.
+    /// Hides the interaction QTE HUD.
     /// </summary>
     public void HideInteractionHUD()
     {
         InteractionHUDController.Instance?.HideHUD();
     }
 
+    /// <summary>
+    /// Triggers the visual screen shake for a social battery depletion event.
+    /// </summary>
     public void ShakeSocialShutdown()
     {
         ShakePanel(socialShutdownShakeDuration, socialShutdownShakeAmplitude, socialShutdownShakeVibrato, socialShutdownShakeRandomness);
         CameraShakeManager.Instance?.ShakeSocialShutdown();
     }
 
+    /// <summary>
+    /// Triggers the visual screen shake for a stomach fullness event.
+    /// </summary>
     public void ShakeMaamoulExplosion()
     {
         ShakePanel(maamoulExplosionShakeDuration, maamoulExplosionShakeAmplitude, maamoulExplosionShakeVibrato, maamoulExplosionShakeRandomness);
@@ -499,7 +497,7 @@ public class UIManager : MonoBehaviour
     #region Private Helper Methods
 
     /// <summary>
-    /// Shakes the main panel with specified parameters.
+    /// Core logic for shaking a specific UI panel using DOTween.
     /// </summary>
     private void ShakePanel(float duration, Vector2 amplitude, int vibrato, float randomness)
     {
@@ -511,7 +509,7 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Ensures feedback panel has required components (CanvasGroup, Image).
+    /// Lazily initializes or verifies critical feedback components.
     /// </summary>
     private void EnsureFeedbackComponents()
     {
@@ -520,14 +518,12 @@ public class UIManager : MonoBehaviour
             _feedbackCanvasGroup = feedbackPanel.GetComponent<CanvasGroup>();
             if (_feedbackCanvasGroup == null)
             {
-                // Debug.LogWarning("[UIManager] feedbackPanel missing CanvasGroup — adding at runtime. Please add to prefab!");
                 _feedbackCanvasGroup = feedbackPanel.AddComponent<CanvasGroup>();
             }
         }
 
         if (feedbackPanel.GetComponent<Image>() == null)
         {
-            // Debug.LogWarning("[UIManager] feedbackPanel missing Image component — adding at runtime. Please add to prefab!");
             feedbackPanel.AddComponent<Image>();
         }
     }
@@ -541,6 +537,9 @@ public class UIManager : MonoBehaviour
         canvasGroup.DOFade(1f, duration).SetDelay(delay).SetTarget(uiObject);
     }
 
+    /// <summary>
+    /// Deactivates all top-level game state panels.
+    /// </summary>
     public void HideAllPanels()
     {
         if (mainMenuPanel != null) mainMenuPanel.SetActive(false);
@@ -553,11 +552,10 @@ public class UIManager : MonoBehaviour
 
     #endregion
 
-    #region PHASE 10: Unified Hub UI
+    #region Unified Hub UI
 
     /// <summary>
-    /// PHASE 10: Shows the unified hub panel.
-    /// UnifiedHubManager controls tab switching and UI updates.
+    /// Displays the unified hub and enables the base HUD with a smooth reveal animation.
     /// </summary>
     public void ShowUnifiedHub()
     {
@@ -566,20 +564,27 @@ public class UIManager : MonoBehaviour
         if (unifiedHubPanel != null)
         {
             unifiedHubPanel.SetActive(true);
+            
+            // JUICE: Smooth reveal animation
+            CanvasGroup group = unifiedHubPanel.GetComponent<CanvasGroup>();
+            if (group == null) group = unifiedHubPanel.AddComponent<CanvasGroup>();
+            
+            unifiedHubPanel.transform.DOKill();
+            group.DOKill();
+            
+            unifiedHubPanel.transform.localScale = Vector3.one * 0.95f;
+            group.alpha = 0f;
+            
+            unifiedHubPanel.transform.DOScale(1f, 0.3f).SetEase(Ease.OutBack).SetUpdate(true);
+            group.DOFade(1f, 0.2f).SetUpdate(true);
         }
 
-        // PHASE 13 UPDATED: Show HUD meters in hub (Eidia/Scrap visible)
         SetHUDEnabled(true);
         RefreshMeters();
-
-#if UNITY_EDITOR
-        // Debug.Log("[UIManager] Unified Hub panel shown.");
-#endif
     }
 
     /// <summary>
-    /// Shows the unified hub panel WITHOUT hiding other panels.
-    /// Used for Game Over / Win states where both hub and result panel should show.
+    /// Shows the unified hub without hiding already visible panels (e.g., results).
     /// </summary>
     private void ShowUnifiedHubWithoutHidingOthers()
     {
@@ -588,17 +593,12 @@ public class UIManager : MonoBehaviour
             unifiedHubPanel.SetActive(true);
         }
 
-        // PHASE 13 UPDATED: Show HUD meters in hub (Eidia/Scrap visible)
         SetHUDEnabled(true);
         RefreshMeters();
-
-#if UNITY_EDITOR
-        // Debug.Log("[UIManager] Unified Hub panel shown (overlay mode).");
-#endif
     }
 
     /// <summary>
-    /// PHASE 10: Hides the unified hub panel.
+    /// Hides the unified hub panel.
     /// </summary>
     public void HideUnifiedHub()
     {
@@ -610,9 +610,18 @@ public class UIManager : MonoBehaviour
 
     #region Event Handlers
 
+    /// <summary>
+    /// Displays the Game Over panel with final eidia tally and isolates the view.
+    /// </summary>
     public void ShowGameOver(int totalEidia)
     {
         HideAllPanels();
+        
+        AudioManager.Instance?.StopAllSFX();
+        InteractionHUDController.Instance?.HideHUD();
+        CinematicController.Instance?.StopCinematic();
+        TutorialOverlayManager.Instance?.StopTutorial();
+        
         if (gameOverPanel != null) gameOverPanel.SetActive(true);
         if (gameOverEidiaText != null)
         {
@@ -622,9 +631,18 @@ public class UIManager : MonoBehaviour
         HideUnifiedHub();
     }
 
+    /// <summary>
+    /// Displays the Win panel with final eidia tally and isolates the view.
+    /// </summary>
     public void ShowWin(int totalEidia)
     {
         HideAllPanels();
+
+        AudioManager.Instance?.StopAllSFX();
+        InteractionHUDController.Instance?.HideHUD();
+        CinematicController.Instance?.StopCinematic();
+        TutorialOverlayManager.Instance?.StopTutorial();
+
         if (winPanel != null) winPanel.SetActive(true);
         if (winEidiaText != null)
         {
@@ -634,6 +652,9 @@ public class UIManager : MonoBehaviour
         HideUnifiedHub();
     }
 
+    /// <summary>
+    /// Responds to global game state changes to toggle relevant UI elements.
+    /// </summary>
     private void HandleStateChanged(GameState newState)
     {
         switch (newState)
@@ -647,38 +668,28 @@ public class UIManager : MonoBehaviour
             case GameState.Wardrobe:
             case GameState.HouseHub:
                 HideAllPanels();
-                // Both shown via unified hub - manager controls display
-                // PHASE 13 UPDATED: Show HUD meters in hub (Eidia/Scrap visible)
                 SetHUDEnabled(true);
                 RefreshMeters();
                 break;
             case GameState.Encounter:
                 HideAllPanels();
-                // CRITICAL FIX: Don't show encounter panel yet - it will be revealed
-                // after the house transition completes (prevents showing behind fade)
-                // HouseFlowController.ShowSingleCard will activate cards when ready
-                // Show HUD meters and force refresh when entering a house
                 SetHUDEnabled(true);
                 RefreshMeters();
                 break;
             case GameState.InterHouseMiniGame:
                 HideAllPanels();
-                // All panels hidden - mini-game prefab handles its own UI
-                // PHASE 13 UPDATED: Show HUD meters in mini-games
                 SetHUDEnabled(true);
                 RefreshMeters();
                 break;
             case GameState.GameOver:
-                // Now handled by ShowGameOver
                 break;
             case GameState.Win:
-                // Now handled by ShowWin
                 break;
         }
     }
 
     /// <summary>
-    /// Shows or hides the HUD meters (battery/stomach sliders).
+    /// Enables or disables the visibility of HUD sliders and numeric text.
     /// </summary>
     private void SetHUDEnabled(bool enabled)
     {
@@ -699,8 +710,7 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Force-refreshes meter sliders to current values.
-    /// Called when entering a house to ensure UI is up to date.
+    /// Syncs UI sliders with the latest values from MeterManager.
     /// </summary>
     private void RefreshMeters()
     {
@@ -727,7 +737,7 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Shows or hides the numeric timer text.
+    /// Toggles the numeric countdown timer text.
     /// </summary>
     public void SetTimerVisibility(bool visible)
     {
@@ -738,7 +748,7 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Public wrapper for RefreshMeters - called from GameManager when entering a house.
+    /// External entry point to refresh meters during house transitions.
     /// </summary>
     public void RefreshMetersPublic() => RefreshMeters();
 
@@ -762,7 +772,6 @@ public class UIManager : MonoBehaviour
 
     private void HandleMetersChanged(float battery, float stomach)
     {
-        // Fallback handler for initialization - sets values instantly
         if (batterySlider != null)
         {
             float maxBattery = MeterManager.Instance != null ? MeterManager.Instance.MaxBattery : 100f;
@@ -778,29 +787,18 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Event handler for battery modification - animates slider with DOTween.
-    /// Receives (currentValue 0-maxBattery, delta) from MeterManager.
+    /// Updates the battery slider with smooth animation and juice.
     /// </summary>
     private void HandleBatteryModified(float currentValue, float delta)
     {
         if (batterySlider == null) return;
 
-        // Kill any existing tween on this slider to prevent conflicts
         batterySlider.DOKill();
-
-        // Get current max battery from MeterManager (can be >100 from upgrades)
         float maxBattery = MeterManager.Instance != null ? MeterManager.Instance.MaxBattery : 100f;
-
-        // Update slider max value to match current max battery
         batterySlider.maxValue = maxBattery;
-
-        // Set value directly (no normalization needed with correct maxValue)
         batterySlider.DOValue(currentValue, 0.3f).SetEase(Ease.OutQuad);
-        
-        // JUICE: Punch scale on modification
         batterySlider.transform.DOPunchScale(Vector3.one * 0.05f, 0.2f);
 
-        // PHASE 2: Floating Combat Text
         if (FloatingTextManager.Instance != null && Mathf.Abs(delta) >= 1f)
         {
             string sign = delta > 0 ? "+" : "";
@@ -810,30 +808,20 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Event handler for stomach modification - animates slider with DOTween.
-    /// Receives (currentValue 0-100, delta) from MeterManager.
+    /// Updates the stomach slider with smooth animation and juice.
     /// </summary>
     private void HandleStomachModified(float currentValue, float delta)
     {
         if (stomachSlider == null) return;
 
-        // Kill any existing tween on this slider to prevent conflicts
         stomachSlider.DOKill();
-
-        // Stomach is always 0-100, so maxValue stays at 100
         stomachSlider.maxValue = 100f;
-
-        // Set value directly (no normalization needed with correct maxValue)
         stomachSlider.DOValue(currentValue, 0.3f).SetEase(Ease.OutQuad);
-        
-        // JUICE: Punch scale on modification
         stomachSlider.transform.DOPunchScale(Vector3.one * 0.05f, 0.2f);
 
-        // PHASE 2: Floating Combat Text
         if (FloatingTextManager.Instance != null && Mathf.Abs(delta) >= 1f)
         {
             string sign = delta > 0 ? "+" : "";
-            // For stomach, POSITIVE delta is BAD (Red), NEGATIVE delta is GOOD (Green)
             Color color = delta > 0 ? wrongFeedbackColor : correctFeedbackColor;
             FloatingTextManager.Instance.SpawnTextOverUI($"{sign}{Mathf.RoundToInt(delta)}", StomachSliderRect, color);
         }

@@ -13,10 +13,6 @@ using DG.Tweening;
 [RequireComponent(typeof(BoxCollider2D))]
 public class FallingItem : MonoBehaviour
 {
-    [Header("Item Type")]
-    [Tooltip("True = Eidia (good, catch it). False = Ma'amoul (bad, avoid it)")]
-    [SerializeField] private bool isEidia = true;
-
     [Header("Movement")]
     [Tooltip("How fast this item falls (world units per second)")]
     [SerializeField] private float fallSpeed = 8f;
@@ -34,6 +30,14 @@ public class FallingItem : MonoBehaviour
     private void Awake()
     {
         _collider = GetComponent<BoxCollider2D>();
+    }
+
+    /// <summary>
+    /// Updates the falling speed of the item.
+    /// </summary>
+    public void SetSpeed(float newSpeed)
+    {
+        fallSpeed = newSpeed;
     }
 
     private void Start()
@@ -74,7 +78,6 @@ public class FallingItem : MonoBehaviour
 
             // Cache reference BEFORE destroying to avoid race condition
             CatchMiniGame catchGame = CatchMiniGame.Instance;
-            bool isEidiaCapture = isEidia;
 
             // Disable collider and destroy this item
             if (_collider != null) _collider.enabled = false;
@@ -83,7 +86,7 @@ public class FallingItem : MonoBehaviour
             // CRITICAL: Notify manager AFTER disabling collider but object still exists
             if (catchGame != null)
             {
-                catchGame.OnItemCaught(isEidiaCapture);
+                catchGame.OnItemCaught();
             }
         }
     }
@@ -116,7 +119,7 @@ public class FallingItem : MonoBehaviour
     private void OnDrawGizmosSelected()
     {
         // Draw collider bounds
-        Gizmos.color = isEidia ? new Color(1f, 0.84f, 0f, 0.5f) : new Color(0.6f, 0.3f, 0.1f, 0.5f);
+        Gizmos.color = new Color(1f, 0.84f, 0f, 0.5f);
 
         if (_collider != null)
         {

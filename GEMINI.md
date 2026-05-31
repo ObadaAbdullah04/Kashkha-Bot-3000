@@ -92,21 +92,31 @@ Data is managed via CSVs in `Assets/_Project/Data/` and ScriptableObjects in `Re
 ---
 *For deep technical details, refer to `Assets/_Project/ARCHITECTURE.md`.*
 
-## 🚀 Recent Implementation: Phase 1 (Onboarding & FTUE)
+## 🚀 Recent Implementations (Phases 1-19)
 
-We have successfully implemented the core onboarding systems. **Manual Editor setup is required to activate visuals.**
+The project has undergone significant expansion, reaching **Phase 19** with a focus on polished transitions, unified UI, and refined gameplay loops.
 
-> [!IMPORTANT]
-> Follow the **[PHASE_1_UNITY_SETUP.md](./PHASE_1_UNITY_SETUP.md)** checklist for step-by-step instructions on Hierarchy and Inspector assignments.
+### 🏛️ 1. Unified Hub Architecture (Phase 6-10)
+- **Single Source of Truth:** Replaced multiple scenes/panels with a **Unified Hub** containing three tabs: Houses, Wardrobe, and Upgrades.
+- **Persistent Progress:** The Hub tracks house completion and manages the mid-run loop.
 
-### 🎥 1. Video Intro System
-Allows playing full-screen MP4 cinematics (e.g., Intro, Prologue) as part of any house sequence.
+### 🎬 2. Unified Cinematic System (Phase 15)
+- **Hybrid Playback:** `CinematicController` now supports both **Unity Timeline** (for complex scenes) and **DOTween Typewriter** (for quick dialogue) with automatic UI management.
+- **Full-Screen Video:** Integrated MP4 playback support for high-fidelity intros and transitions.
 
-### ✋ 2. "Ghost Hand" Swipe Tutorial
-An animated hand that teaches the core swipe mechanic on the first card of House 1. Includes background dimming.
+### 🎮 3. Expanded Mini-Games (Phase 5C, 17)
+- **Path-Drawing Maze:** A gesture-based maze navigation challenge.
+- **Memory Swap:** A tile-matching memory game with memorization phases.
+- **Catch Game:** Optimized time-attack eidia catching.
 
-### ⚡ 3. QTE Micro-Tutorials (Shake, Hold, Tap, Draw)
-Pauses the timer the first time a player encounters a new interaction type. Loads gesture icons from `Resources/TutorialIcons/`.
+### 🧹 4. Phase 18 Optimization Pass (The "Polish" Phase)
+- **Currency Consolidation:** Merged all currencies into **Total Eidia** for a cleaner economy.
+- **Simplified Wardrobe:** Streamlined outfit selection and stat modifiers.
+- **Audio Overhaul:** Centralized `AudioManager` with event-driven SFX and cross-fading music.
+- **Smart Backgrounds:** `HouseBackgroundController` and `MiniGameBackgroundLoader` automatically handle visual context switching.
+- **Clean State Management:** Implemented strict scene reload patterns and event clearing to prevent memory leaks and "ghost" references.
 
-### 🔄 4. Global Tutorial Reset
-Tutorials are automatically reset at the start of every new run via `GameManager.StartRun()`.
+### ⏱️ 5. Interaction Refinement (Phase 13-19)
+- **Standalone QTEs:** Integrated Shake, Hold, Tap, and Draw interactions directly into house sequences.
+- **Smart Timer:** Phase 19 logic ensures the timer is only visible during active questions, hiding it during cinematics and interactions for better immersion.
+- **Tutorial Overlay:** Enhanced `TutorialOverlayManager` with persistent completion tracking and visual pointers.

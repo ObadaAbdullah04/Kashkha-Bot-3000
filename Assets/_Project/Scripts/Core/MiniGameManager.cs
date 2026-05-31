@@ -66,15 +66,20 @@ public class MiniGameManager : MonoBehaviour
 
     private void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-            transform.SetParent(null);
-            DontDestroyOnLoad(gameObject);
-        }
-        else
+        if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            OnMiniGameEnded = null;
+            Instance = null;
         }
     }
 
@@ -104,7 +109,6 @@ public class MiniGameManager : MonoBehaviour
     {
         if (slotIndex < 0 || slotIndex > 2)
         {
-            // Debug.LogError($"[MiniGameManager] Invalid slot index: {slotIndex}. Must be 0-2.");
             return;
         }
 
@@ -116,17 +120,13 @@ public class MiniGameManager : MonoBehaviour
             _ => MiniGameType.CatchGame
         };
 
-        // House level for difficulty scaling (use slotIndex + 1)
         int houseLevel = slotIndex + 1;
-
-        // Debug.Log($"[MiniGameManager] Starting assigned mini-game: Slot {slotIndex + 1}, Type: {gameType}, House: {houseLevel}");
-
         StartMiniGame(gameType, houseLevel);
     }
 
     /// <summary>
-    /// Starts a specific mini-game type with house-based difficulty.
-    /// PHASE 18: Instruction is delayed to appear AFTER the black screen transition fades out.
+    /// Instantiates a specific mini-game type with house-based difficulty scaling.
+    /// Instructions are delayed to synchronize with the transition fade-out.
     /// </summary>
     public void StartMiniGame(MiniGameType type, int houseLevel)
     {
@@ -138,9 +138,6 @@ public class MiniGameManager : MonoBehaviour
             _ => "العب واربح!"
         };
 
-        // Delay instruction so it shows AFTER the 0.6s fade-in + text duration
-        // GameManager calls this at midpoint, so we wait 2.5s (matching transition duration)
-        // to ensure the player actually sees the blue instruction panel as the black fades.
         _pendingInstruction = instruction;
         Invoke(nameof(ShowDelayedInstruction), 2.5f);
 
@@ -159,21 +156,18 @@ public class MiniGameManager : MonoBehaviour
                 break;
 
             default:
-                // Debug.LogWarning($"[MiniGameManager] Unknown mini-game type: {type}. Defaulting to CatchGame.");
                 StartCatchGame(houseLevel);
                 break;
         }
     }
 
     /// <summary>
-    /// Task 1: Starts the Eidia Catch mini-game between houses.
-    /// MiniGameManager determines duration based on house level and initializes CatchMiniGame.
+    /// Spawns and initializes the Eidia Catch mini-game.
     /// </summary>
     public void StartCatchGame(int houseLevel)
     {
         if (catchGamePrefab == null)
         {
-            // Debug.LogError("[MiniGameManager] catchGamePrefab not assigned!");
             FallbackToNextHouse();
             return;
         }
@@ -189,13 +183,12 @@ public class MiniGameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// PHASE 5C (REVISED): Starts the Path-Drawing Maze mini-game.
+    /// Spawns and initializes the Path-Drawing Maze mini-game.
     /// </summary>
     public void StartPathDrawingGame(int houseLevel)
     {
         if (pathDrawingPrefab == null)
         {
-            // Debug.LogError("[MiniGameManager] pathDrawingPrefab not assigned! Fallback to Catch game.");
             StartCatchGame(houseLevel);
             return;
         }
@@ -211,13 +204,12 @@ public class MiniGameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// PHASE 17: Starts the Memory Swap tile matching mini-game.
+    /// Spawns and initializes the Memory Swap matching mini-game.
     /// </summary>
     public void StartMemorySwapGame(int houseLevel)
     {
         if (memorySwapPrefab == null)
         {
-            // Debug.LogError("[MiniGameManager] memorySwapPrefab not assigned!");
             FallbackToNextHouse();
             return;
         }
@@ -226,12 +218,10 @@ public class MiniGameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Called by mini-games when they end.
+    /// Finalizes the current mini-game, awarding accumulated rewards and cleaning up the instance.
     /// </summary>
     public void EndMiniGame(int eidiaEarned, int scrapEarned)
     {
-        // Debug.Log($"[MiniGameManager] === EndMiniGame === Eidia: {eidiaEarned}, Scrap: {scrapEarned}");
-
         if (scrapEarned > 0 && SaveManager.Instance != null)
         {
             SaveManager.Instance.AddScrap(scrapEarned);

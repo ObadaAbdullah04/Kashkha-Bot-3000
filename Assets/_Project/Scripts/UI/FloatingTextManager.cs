@@ -30,6 +30,11 @@ public class FloatingTextManager : MonoBehaviour
         }
     }
 
+    private void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+    }
+
     /// <summary>
     /// Spawns a floating text at the specified screen position.
     /// </summary>
